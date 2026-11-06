@@ -145,3 +145,10 @@ nav button{flex:1 1 auto;min-width:0}
 .overview-mode .colour-cue>span{width:8px;height:8px}
 .overview-mode .speed-cue{width:20px;height:14px;transform:translateY(-2px)}
 @media(prefers-reduced-motion:reduce){.timer-face>.speed-cue{animation:none}}
+
+/* Keep the compact prescription and set-mode cue aligned on narrow screens. */
+.preview-prescription{display:inline-flex;align-items:center;gap:7px;max-width:100%}
+.preview-prescription>span:first-child{min-width:0}
+.preview-prescription>.speed-cue{flex:none;width:20px;height:14px;margin:0;transform:translateY(-1px)}
+.preview-prescription>.colour-cue{flex:none;margin:0}
+
