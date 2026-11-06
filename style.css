@@ -154,4 +154,13 @@ nav button{flex:1 1 auto;min-width:0}
 
 
 
-.private-video-load{width:100%;min-height:120px;background:#e6eee4;color:#205c3b}.private-video-status{margin:10px 0}.private-video>video{display:block;width:100%}
+/* Match the loaded player dimensions, including the shared 300px height limit. */
+.private-video>.private-video-load,.private-video>video{display:block;width:100%;aspect-ratio:16/9;max-height:300px;margin:12px 0;border-radius:12px;background:#000}
+.private-video>.private-video-load{min-height:0;padding:0;color:#fff;display:grid;place-items:center}
+.private-video-play{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:#ffffff24}
+.private-video-play svg{display:block;width:36px;height:36px;margin-left:3px}
+.private-video>.private-video-load:disabled{opacity:1}
+.private-video>.private-video-load:disabled .private-video-play{opacity:.55}
+.private-video>.private-video-load:focus-visible{outline:3px solid #db9c35;outline-offset:3px}
+.private-video-status{margin:10px 0}
+.library-player .private-video>.private-video-load,.library-player .private-video>video{margin:2px 0 14px}

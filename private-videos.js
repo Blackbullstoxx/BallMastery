@@ -7,7 +7,7 @@ const privateVideos=(()=>{
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function markup(d,area='ball'){
   const item=lookup(area,d.key||d.id);if(!item)return '';
-  return `<div class="drill-video private-video" data-private-video="${area}:${escape(item.id)}"><button type="button" class="private-video-load" aria-label="Video laden: ${escape(item.name)}">▶ Video laden</button></div>`;
+  return `<div class="drill-video private-video" data-private-video="${area}:${escape(item.id)}"><button type="button" class="private-video-load" aria-label="Video laden: ${escape(item.name)}"><span class="private-video-play" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10-6.5z" fill="currentColor"/></svg></span></button></div>`;
  }
  function bind(root=document){
   root.querySelectorAll('[data-private-video]').forEach(host=>{
