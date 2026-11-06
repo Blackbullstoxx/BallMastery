@@ -152,3 +152,6 @@ nav button{flex:1 1 auto;min-width:0}
 .preview-prescription>.speed-cue{flex:none;width:20px;height:14px;margin:0;transform:translateY(-1px)}
 .preview-prescription>.colour-cue{flex:none;margin:0}
 
+
+
+.private-video-load{width:100%;min-height:120px;background:#e6eee4;color:#205c3b}.private-video-status{margin:10px 0}.private-video>video{display:block;width:100%}

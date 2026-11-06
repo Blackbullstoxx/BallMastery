@@ -37,10 +37,24 @@ Browserbasierte Trainings-App mit Ballbeherrschung, Finten, Jonglieren, Timern, 
 
 Trainingsdaten liegen im Browserspeicher des jeweiligen Geräts; Sicherungen liegen in der verbundenen Dropbox. Das Repository enthält keine persönlichen Trainingsbackups und keine Dropbox-Zugangstoken. Der öffentliche Dropbox-App-Key ist eine Anwendungskennung, kein Zugangsschlüssel.
 
-Die derzeitigen Video-Freigabelinks sind Bestandteil des öffentlichen Codes. Wer einen aktiven Link kennt, kann das jeweilige Video abrufen. Die private Videoanbindung ist in diesem Paket noch nicht umgesetzt.
+Die Videos werden über die auf dem Gerät autorisierte Dropbox-Verbindung geladen. Die aktuelle App enthält Dateipfade, aber keine dauerhaft öffentlichen Video-Freigabelinks. Beim Laden entsteht ein temporärer Abspiellink. Ohne passende Dropbox-Verbindung gibt es keinen Zugriff. Alte Freigabelinks aus dem Git-Verlauf bleiben unabhängig davon gültig, bis sie in Dropbox deaktiviert werden. Bereits heruntergeladene Kopien lassen sich nicht zurückholen.
 
 ## Technik
 
 Statische HTML-/CSS-/JavaScript-Dateien, kein Build und kein eigener Server nötig. `manifest.webmanifest` und `sw.js` verwenden relative Pfade für GitHub-Projektseiten. Der Service Worker speichert nur die App-Dateien; Dropbox, Videos und Trainingsdaten werden nicht in den App-Cache aufgenommen.
 
 Exportbasis: veröffentlichter App-Stand 89, Quellstand `0501c59abae4dc8f2cf7a85239edeacb79b93263`. Für GitHub wurden Startpfad und Offline-Unterstützung ergänzt. Die bisherige veröffentlichte App wird dadurch nicht geändert.
+
+## Private Videos testen und alte Freigaben beenden
+
+1. Aktualisierte Dateien hochladen und die erfolgreiche Pages-Veröffentlichung abwarten.
+2. App online öffnen, danach alle App-Fenster und zugehörigen Safari-Tabs schließen und erneut öffnen, um die neue Offline-Version zu aktivieren.
+3. Dropbox verbunden lassen. Videos stehen unter `/Videos/Ball Mastery/...` und `/Videos/Moves/...`, relativ zum Dropbox-App-Ordner.
+4. Vor dem Training oder in der Videoliste auf **Video laden** tippen. Auf iOS nötigenfalls danach im Player auf Play tippen.
+5. Je ein Video aus Anfänger, Fortgeschrittene, Könner, Meister sowie Richtungswechsel, Stops und Starts und Finten prüfen. Bild, Ton und Spulen testen. Anschließend auf jedem Familiengerät prüfen.
+6. In einer privaten Browseransicht ohne Dropbox-Verbindung darf sich kein Video laden lassen. Die App-Dateien dürfen weiterhin sichtbar sein.
+7. Erst nach erfolgreichem Test in Dropbox den öffentlichen Link des Ordners Videos und alle separat erzeugten öffentlichen Videolinks löschen. Nicht die Videos oder Ordner löschen und nicht die App-Verbindung widerrufen.
+8. Alte Freigabelinks danach in einer privaten Browseransicht testen: Es darf kein Zugriff mehr möglich sein. Die neue App muss Videos weiterhin abspielen.
+
+Ein temporärer Link kann während seiner Gültigkeit weitergegeben werden; berechtigte Nutzer können Inhalte speichern. Eine fehlende Datei, Offline-Zustand oder eine abgelaufene Verbindung führen zu einer Fehlermeldung mit erneutem Ladeversuch, nie zum Rückfall auf einen öffentlichen Link. Zugangsdaten und temporäre Links werden weder in das Repository noch in Trainingsbackups geschrieben. Alte Trainingsbackups können noch frühere öffentliche Links enthalten, die die neue Videowiedergabe ignoriert. Die Offline-Speicherung enthält ausschließlich App-Dateien und Pfad-Metadaten, keine Videodateien.
+
