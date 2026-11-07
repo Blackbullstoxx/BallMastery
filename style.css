@@ -164,3 +164,12 @@ nav button{flex:1 1 auto;min-width:0}
 .private-video>.private-video-load:focus-visible{outline:3px solid #db9c35;outline-offset:3px}
 .private-video-status{margin:10px 0}
 .library-player .private-video>.private-video-load,.library-player .private-video>video{margin:2px 0 14px}
+
+
+/* Additional insights remain inside the expanded exercise. */
+.record-trend{font-size:13px;line-height:1.5;color:#57705f;margin:14px 0 0}
+.record-trend strong,.record-colour-result strong{color:#193426;font-weight:650}
+.record-trend small,.record-colour-result small{display:block;font-size:11px;margin-top:3px}
+.record-colour{border-top:1px solid #e5ece2;padding-top:16px;margin-top:16px}
+.record-colour>.chart-duration{margin-bottom:10px}.record-colour>.chart-duration>.colour-cue,.chart-duration>.colour-cue{margin-left:0}
+.record-colour-result{font-size:13px;line-height:1.5;color:#57705f;margin:10px 0 16px}

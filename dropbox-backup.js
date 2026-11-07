@@ -7,7 +7,7 @@ const dropboxBackup=(()=>{
  const $d=s=>document.querySelector(s),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const uid=()=>crypto.randomUUID(),folderName=name=>(name||'Training').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,35).replace(/^-|-$/g,'')||'training';
  const reading=()=>typeof isReadOnly==='function'&&isReadOnly();
- const meaningful=s=>!!(s.scores?.length||s.colourScores?.length||s.sessions?.length||Object.values(s.ballTraining?.days||{}).some(x=>x>0));
+ const meaningful=s=>!!(s.scores?.length||s.colourScores?.length||s.colourTraining?.length||s.sessions?.length||Object.values(s.ballTraining?.days||{}).some(x=>x>0));
  function profilePath(id){if(!/^[a-z0-9-]{10,100}$/.test(id||''))throw Error('Ungültige Sicherungsauswahl.');return ROOT+'/'+id}
  function snapshotPath(path){if(!/^\/balltraining\/[a-z0-9-]{10,100}\/[a-zA-Z0-9.-]+\.json$/.test(path||''))throw Error('Ungültige Sicherungsdatei.');return path}
  // Compare data rather than property order or automatically rebuilt daily views.
@@ -169,4 +169,5 @@ const dropboxBackup=(()=>{
  window.addEventListener('load',()=>void init().finally(initializedResolve));
  return {markup:ui,bind,changed,localReplaced,saveNow,videoLink,openStatus,connectionVersion:()=>connectionGeneration};
 })();
+
 

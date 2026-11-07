@@ -105,7 +105,15 @@ const colourPerception=(()=>{
   // Give the start signal time to finish before opening the microphone.
   s.retry=setTimeout(()=>startRecognition(s),850);s.clock=setInterval(step,100);paint();
  }
- function finishSet(){const s=session;if(s?.trial?.open)closeTrial(s);stop()}
+ function finishSet(){const s=session;if(s?.trial?.open)closeTrial(s);stop();
+  const result=stats(),d=run?.plan?.[run.index];
+  if(!isReadOnly()&&eligible()&&result){
+   result.id=result.id||crypto.randomUUID();
+   const row={id:result.id,key:d.key,duration:d.work,date:run.day||date(),finishedAt:Date.now(),shown:result.shown,correct:result.correct,interrupted:result.interrupted||0};
+   const index=state.colourTraining.findIndex(r=>r.id===row.id);
+   if(index<0)state.colourTraining.push(row);else state.colourTraining[index]=row;
+  }
+ }
  function summary(){
   const i=run?.index;let result=stats();if(run?.phase==='done'){const rows=Object.values(run.colourResults||{});if(!rows.length)return '';result=rows.reduce((s,r)=>({shown:s.shown+r.shown,correct:s.correct+r.correct,interrupted:s.interrupted+(r.interrupted||0)}),{shown:0,correct:0,interrupted:0})}else if(!run?.plan?.[i]?.colour||!result||!['rest','review'].includes(run.phase))return '';
   const count=Math.max(0,result.shown-(result.interrupted||0));
@@ -116,7 +124,7 @@ const colourPerception=(()=>{
 function normalizeColourSettings(value){return {review:Array.from({length:4},(_,i)=>Math.max(0,Math.min(Number.isInteger(value?.review?.[i])?value.review[i]:0,20))),extras:Math.max(0,Math.min(Number.isInteger(value?.extras)?value.extras:0,20))}}
 function validColourSettings(v){return !!v&&Array.isArray(v.review)&&v.review.length===4&&v.review.every(n=>Number.isInteger(n)&&n>=0&&n<=20)&&Number.isInteger(v.extras)&&v.extras>=0&&v.extras<=20}
 function restoreColourResults(value,length){
- const result={};for(const [key,row] of Object.entries(value||{}))if(/^\d+$/.test(key)&&Number(key)<length&&row&&['shown','correct','interrupted'].every(k=>Number.isInteger(row[k])&&row[k]>=0&&row[k]<=10000)&&row.correct+row.interrupted<=row.shown)result[key]={shown:row.shown,correct:row.correct,interrupted:row.interrupted};return result;
+ const result={};for(const [key,row] of Object.entries(value||{}))if(/^\d+$/.test(key)&&Number(key)<length&&row&&['shown','correct','interrupted'].every(k=>Number.isInteger(row[k])&&row[k]>=0&&row[k]<=10000)&&row.correct+row.interrupted<=row.shown)result[key]={shown:row.shown,correct:row.correct,interrupted:row.interrupted,...(typeof row.id==='string'?{id:row.id}:{})};return result;
 }
 
 function refreshColourPlan(r,current=false,all=false){
@@ -138,3 +146,7 @@ function trainingModeCue(d,next=false){
  const label=(next?'Nächster Satz':'Dieser Satz')+(d.colour?' mit Farberkennung':' auf Geschwindigkeit');
  return d.colour?colourCue(d,label):`<span class="speed-cue" role="img" aria-label="${label}"><svg viewBox="0 0 48 30" aria-hidden="true" focusable="false"><path d="M5 26a19 19 0 0 1 28-16M40 15a19 19 0 0 1 3 11" fill="none" stroke="currentColor" stroke-width="3.5"/><path d="M23 21 39 6 28 26Z" fill="currentColor"/><circle cx="24" cy="25" r="4.5" fill="currentColor"/></svg></span>`;
 }
+
+
+function validColourTrainingRow(r){return !!r&&typeof r.id==='string'&&r.id.length>0&&r.id.length<=200&&typeof r.key==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&Number.isFinite(Date.parse(r.date+'T00:00:00Z'))&&Number.isFinite(r.finishedAt)&&r.finishedAt>=0&&Number.isInteger(r.duration)&&r.duration>0&&r.duration<=600&&['shown','correct','interrupted'].every(k=>Number.isInteger(r[k])&&r[k]>=0&&r[k]<=10000)&&r.correct+r.interrupted<=r.shown}
+function normalizeColourTraining(rows){return Array.isArray(rows)?[...new Map(rows.filter(validColourTrainingRow).map(r=>[r.id,{id:r.id,key:r.key,date:r.date,duration:r.duration,finishedAt:r.finishedAt,shown:r.shown,correct:r.correct,interrupted:r.interrupted}])).values()]:[]}
