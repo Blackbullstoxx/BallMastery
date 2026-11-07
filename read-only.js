@@ -25,7 +25,6 @@ function renderReadOnlyUI(){
  let banner=document.querySelector('#read-only-banner');
  const settings=document.querySelector('nav [data-tab="settings"]');
  if(settings){settings.disabled=isReadOnly();settings.title=isReadOnly()?'In der Leseansicht nicht verfügbar':''}
- const footer=document.querySelector('footer');if(footer)footer.textContent=isReadOnly()?'Leseansicht · Datenstand aus Dropbox · Videos benötigen Internet':'Auf diesem Gerät gespeichert · Videos benötigen Internet';
  if(!isReadOnly()){banner?.remove();return}
  const info=readOnlyInfo(),view=document.querySelector('#view');
  if(!banner){banner=document.createElement('aside');banner.id='read-only-banner';view.before(banner)}

@@ -1,10 +1,8 @@
 /* Offline availability; no training data or Dropbox responses are cached here. */
 (()=>{
  const footer=document.querySelector('footer');
- let status='Offline-Version wird vorbereitet …';
- const paint=()=>{if(!footer)return;const base=footer.textContent.startsWith('Leseansicht')?'Leseansicht · Datenstand aus Dropbox':'Auf diesem Gerät gespeichert';const text=base+' · '+status+' · Videos benötigen Internet';if(footer.textContent!==text)footer.textContent=text};
- const show=text=>{status=text;paint()};
- if(footer)new MutationObserver(paint).observe(footer,{childList:true,characterData:true,subtree:true});
+ // Keep the release label from index.html; availability stays inspectable separately.
+ const show=text=>{if(footer)footer.dataset.offlineStatus=text};
  if(!('serviceWorker' in navigator)||!window.isSecureContext){show('Offline-Start nicht verfügbar');return}
  show('Offline-Version wird vorbereitet …');
  let available=false;
