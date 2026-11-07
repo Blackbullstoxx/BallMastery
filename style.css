@@ -173,3 +173,14 @@ nav button{flex:1 1 auto;min-width:0}
 .record-colour{border-top:1px solid #e5ece2;padding-top:16px;margin-top:16px}
 .record-colour>.chart-duration{margin-bottom:10px}.record-colour>.chart-duration>.colour-cue,.chart-duration>.colour-cue{margin-left:0}
 .record-colour-result{font-size:13px;line-height:1.5;color:#57705f;margin:10px 0 16px}
+
+
+.record-trend-details{margin:8px 0 0;color:#57705f;font-size:13px;line-height:1.5}
+.record-trend-details>summary{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;list-style:none;padding:3px 0;font-weight:400;cursor:pointer}
+.record-trend-details>summary::-webkit-details-marker{display:none}
+.record-trend-details>summary:focus-visible{outline:2px solid #9a7000;outline-offset:3px;border-radius:3px}
+.record-trend-item{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.record-trend-arrow{display:block;width:24px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+.record-trend-arrow.trend-up{color:#23754d}.record-trend-arrow.trend-flat{color:#9a7000}.record-trend-arrow.trend-down{color:#bb3e3e}
+.record-trend-explanation{font-size:12px;line-height:1.5;padding:4px 0 2px}.record-trend-explanation p{margin:7px 0}
+.record-trend-stamp{font-size:11px;color:#57705f;margin:5px 0}
