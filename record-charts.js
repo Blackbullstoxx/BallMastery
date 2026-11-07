@@ -2,7 +2,7 @@
 const recordChartPeriods=new Map();let recordChartObserver=null;
 const scoreDay=date=>/^\d{4}-\d{2}-\d{2}$/.test(date)?Date.parse(date+'T00:00:00Z'):NaN;
 function recordSeries(scores,key,duration,period,today){const end=scoreDay(today),cutoff=period?end-(period-1)*86400000:-Infinity,byDate=new Map();for(const row of scores){const day=scoreDay(row.date);if(row.key!==key||row.duration!==duration||!Number.isFinite(row.value)||row.value<0||!Number.isFinite(day)||day<cutoff||day>end)continue;const previous=byDate.get(row.date);if(!previous||row.value>previous.value)byDate.set(row.date,{date:row.date,value:row.value,day})}return [...byDate.values()].sort((a,b)=>a.day-b.day)}
-function recordChartMarkup(key,duration,colour=false){const rows=recordSeries(colour?state.colourScores:state.scores,key,duration,0,date()),today=rows.find(r=>r.date===date()),record=rows.length?Math.max(...rows.map(r=>r.value)):0,period=recordChartPeriods.get(JSON.stringify([key,duration,colour]))||0;return `<section class="record-chart" data-chart-key="${esc(key)}" data-chart-duration="${duration}" data-chart-colour="${colour}"><h4 class="chart-duration">${colour?colourCue({colour:true},'Mit Farberkennung')+' ':''}${duration?duration+' Sekunden':'Kontakte am Stück'}</h4><div class="record-metrics"><div><span>Heute</span><strong>${today?.value??'–'}</strong></div><div><span>Rekord</span><strong>${record}</strong></div></div>${recordTrendMarkup(rows,duration)}<div class="chart-periods" role="group" aria-label="Zeitraum ${duration?duration+' Sekunden':'Kontakte am Stück'}">${[[30,'30 Tage'],[90,'90 Tage'],[0,'Alles']].map(([n,label])=>`<button type="button" data-chart-period="${n}" aria-pressed="${n===period}">${label}</button>`).join('')}</div><div class="chart-drawing"></div><p class="chart-selection" aria-live="polite"></p></section>`}
+function recordChartMarkup(key,duration,colour=false){const rows=recordSeries(colour?state.colourScores:state.scores,key,duration,0,date()),today=rows.find(r=>r.date===date()),record=rows.length?Math.max(...rows.map(r=>r.value)):0,period=recordChartPeriods.get(JSON.stringify([key,duration,colour]))||0;return `<section class="record-chart" data-chart-key="${esc(key)}" data-chart-duration="${duration}" data-chart-colour="${colour}"><h4 class="chart-duration">${colour?colourCue({colour:true},'Mit Farberkennung')+' ':''}${duration?duration+' Sekunden':'Kontakte am Stück'}</h4><div class="record-metrics"><div><span>Heute</span><strong>${today?.value??'–'}</strong></div><div><span>Rekord</span><strong>${record}</strong></div></div>${recordTrendMarkup(rows,duration)}${!colour&&duration===0?recordJugglingMarkup(key,rows):''}<div class="chart-periods" role="group" aria-label="Zeitraum ${duration?duration+' Sekunden':'Kontakte am Stück'}">${[[30,'30 Tage'],[90,'90 Tage'],[0,'Alles']].map(([n,label])=>`<button type="button" data-chart-period="${n}" aria-pressed="${n===period}">${label}</button>`).join('')}</div><div class="chart-drawing"></div><p class="chart-selection" aria-live="polite"></p></section>`}
 function stopRecordCharts(){recordChartObserver?.disconnect();recordChartObserver=null}
 function mountRecordCharts(){stopRecordCharts();const panels=[...document.querySelectorAll('.record-chart')];for(const panel of panels){panel.querySelectorAll('[data-chart-period]').forEach(button=>button.onclick=()=>{recordChartPeriods.set(JSON.stringify([panel.dataset.chartKey,Number(panel.dataset.chartDuration),panel.dataset.chartColour==='true']),Number(button.dataset.chartPeriod));delete panel.dataset.selectedDate;panel.querySelectorAll('[data-chart-period]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));drawRecordChart(panel)});drawRecordChart(panel)}if(window.ResizeObserver){recordChartObserver=new ResizeObserver(entries=>entries.forEach(({target})=>{if(target.isConnected&&target.dataset.chartWidth!==String(target.querySelector('.chart-drawing').clientWidth))drawRecordChart(target)}));panels.forEach(p=>recordChartObserver.observe(p))}}
 function drawRecordChart(panel){const key=panel.dataset.chartKey,duration=Number(panel.dataset.chartDuration),colour=panel.dataset.chartColour==='true',scores=colour?state.colourScores:state.scores,period=recordChartPeriods.get(JSON.stringify([key,duration,colour]))||0,rows=recordSeries(scores,key,duration,period,date()),all=recordSeries(scores,key,duration,0,date()),allBest=all.length?Math.max(...all.map(r=>r.value)):0,host=panel.querySelector('.chart-drawing'),detail=panel.querySelector('.chart-selection');const width=Math.max(200,host.clientWidth);panel.dataset.chartWidth=String(host.clientWidth);
@@ -36,4 +36,24 @@ function recordColourMarkup(key){
   if(!recent.length)return `<p class="hint">${duration} Sek. · Noch keine auswertbaren Farben.</p>`;
   return `<p class="record-colour-result"><strong>${t.correct} von ${t.shown}</strong> richtig erkannt · ${Math.round(100*t.correct/t.shown)} %<small>${duration} Sek. · ${recent.length===1?'letzter Satz':'letzte '+recent.length+' Sätze'}${recent.length===5&&prior.length===5?' · zuvor '+Math.round(100*p.correct/p.shown)+' %':''}</small></p>`;
  }).join('')}${scoreDurations.map(duration=>recordChartMarkup(key,duration,true)).join('')}</section>`;
+}
+
+/* Summarise recorded daily maxima; unrecorded days are not failed attempts. */
+function recordJugglingStats(key,rows,today){
+ if(!['toe','free'].includes(key))return null;
+ const cutoff=scoreDay(today)-29*86400000,recent=rows.slice(-5),window=rows.filter(row=>row.day>=cutoff);
+ const best=window.length?Math.max(...window.map(row=>row.value)):null;
+ let level=null,count=0;
+ if(recent.length===5){
+  const median=recordMedian(recent),steps=[1,5,10,20,30,50,75];
+  for(let power=100;power<=median;power*=10)steps.push(power,power*1.5,power*2,power*3,power*5,power*7.5);
+  level=steps.filter(n=>n<=median).sort((a,b)=>b-a)[0]??null;
+  if(level!==null)count=recent.filter(row=>row.value>=level).length;
+ }
+ return {best,level,count};
+}
+function recordJugglingMarkup(key,rows){
+ const stats=recordJugglingStats(key,rows,date());if(!stats||!rows.length)return '';
+ const f=n=>n.toLocaleString('de-DE');
+ return `<p class="record-trend record-juggling" title="Das Kontaktniveau ist die höchste passende Stufe, die an mindestens drei der letzten fünf Tage mit eingetragenem Tagesbestwert erreicht wurde. Der 30-Tage-Bestwert umfasst heute und die 29 Tage davor. Beide Angaben sind unabhängig vom gewählten Diagrammzeitraum.">${stats.level!==null?`<span><strong>${f(stats.level)}+</strong> Kontakte an <strong>${stats.count} von 5</strong> erfassten Tagen</span><br>`:''}<span>30-Tage-Bestwert: <strong>${stats.best===null?'–':f(stats.best)}</strong>${stats.best===null?'':' Kontakte'}</span></p>`;
 }

@@ -1,10 +1,10 @@
 /* Cache only the versioned app shell; never cache videos, credentials or backups. */
 'use strict';
-const RELEASE="2026.11.07.1";
+const RELEASE="2026.11.07.2";
 const BASE=new URL(self.registration.scope);
 const PREFIX='ballmastery-shell-'+encodeURIComponent(BASE.pathname)+'-';
 const CACHE=PREFIX+RELEASE;
-const ASSETS=["private-videos.js?v=94", "./", "index.html", "balltraining-icon-180.png", "balltraining-icon-192.png", "manifest.webmanifest", "style.css?v=95", "videos.js?v=93", "record-charts.js?v=95", "training-progress.js?v=80", "day-overview.js?v=88", "ball-training-time.js?v=74", "dropbox-backup.js?v=95", "read-only.js?v=96", "speech-test-log.js?v=87", "colour-perception.js?v=95", "app.js?v=95", "offline.js?v=96", "drills.json?v=93", "dropbox-videos.json", "balltraining-icon-512.png", "drills.json"].map(path=>new URL(path,BASE).href);
+const ASSETS=["private-videos.js?v=94", "./", "index.html", "balltraining-icon-180.png", "balltraining-icon-192.png", "manifest.webmanifest", "style.css?v=95", "videos.js?v=93", "record-charts.js?v=97", "training-progress.js?v=80", "day-overview.js?v=88", "ball-training-time.js?v=74", "dropbox-backup.js?v=95", "read-only.js?v=96", "speech-test-log.js?v=87", "colour-perception.js?v=95", "app.js?v=95", "offline.js?v=96", "drills.json?v=93", "dropbox-videos.json", "balltraining-icon-512.png", "drills.json"].map(path=>new URL(path,BASE).href);
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
   const cache=await caches.open(CACHE);
