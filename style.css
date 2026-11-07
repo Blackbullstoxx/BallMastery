@@ -184,3 +184,21 @@ nav button{flex:1 1 auto;min-width:0}
 .record-trend-arrow.trend-up{color:#23754d}.record-trend-arrow.trend-flat{color:#9a7000}.record-trend-arrow.trend-down{color:#bb3e3e}
 .record-trend-explanation{font-size:12px;line-height:1.5;padding:4px 0 2px}.record-trend-explanation p{margin:7px 0}
 .record-trend-stamp{font-size:11px;color:#57705f;margin:5px 0}
+
+/* Compact record rows retain comfortable action targets. */
+.record-history>summary{font-size:13px;font-weight:500}
+.record-history-row{display:flex;align-items:center;gap:10px;min-height:44px;border-top:1px solid #e5ece2;font-size:13px;line-height:1.4}
+.record-history-row time{flex:none;color:#57705f;font-size:12px;font-variant-numeric:tabular-nums}
+.record-history-value{flex:1;min-width:0;color:#57705f;font-variant-numeric:tabular-nums}
+.record-history-value strong{font-weight:650;color:#193426}
+.record-history-actions{position:relative;flex:none}
+.record-history-actions>summary{display:grid;place-items:center;list-style:none;width:44px;min-height:44px;padding:0;font-size:24px;font-weight:400;border-radius:8px;cursor:pointer}
+.record-history-actions>summary::-webkit-details-marker{display:none}
+.record-history-actions[open]>summary{background:#e6ede5}
+.record-history-actions>summary:focus-visible{outline:2px solid #9a7000;outline-offset:1px}
+.record-history-menu{position:absolute;z-index:10;right:0;top:100%;width:152px;padding:4px;background:#fff;border:1px solid #dce6da;border-radius:10px;box-shadow:0 4px 16px #19342620}
+.record-history-menu button{display:block;width:100%;min-height:44px;padding:8px 12px;border-radius:6px;background:transparent;font-size:13px;text-align:left}
+.record-history-menu button:hover{background:#f0f4ef}
+.record-history-menu [data-delete]{color:#a93636}
+.record-history-more{display:block;margin:8px 0 0;width:100%;font-size:12px;padding:8px;min-height:44px}
+

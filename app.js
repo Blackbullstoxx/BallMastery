@@ -170,7 +170,7 @@ function recordExerciseCard(k){
  const record=scores.length?Math.max(...scores.filter(x=>x.duration===duration).map(x=>x.value)):null,days=practiceDayList(k),count=days.length;
  const dayLabel=`<span class="record-training-days" title="${Object.hasOwn(techNames,k)?'Trainingstage mit abgeschlossenem Timer oder eingetragenem Bestwert':'Nachweislich erfasste Trainingstage mit vollständigem Übungsdurchgang'}">${count} Trainingstag${count===1?'':'e'}</span>`;
  const recordLabel=k==='touches'?'':`Rekord: <strong>${record??'–'}</strong>${record!==null?' '+(duration?'· '+duration+' Sek.':'Kontakte'):''} · `;
- const history=scores.length?`<details><summary>${isReadOnly()?'Verlauf':'Verlauf und Korrekturen'}</summary>${scores.slice().reverse().map(s=>`<div class="divider row"><span>${s.date} · ${s.value}${s.duration?' / '+s.duration+' s':''}</span><button data-edit="${s.id}">Korrigieren</button><button data-delete="${s.id}">Löschen</button></div>`).join('')}</details>`:days.length?`<p class="hint">Letztes Training: ${days.at(-1).split('-').reverse().join('.')}</p>`:'';
+ const history=scores.length?recordHistoryMarkup(k,scores):days.length?`<p class="hint">Letztes Training: ${days.at(-1).split('-').reverse().join('.')}</p>`:'';
  return `<details class="card record-exercise" name="record-exercises" data-record-exercise="${esc(k)}" ${recordOpenExercise===k?'open':''}><summary><span class="record-exercise-heading"><span class="record-exercise-name">${esc(name)}</span><span class="record-exercise-best">${recordLabel}${dayLabel}</span></span></summary><div class="record-exercise-body">${durations.map(t=>recordChartMarkup(k,t)).join('')}${recordColourMarkup(k)}${history}</div></details>`;
 }
 
@@ -182,7 +182,8 @@ function renderRecords(){const keys=[...new Set([...state.scores.filter(x=>!x.ke
  document.querySelectorAll('[data-record-area]').forEach(area=>area.addEventListener('toggle',()=>{if(!area.isConnected)return;if(area.open){recordOpenArea=area.dataset.recordArea;document.querySelectorAll('[data-record-area]').forEach(other=>{if(other!==area)other.open=false});area.querySelectorAll('.record-chart').forEach(drawRecordChart)}else if(recordOpenArea===area.dataset.recordArea)recordOpenArea=null}));
  document.querySelectorAll('[data-record-level]').forEach(level=>level.addEventListener('toggle',()=>{if(!level.isConnected)return;if(level.open){recordOpenLevel=level.dataset.recordLevel;document.querySelectorAll('[data-record-level]').forEach(other=>{if(other!==level)other.open=false});level.querySelectorAll('.record-chart').forEach(drawRecordChart)}else if(recordOpenLevel===level.dataset.recordLevel)recordOpenLevel=null}));
  document.querySelectorAll('[data-record-exercise]').forEach(exercise=>exercise.addEventListener('toggle',()=>{if(!exercise.isConnected)return;if(exercise.open){recordOpenExercise=exercise.dataset.recordExercise;document.querySelectorAll('[data-record-exercise]').forEach(other=>{if(other!==exercise)other.open=false});exercise.querySelectorAll('.record-chart').forEach(drawRecordChart)}else if(recordOpenExercise===exercise.dataset.recordExercise)recordOpenExercise=null}));
- mountRecordCharts();document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{if(isReadOnly())return;const s=state.scores.find(s=>s.id===b.dataset.edit),v=prompt('Richtiger Wert:',s.value);if(v===null||v.trim()==='')return;const n=Number(v);if(Number.isInteger(n)&&n>=0&&n<=99999){s.value=n;save();render()}});document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{if(isReadOnly())return;if(confirm('Diesen Eintrag löschen?')){state.scores=state.scores.filter(s=>s.id!==b.dataset.delete);save();render()}})}
+ mountRecordCharts();bindRecordHistory()}
+
 function weekdayPicker(key,name){const full=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];return `<fieldset class="weekday-picker" aria-label="Trainingstage für ${name}"><div class="weekday-row">${['Mo','Di','Mi','Do','Fr','Sa','So'].map((d,i)=>`<label><input type="checkbox" data-weekdays="${key}" value="${i}" aria-label="${full[i]} für ${name}" ${state.weekdays[key].includes(i)?'checked':''}><span>${d}</span></label>`).join('')}</div></fieldset>`}
 function num(id,label,value,min=0,max=100){return `<label>${label}<input type="number" id="${id}" value="${value}" min="${min}" max="${max}" required></label>`}
 function drillOptions(selected,byIndex=false){return levels.map((l,k)=>`<optgroup label="${'★'.repeat(k+1)} · ${l.replace(/ ★+/,'')}">${drills.map((d,i)=>d.level===k?`<option value="${byIndex?i:d.id}" ${String(selected)===String(byIndex?i:d.id)?'selected':''}>${esc(title(d))}</option>`:'').join('')}</optgroup>`).join('')}
@@ -257,6 +258,7 @@ $('#view').addEventListener('click',showBallTrainingStart);document.querySelecto
 
 function scheduleMidnightRefresh(){clearTimeout(midnightTimer);const now=new Date(),next=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);midnightTimer=setTimeout(()=>{if(checkTrainingDay())render();scheduleMidnightRefresh()},Math.max(1000,next-now+100))}
 window.addEventListener('focus',()=>{if(checkTrainingDay())render();scheduleMidnightRefresh()});scheduleMidnightRefresh();
+
 
 
 
