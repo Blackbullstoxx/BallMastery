@@ -22,10 +22,11 @@ function bindRecordHistory(){
    if(button.hasAttribute('data-edit')){
     const value=prompt('Richtiger Wert:',row.value);if(value===null||value.trim()==='')return;
     const n=Number(value);if(!Number.isInteger(n)||n<0||n>99999)return;
-    row.value=n;changed=true;
-   }else if(confirm('Diesen Eintrag löschen?')){state.scores=state.scores.filter(row=>row.id!==id);changed=true}
+    row.value=n;correctWeeklyLearningScore(id,n);changed=true;
+   }else if(confirm('Diesen Eintrag löschen?')){state.scores=state.scores.filter(row=>row.id!==id);removeWeeklyLearningScore(id);changed=true}
    if(changed){view.open=true;save();render()}
   }));
  });
 }
+
 

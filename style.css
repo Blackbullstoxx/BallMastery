@@ -198,3 +198,6 @@ nav button{flex:1 1 auto;min-width:0}
 @media(max-width:350px){.record-history-row{gap:6px}.record-history-row time{font-size:11px}.record-history-value{font-size:11px}.record-history-actions button{font-size:11px;padding:5px 4px}}
 .record-history-more{display:block;margin:8px 0 0;width:100%;font-size:12px;padding:8px;min-height:44px}
 
+
+
+.preview-facts>.weekly-learning{margin:0}.weekly-learning{font-size:13px;margin:8px 0}
