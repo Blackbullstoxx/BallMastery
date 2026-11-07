@@ -26,16 +26,18 @@ function removeWeeklyLearningScore(scoreId){if(isReadOnly()||!state.weeklyLearni
 function weeklyLearningTrend(phase,key,duration,today){
  if(!phase||!validWeeklyLearning(phase)||phase.key!==key)return null;
  const rows=recordSeries(phase.entries.map(row=>({...row,key})),key,duration,0,today);if(rows.length<3)return null;
- const baseline=rows[0],recent=rows.length===3?rows.slice(1):rows.slice(-3),current=recordMedian(recent),difference=current-baseline.value;
- return {baseline,recent,current,difference,percent:baseline.value===0?null:difference/baseline.value*100,direction:difference>=1?'up':difference<=-1?'down':'flat',early:rows.length<=4,days:rows.length};
+ // The median pairwise slope uses all recorded days while limiting outlier influence.
+ const slopes=[];for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++)slopes.push({value:(rows[j].value-rows[i].value)/(j-i)});
+ const slope=recordMedian(slopes),estimatedChange=slope*(rows.length-1);
+ return {rows,slope,estimatedChange,direction:estimatedChange>=1-1e-9?'up':estimatedChange<=-1+1e-9?'down':'flat',early:rows.length<=4,days:rows.length};
 }
 function weeklyLearningMarkup(d){
  if(d?.kind!=='Wochenübung'||d.colour)return '';
  const trend=weeklyLearningTrend(state.weeklyLearning,d.key,d.work,date());if(!trend)return '';
- const label={up:'steigend',flat:'etwa gleich',down:'fallend'}[trend.direction],format=n=>n.toLocaleString('de-DE',{maximumFractionDigits:1}),day=s=>s.split('-').reverse().join('.');
- const change=trend.direction==='flat'?'':trend.percent===null?(trend.difference>0?'+':'−')+format(Math.abs(trend.difference))+' Wdh.':(trend.percent>0?'+':'−')+Math.round(Math.abs(trend.percent))+' %';
- return `<details class="record-trend-details weekly-learning"><summary><span>Seit Beginn:</span><span class="record-trend-item" aria-label="Lerntrend: ${label}${change?', '+change:''}">${recordTrendArrow(trend.direction)}${change?`<span>${change}</span>`:''}</span></summary><div class="record-trend-explanation">${trend.early?'<p>Frühe Tendenz aus wenigen Einträgen.</p>':''}<p>Ausgangspunkt: ${format(trend.baseline.value)} Wiederholungen am ${day(trend.baseline.date)}. Vergleich: ${format(trend.current)} aus ${trend.recent.length} erfassten Tagen (${day(trend.recent[0].date)}–${day(trend.recent.at(-1).date)}).</p><p>Am dritten Tag zählt der Mittelwert aus Tag 2 und 3, danach der Median der letzten drei Tage. Ein Unterschied von mindestens einer Wiederholung bestimmt die Pfeilrichtung; die Prozentzahl dient nur zur Anzeige.</p><p>Nur eingetragene Werte dieser Lernphase mit ${d.work} Sekunden Satzdauer ohne Farberkennung. Fehlende Einträge zählen nicht als null. Der Pfeil bewertet die Wiederholungszahl, nicht die Ausführungsqualität.</p></div></details>`;
+ const label={up:'steigend',flat:'etwa gleich',down:'fallend'}[trend.direction],day=s=>s.split('-').reverse().join('.');
+ return `<details class="record-trend-details weekly-learning"><summary><span>Lerntrend:</span><span class="record-trend-item" aria-label="Lerntrend: ${label}">${recordTrendArrow(trend.direction)}</span></summary><div class="record-trend-explanation">${trend.early?'<p>Frühe Tendenz aus wenigen Einträgen.</p>':''}<p>Gemeinsame Entwicklung aus ${trend.days} erfassten Tagen (${day(trend.rows[0].date)}–${day(trend.rows.at(-1).date)}).</p><p>Verglichen werden alle Tagespaare. Ihre Veränderungen werden durch den Abstand in erfassten Trainingstagen geteilt; der mittlere dieser Werte (Median) bestimmt die Entwicklungsrichtung. Ein einzelner ungewöhnlicher Wert hat dadurch weniger Einfluss.</p><p>Grün oder rot ab einer geschätzten Veränderung von einer Wiederholung über den gesamten erfassten Zeitraum, sonst goldgelb. Es ist keine zusätzliche Wiederholung pro Tag erforderlich.</p><p>Nur eingetragene Werte dieser Lernphase mit ${d.work} Sekunden Satzdauer ohne Farberkennung. Fehlende Einträge zählen nicht als null. Der Pfeil bewertet die Wiederholungszahl, nicht die Ausführungsqualität.</p></div></details>`;
 }
+
 function weeklyLearningForScore(key,duration){
  const item=run?.plan?.[Number.isInteger(run.historyIndex)?run.historyIndex:run.index];
  return item?.key===key&&item.kind==='Wochenübung'&&!item.colour?weeklyLearningMarkup({...item,work:duration}):'';
