@@ -209,3 +209,9 @@ nav button{flex:1 1 auto;min-width:0}
 .record-ball-trend-note{margin:12px 0;font-size:12px;line-height:1.5;color:#57705f}
 .record-ball-trend-method{font-size:12px;line-height:1.5;color:#57705f}
 .record-ball-trend-method>summary{font-weight:400;padding:4px 0}
+
+/* Keep the history disclosure directly below the chart's selected value. */
+.record-exercise-body .chart-selection{min-height:18px}
+.record-exercise-body>.record-chart:has(+.record-history),
+.record-exercise-body>.record-colour:has(+.record-history)>.record-chart:last-child{margin-bottom:0}
+.record-exercise-body>.record-history>summary{padding-top:4px}
