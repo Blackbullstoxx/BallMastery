@@ -171,8 +171,9 @@ function recordExerciseCard(k){
  const record=scores.length?Math.max(...scores.filter(x=>x.duration===duration).map(x=>x.value)):null,days=practiceDayList(k),count=days.length;
  const dayLabel=`<span class="record-training-days" title="${Object.hasOwn(techNames,k)?'Trainingstage mit abgeschlossenem Timer oder eingetragenem Bestwert':'Nachweislich erfasste Trainingstage mit vollständigem Übungsdurchgang'}">${count} Trainingstag${count===1?'':'e'}</span>`;
  const recordLabel=k==='touches'?'':`Rekord: <strong>${record??'–'}</strong>${record!==null?' '+(duration?'· '+duration+' Sek.':'Kontakte'):''} · `;
+ const ballTrend=category<4?recordBallTrend(k,duration):null;
  const history=scores.length?recordHistoryMarkup(k,scores):days.length?`<p class="hint">Letztes Training: ${days.at(-1).split('-').reverse().join('.')}</p>`:'';
- return `<details class="card record-exercise" name="record-exercises" data-record-exercise="${esc(k)}" ${recordOpenExercise===k?'open':''}><summary><span class="record-exercise-heading"><span class="record-exercise-name">${esc(name)}</span><span class="record-exercise-best">${recordLabel}${dayLabel}</span></span></summary><div class="record-exercise-body">${durations.map(t=>recordChartMarkup(k,t)).join('')}${recordColourMarkup(k)}${history}</div></details>`;
+ return `<details class="card record-exercise" name="record-exercises" data-record-exercise="${esc(k)}" ${recordOpenExercise===k?'open':''}><summary><span class="record-exercise-heading"><span class="record-exercise-name">${esc(name)}</span><span class="record-exercise-best${ballTrend?.trend?' has-record-trend':''}"><span class="record-exercise-meta">${recordLabel}${dayLabel}</span>${recordBallTrendIcon(ballTrend)}</span></span></summary><div class="record-exercise-body">${recordBallTrendExplanation(ballTrend)}${durations.map(t=>recordChartMarkup(k,t)).join('')}${recordColourMarkup(k)}${history}</div></details>`;
 }
 
 function recordAreaContents(area){if(area.id!=='ball')return area.keys.map(recordExerciseCard).join('');return levels.map((name,level)=>{const keys=area.keys.filter(k=>scoreCategory(k)===level);if(!keys.length)return '';return `<details class="records-level" name="record-levels" data-record-level="${level}" ${recordOpenLevel===String(level)?'open':''}><summary><span>${name}</span><span class="records-area-count">${keys.length} ${keys.length===1?'Übung':'Übungen'}</span></summary><div class="records-level-body">${keys.map(recordExerciseCard).join('')}</div></details>`}).join('')}
@@ -259,6 +260,7 @@ $('#view').addEventListener('click',showBallTrainingStart);document.querySelecto
 
 function scheduleMidnightRefresh(){clearTimeout(midnightTimer);const now=new Date(),next=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);midnightTimer=setTimeout(()=>{if(checkTrainingDay())render();scheduleMidnightRefresh()},Math.max(1000,next-now+100))}
 window.addEventListener('focus',()=>{if(checkTrainingDay())render();scheduleMidnightRefresh()});scheduleMidnightRefresh();
+
 
 
 
