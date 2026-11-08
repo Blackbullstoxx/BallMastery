@@ -33,12 +33,22 @@ function medianPairwiseTrend(rows){
  const slope=recordMedian(slopes),estimatedChange=slope*(rows.length-1);
  return {rows,slope,estimatedChange,direction:estimatedChange>=1-1e-9?'up':estimatedChange<=-1+1e-9?'down':'flat',early:rows.length<=4,days:rows.length};
 }
-function weeklyLearningTrend(phase,key,duration,today){return medianPairwiseTrend(weeklyLearningRows(phase,key,duration,today))}
+function weeklyLearningInput(phase,key,duration,today){
+ const phaseRows=weeklyLearningRows(phase,key,duration,today);
+ if(phase&&(!validWeeklyLearning(phase)||phase.key!==key))return {rows:[],historical:false,phaseDays:0};
+ if(phaseRows.length>=3)return {rows:phaseRows,historical:false,phaseDays:phaseRows.length};
+ const history=recordSeries(state.scores||[],key,duration,0,today).slice(-8);
+ return history.length>=3?{rows:history,historical:true,phaseDays:phaseRows.length}:{rows:phaseRows,historical:false,phaseDays:phaseRows.length};
+}
+function weeklyLearningTrend(phase,key,duration,today){
+ const input=weeklyLearningInput(phase,key,duration,today),trend=medianPairwiseTrend(input.rows);
+ return trend?{...trend,historical:input.historical,phaseDays:input.phaseDays}:null;
+}
 function weeklyLearningMarkup(d){
  if(d?.kind!=='Wochenübung'||d.colour)return '';
  const trend=weeklyLearningTrend(state.weeklyLearning,d.key,d.work,date());if(!trend)return '';
  const label={up:'steigend',flat:'etwa gleich',down:'fallend'}[trend.direction],day=s=>s.split('-').reverse().join('.');
- return `<details class="record-trend-details weekly-learning"><summary><span>Lerntrend:</span><span class="record-trend-item" aria-label="Lerntrend: ${label}">${recordTrendArrow(trend.direction)}</span></summary><div class="record-trend-explanation">${trend.early?'<p>Frühe Tendenz aus wenigen Einträgen.</p>':''}<p>Gemeinsame Entwicklung aus ${trend.days} erfassten Tagen (${day(trend.rows[0].date)}–${day(trend.rows.at(-1).date)}).</p><p>Verglichen werden alle Tagespaare. Ihre Veränderungen werden durch den Abstand in erfassten Trainingstagen geteilt; der mittlere dieser Werte (Median) bestimmt die Entwicklungsrichtung. Ein einzelner ungewöhnlicher Wert hat dadurch weniger Einfluss.</p><p>Grün oder rot ab einer geschätzten Veränderung von einer Wiederholung über den gesamten erfassten Zeitraum, sonst goldgelb. Es ist keine zusätzliche Wiederholung pro Tag erforderlich.</p><p>Nur eingetragene Werte dieser Lernphase mit ${d.work} Sekunden Satzdauer ohne Farberkennung. Fehlende Einträge zählen nicht als null. Der Pfeil bewertet die Wiederholungszahl, nicht die Ausführungsqualität.</p></div></details>`;
+ return `<details class="record-trend-details weekly-learning"><summary><span>Lerntrend:</span><span class="record-trend-item" aria-label="Lerntrend: ${label}">${recordTrendArrow(trend.direction)}</span></summary><div class="record-trend-explanation">${trend.early?'<p>Frühe Tendenz aus wenigen Einträgen.</p>':''}${trend.historical?`<p>Übergangsweise aus vorhandenen Tagesbestwerten. In der separat erfassten Lernphase liegen bisher ${trend.phaseDays} passende Tage vor. Ab drei Tagen verwendet der Lerntrend ausschließlich diese Lernphase.</p>`:'' }<p>Gemeinsame Entwicklung aus ${trend.days} erfassten Tagen (${day(trend.rows[0].date)}–${day(trend.rows.at(-1).date)}).</p><p>Verglichen werden alle Tagespaare. Ihre Veränderungen werden durch den Abstand in erfassten Trainingstagen geteilt; der mittlere dieser Werte (Median) bestimmt die Entwicklungsrichtung. Ein einzelner ungewöhnlicher Wert hat dadurch weniger Einfluss.</p><p>Grün oder rot ab einer geschätzten Veränderung von einer Wiederholung über den gesamten erfassten Zeitraum, sonst goldgelb. Es ist keine zusätzliche Wiederholung pro Tag erforderlich.</p><p>${trend.historical?'Vorhandene Tagesbestwerte dieses Drills mit gleicher Satzdauer; ihre Zuordnung zu einer früheren Lernphase ist nicht bekannt.':'Nur eingetragene Werte dieser Lernphase.'} ${d.work} Sekunden Satzdauer ohne Farberkennung. Fehlende Einträge zählen nicht als null. Der Pfeil bewertet die Wiederholungszahl, nicht die Ausführungsqualität.</p></div></details>`;
 }
 
 function weeklyLearningForScore(key,duration){
@@ -50,8 +60,8 @@ function weeklyLearningForScore(key,duration){
 function recordBallTrend(key,duration){
  if(!drills.some(drill=>drill.id===key)||!Number.isFinite(duration)||duration<=0)return null;
  const weekly=drills[state.current]?.id===key&&!state.finished;
- const rows=weekly?weeklyLearningRows(state.weeklyLearning,key,duration,date()):recordSeries(state.scores,key,duration,0,date()).slice(-8);
- return {weekly,duration,rows,trend:medianPairwiseTrend(rows)};
+ const input=weekly?weeklyLearningInput(state.weeklyLearning,key,duration,date()):{rows:recordSeries(state.scores,key,duration,0,date()).slice(-8),historical:false};
+ return {weekly,duration,...input,trend:medianPairwiseTrend(input.rows)};
 }
 function recordBallTrendIcon(info){
  if(!info?.trend)return '';
@@ -62,5 +72,5 @@ function recordBallTrendExplanation(info){
  if(!info)return '';
  if(!info.trend)return `<p class="record-ball-trend-note">${info.weekly?'Lerntrend der aktuellen Wochenübung':'Trend'} ab 3 eingetragenen Tagesbestwerten mit ${info.duration} Sekunden Satzdauer${info.weekly?' in dieser Lernphase':''} · bisher ${info.rows.length}.</p>`;
  const day=s=>s.split('-').reverse().join('.'),rows=info.rows,label={up:'steigend',flat:'etwa gleich',down:'fallend'}[info.trend.direction];
- return `<p class="record-ball-trend-note">${info.weekly?'Lerntrend der aktuellen Wochenübung':'Trend'}: ${label} · ${info.trend.early?'Frühe Tendenz aus ':''}${info.weekly?'':info.trend.early?'':'letzte '}${rows.length} ${info.trend.early?'Tagesbestwerten':'Tagesbestwerte'} · ${info.duration} Sek. · ${day(rows[0].date)}–${day(rows.at(-1).date)}.</p><details class="record-ball-trend-method"><summary>Wie wird der Trend ermittelt?</summary><p>Die mittlere Veränderungsrate (Median aller Tagespaare) beschreibt die gemeinsame Entwicklung. Ab einer geschätzten Veränderung von einer Wiederholung über den betrachteten Zeitraum zeigt der Pfeil nach oben oder unten, sonst bleibt er waagerecht. Es ist keine zusätzliche Wiederholung pro Tag erforderlich.</p><p>${info.weekly?'Es zählt dieselbe Lernphase wie im Heute-Tab.':'Es zählen höchstens die letzten acht erfassten Tage.'} Fehlende Einträge zählen nicht als null. Werte mit Farberkennung werden nicht einbezogen. Der Trend beschreibt Wiederholungszahlen, nicht die Ausführungsqualität.</p></details>`;
+ return `<p class="record-ball-trend-note">${info.historical?'Trend vorhandener Tagesbestwerte':info.weekly?'Lerntrend der aktuellen Wochenübung':'Trend'}: ${label} · ${info.trend.early?'Frühe Tendenz aus ':''}${info.weekly?'':info.trend.early?'':'letzte '}${rows.length} ${info.trend.early?'Tagesbestwerten':'Tagesbestwerte'} · ${info.duration} Sek. · ${day(rows[0].date)}–${day(rows.at(-1).date)}.</p><details class="record-ball-trend-method"><summary>Wie wird der Trend ermittelt?</summary><p>Die mittlere Veränderungsrate (Median aller Tagespaare) beschreibt die gemeinsame Entwicklung. Ab einer geschätzten Veränderung von einer Wiederholung über den betrachteten Zeitraum zeigt der Pfeil nach oben oder unten, sonst bleibt er waagerecht. Es ist keine zusätzliche Wiederholung pro Tag erforderlich.</p><p>${info.historical?`Übergangsweise zählen höchstens die letzten acht vorhandenen Tagesbestwerte, wie im Heute-Tab. Die separat erfasste Lernphase enthält bisher ${info.phaseDays} passende Tage. Ab drei Tagen wird ausschließlich diese Lernphase verwendet.`:info.weekly?'Es zählt dieselbe Lernphase wie im Heute-Tab.':'Es zählen höchstens die letzten acht erfassten Tage.'} Fehlende Einträge zählen nicht als null. Werte mit Farberkennung werden nicht einbezogen. Der Trend beschreibt Wiederholungszahlen, nicht die Ausführungsqualität.</p></details>`;
 }
