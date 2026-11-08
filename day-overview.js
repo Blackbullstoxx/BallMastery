@@ -102,7 +102,8 @@ function overviewBallRow(row){
  return `<li class="overview-drill"><div><span class="overview-name">${esc(title(drill))} <span class="overview-stars" aria-label="${esc(levels[drill.level])}">${stars}</span></span><span class="overview-prescription">${overviewBallPrescription(row)}</span></div>${overviewRowSide(row)}</li>`;
 }
 function overviewBody(data){
- return data.sections.map(section=>{
+ const progress=overviewProgressLabel(data);
+ return `<span class="overview-progress" data-overview-progress ${progress?'':'hidden'} aria-live="polite">${progress}</span>`+data.sections.map(section=>{
   let contents;
   if(section.id==='ball')contents=[['Wochenübung',r=>r.kind==='Wochenübung'],['Wiederholung',r=>r.kind.startsWith('Wiederholung · ')],['Feste Zusatzübungen',r=>r.kind==='Feste Zusatzübung']].map(([label,match])=>{
    const rows=section.items.filter(match);return rows.length?`<div class="overview-category"><h4>${label}</h4><ul>${rows.map(overviewBallRow).join('')}</ul></div>`:'';
@@ -113,16 +114,15 @@ function overviewBody(data){
  }).join('');
 }
 function overviewTimeLabel(data){return data.done?'':(data.started?'Noch ca. ':'ca. ')+overviewDuration(data.seconds)}
-function overviewProgressLabel(data){return data.started||data.done?`${data.completed} von ${data.total} ${data.total===1?'Übung':'Übungen'} geschafft`:data.sections.map(s=>s.name).join(' · ')}
+function overviewProgressLabel(data){return data.started||data.done?`${data.completed} von ${data.total} ${data.total===1?'Übung':'Übungen'} geschafft`:''}
 function dayOverviewMarkup(){
  const data=dayOverviewData();if(!data.total)return '';
- return `<details class="card day-overview" id="day-overview" ${dayOverviewOpen?'open':''}><summary><span class="overview-header"><span class="overview-title">${data.done?'Training abgeschlossen ✓':'Heute geplant'}</span><span class="overview-time" ${data.done?'hidden':''}><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><span data-overview-time>${overviewTimeLabel(data)}</span></span><span class="overview-chevron" aria-hidden="true"></span></span><span class="overview-progress" data-overview-progress aria-live="polite">${overviewProgressLabel(data)}</span></summary><div class="overview-body">${overviewBody(data)}</div></details>`;
+ return `<details class="card day-overview" id="day-overview" ${dayOverviewOpen?'open':''}><summary><span class="overview-header"><span class="overview-title">${data.done?'Training abgeschlossen ✓':'Heute geplant'}</span><span class="overview-time" ${data.done?'hidden':''}><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><span data-overview-time>${overviewTimeLabel(data)}</span></span><span class="overview-chevron" aria-hidden="true"></span></span></summary><div class="overview-body">${overviewBody(data)}</div></details>`;
 }
 function bindDayOverview(){const host=$('#day-overview');host?.addEventListener('toggle',()=>{dayOverviewOpen=host.open})}
 function refreshDayOverview(){
  if(tab!=='today')return;const host=$('#day-overview');if(!host?.querySelector)return;
  const data=dayOverviewData();host.querySelector('.overview-title').textContent=data.done?'Training abgeschlossen ✓':'Heute geplant';
  host.querySelector('.overview-time').hidden=data.done;host.querySelector('[data-overview-time]').textContent=overviewTimeLabel(data);
- const progress=host.querySelector('[data-overview-progress]'),text=overviewProgressLabel(data);if(progress.textContent!==text)progress.textContent=text;
  const body=host.querySelector('.overview-body'),markup=overviewBody(data);if(body._overviewMarkup!==markup){body.innerHTML=markup;body._overviewMarkup=markup}
 }
