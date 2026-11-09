@@ -215,3 +215,18 @@ nav button{flex:1 1 auto;min-width:0}
 .record-exercise-body>.record-chart:has(+.record-history),
 .record-exercise-body>.record-colour:has(+.record-history)>.record-chart:last-child{margin-bottom:0}
 .record-exercise-body>.record-history>summary{padding-top:7px}
+
+/* Learned drills across all four levels, separate from today's set progress. */
+.ball-mastery{margin:0 0 12px;text-align:left;color:#193426}
+.mastery-row{display:flex;align-items:center;gap:7px;font-size:13px;line-height:1.5;margin-bottom:7px}
+.mastery-label{white-space:nowrap}
+.mastery-stars{display:inline-flex;align-items:center;gap:2px;flex:none}
+.mastery-star{position:relative;display:block;width:16px;height:16px}
+.mastery-star svg{display:block;width:16px;height:16px}
+.mastery-star-outline{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}
+.mastery-star-fill{position:absolute;top:0;left:0;height:100%;overflow:hidden}
+.mastery-star-fill svg{fill:currentColor}
+.mastery-percent{margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mastery-track{height:6px;border-radius:9px;background:#e0e9df;overflow:hidden}
+.mastery-track>span{display:block;height:100%;background:#205c3b;border-radius:inherit}
+@media(max-width:350px){.mastery-row{font-size:12px;gap:5px}.mastery-star,.mastery-star svg{width:14px;height:14px}}
