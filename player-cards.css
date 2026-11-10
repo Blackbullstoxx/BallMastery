@@ -214,3 +214,8 @@
 
 .player-card-completion{min-height:100vh;min-height:100svh}
 .player-card-completion #fvo-card-preview .fp-result{min-height:3em}
+
+.player-card-panel{border:1px solid #dfd6c9;border-radius:16px;overflow:hidden;background:radial-gradient(ellipse at 50% 46%,#fffaf0 0,#efe7dd 64%,#e4dbce 100%);margin-bottom:20px}
+.player-card-panel #fvo-card-preview .fp-stage{background:transparent;border-radius:0}
+.player-card-actions{display:flex;justify-content:center;padding:6px 16px 18px}
+.player-card-actions #replay-card{margin:0;min-height:44px;padding:10px 18px;border:1px solid #c7c0b4;border-radius:10px;background:#fffbf5;color:#264734;font:500 14px/1.4 Arial,sans-serif}

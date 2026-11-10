@@ -126,3 +126,8 @@ Browserprüfung vor Veröffentlichung: isolierte exakte App-Dateien in Cloud Chr
 Jede Abschlusskarte hat jetzt „Kartenanimation ansehen“. Der ausdrückliche Tipp aktiviert/erneuert die Audioausgabe und lädt bei Bedarf die lokalen Sound-Assets, richtet die Karte aus und startet die Enthüllung erneut. Bestwerte, Trainingszeit, Fleiß, Bereichsabschluss und die gespeicherten Enthüllungsdaten bleiben unverändert. Passt der letzte echte Abschluss noch zu den aktuellen Werten, werden seine Änderungen wieder gezeigt; sonst zählt die Animation zum aktuellen Stand ohne erfundene Veränderungen. Mehrfach-Tipps und ein Tab-/Tageswechsel während der Vorbereitung sind abgesichert. Leseansichten können nicht neu abspielen. Bei tatsächlich fehlgeschlagener Tonvorbereitung wird eine kurze Meldung mit dem Hinweis zum erneuten Versuch angezeigt; der Bereichsabschluss funktioniert weiterhin.
 
 „Erneut trainieren“ mit anschließendem Verwerfen bleibt ein Abbruch eines begonnenen Wiederholungsdurchgangs und vergibt keine neue Belohnung. Die bereits betrachtete Abschlusskarte wird dabei statisch gezeigt. Für einen Ton-/Animationstest ist kein zusätzliches Training mehr erforderlich.
+
+### 2026.11.10.9
+
+- „Kartenanimation ansehen“ sitzt mit eigenem Innenabstand innerhalb der beige umrandeten Kartenfläche. Die Erfolgsüberschrift und „Erneut trainieren“ folgen darunter.
+- Automatisches Einpassen und Scrollen richten sich ausschließlich nach der Karte selbst, ohne Überschrift, Ergebnistext oder Wiederholen-Schaltfläche.

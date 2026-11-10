@@ -72,21 +72,21 @@ const diligenceRules=(()=>{
  return {qualifying,paused,valid,report,earned,number,day};
 })();
 
-// Size the whole card together (including type), then align before first paint.
+// Scale the card and its type together, using only the card silhouette as the viewport target.
 // Resize handles browser chrome/keyboard changes without scrolling the child again.
 function fitPlayerCardCompletion(host,scroll=false){
- const root=host.querySelector?.('#fvo-card-preview');if(!root)return ()=>{};
+ const root=host.querySelector?.('#fvo-card-preview'),card=root?.querySelector('.fp-perspective');if(!root||!card)return ()=>{};
  const viewport=window.visualViewport;
  const fit=()=>{
   if(!host.isConnected)return;
-  const height=viewport?.height||window.innerHeight,natural=root.offsetHeight;
-  if(!natural||!height)return;
-  const scale=Math.min(1,Math.max(1,height-16)/natural);
+  const height=viewport?.height||window.innerHeight,natural=root.offsetHeight,cardHeight=card.offsetHeight;
+  if(!natural||!cardHeight||!height)return;
+  const scale=Math.min(1,Math.max(1,height-16)/cardHeight);
   root.style.transformOrigin='top center';root.style.transform=scale<1?'scale('+scale+')':'';
   host.style.height=Math.ceil(natural*scale)+'px';
  };
  fit();
- if(scroll)window.scrollTo({top:Math.max(0,window.scrollY+host.getBoundingClientRect().top-(viewport?.offsetTop||0)-8),behavior:'instant'});
+ if(scroll)window.scrollTo({top:Math.max(0,window.scrollY+card.getBoundingClientRect().top-(viewport?.offsetTop||0)-8),behavior:'instant'});
  window.addEventListener('resize',fit);viewport?.addEventListener('resize',fit);
  return ()=>{window.removeEventListener('resize',fit);viewport?.removeEventListener('resize',fit)};
 }
