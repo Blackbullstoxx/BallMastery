@@ -136,3 +136,7 @@ Jede Abschlusskarte hat jetzt „Kartenanimation ansehen“. Der ausdrückliche 
 
 - Kleine Erläuterungen unter der Spielerkarte ausgeblendet; die Kartenfläche zeigt direkt die Aktion „Kartenanimation erneut ansehen“.
 - Die Aktion erscheint erst nach Ende der Animation, auch bei erneutem Abspielen; ein Überspringen der Animation gibt sie sofort frei.
+
+### 2026.11.10.11
+
+- Beim Start der Kartenanimation richtet sich die Oberkante der umgebenden Kartenfläche am sichtbaren Displayrand aus, einschließlich der Stufenüberschrift. Die Größenanpassung der Karte bleibt unverändert.

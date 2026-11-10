@@ -73,6 +73,7 @@ const diligenceRules=(()=>{
 })();
 
 // Scale the card and its type together, using only the card silhouette as the viewport target.
+// Align the surrounding panel (including the tier title) at the visible top.
 // Resize handles browser chrome/keyboard changes without scrolling the child again.
 function fitPlayerCardCompletion(host,scroll=false){
  const root=host.querySelector?.('#fvo-card-preview'),card=root?.querySelector('.fp-perspective');if(!root||!card)return ()=>{};
@@ -86,7 +87,7 @@ function fitPlayerCardCompletion(host,scroll=false){
   host.style.height=Math.ceil(natural*scale)+'px';
  };
  fit();
- if(scroll)window.scrollTo({top:Math.max(0,window.scrollY+card.getBoundingClientRect().top-(viewport?.offsetTop||0)-8),behavior:'instant'});
+ if(scroll){const anchor=host.closest?.('.player-card-panel')||root;window.scrollTo({top:Math.max(0,window.scrollY+anchor.getBoundingClientRect().top-(viewport?.offsetTop||0)),behavior:'instant'})}
  window.addEventListener('resize',fit);viewport?.addEventListener('resize',fit);
  return ()=>{window.removeEventListener('resize',fit);viewport?.removeEventListener('resize',fit)};
 }
