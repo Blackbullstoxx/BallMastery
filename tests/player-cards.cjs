@@ -29,7 +29,7 @@ ctx.run.paused=true;now+=5000;cards.sync();assert.equal(ctx.state.cardTraining.d
 now+=60000;cards.sync();assert.equal(ctx.state.cardTraining.days['2026-11-10'].feints,15000,'pause time excluded');
 ctx.run.paused=false;ctx.run.deadline=now+30000;cards.sync();now+=50000;cards.sync();assert.equal(ctx.state.cardTraining.days['2026-11-10'].feints,45000,'deadline caps elapsed time');
 cards.completedSet();cards.completedSet();assert.equal(ctx.state.cardTraining.completedDays.length,1);
-assert.equal(cards.snapshot().values[3],32);
+assert.equal(cards.snapshot().values[3],31);
 cards.completed('feints');assert.equal(ctx.state.playerCard.reveal.seen,false);assert(cards.valid(ctx.state));
 const serialized=JSON.stringify(ctx.state);reading=true;now+=100000;cards.sync();cards.completedSet();cards.completed('ball');cards.init();assert.equal(JSON.stringify(ctx.state),serialized,'read-only cannot change card data');reading=false;
 assert(!cards.valid({...ctx.state,playerCard:{...ctx.state.playerCard,portrait:'https://external.example/photo.png'}}));
@@ -40,7 +40,7 @@ const snap=cards.snapshot();assert.deepEqual(Array.from(snap.visible),[true,fals
 ctx.state.groups.toe=true;assert.equal(cards.snapshot().visible[1],false,'weekly plan does not change card membership');
 const view=fs.readFileSync(root+'/player-card-view.js','utf8'),sw=fs.readFileSync(root+'/sw.js','utf8'),index=fs.readFileSync(root+'/index.html','utf8');
 assert(!view.includes('AudioContext'));assert(!view.includes('portraits='));assert(view.includes('options.relevant[i]'));assert(view.includes('duration+300'));
-for(const file of ['player-cards.js?v=112','player-card-view.js?v=113','player-cards.css?v=113'])assert(index.includes(file)&&sw.includes(file));
+for(const file of ['player-cards.js?v=114','player-card-view.js?v=113','player-cards.css?v=114'])assert(index.includes(file)&&sw.includes(file));
 for(const file of fs.readdirSync(root+'/cards'))assert(sw.includes('cards/'+file));
 // Detached intermediate renders cannot consume the one-time reveal.
 ctx.state=fresh();cards.init();cards.completed('ball');

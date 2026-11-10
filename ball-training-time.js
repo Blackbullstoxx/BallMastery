@@ -16,7 +16,7 @@ function syncBallTime(){
   const elapsed=Math.max(0,Math.min(now,previous.until)-previous.from);
   if(elapsed){const data=ballTrainingState();data.days[previous.day]=Math.min(90000000,(data.days[previous.day]||0)+elapsed);if(previous.day<data.since)data.since=previous.day}
  }
- if(run?.section==='ball'&&run.phase==='work'&&!run.paused&&!document.hidden&&tab==='today'&&run.day===date()&&Number.isFinite(run.deadline)&&run.deadline>now){
+ if(!(typeof playerCards!=='undefined'&&playerCards.trainingPaused())&&run?.section==='ball'&&run.phase==='work'&&!run.paused&&!document.hidden&&tab==='today'&&run.day===date()&&Number.isFinite(run.deadline)&&run.deadline>now){
   const midnight=new Date(run.day+'T00:00:00');midnight.setDate(midnight.getDate()+1);
   ballClock={from:now,until:Math.min(run.deadline,midnight.getTime()),day:run.day};
  }

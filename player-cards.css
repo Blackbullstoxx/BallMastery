@@ -208,3 +208,6 @@
 #my-player-card{margin-bottom:16px}
 
 #fvo-card-preview .fp-portrait img.fp-default-portrait{height:100%;object-fit:contain;object-position:center bottom}
+
+.training-pause-banner{padding:16px;margin:12px 0;border:1px solid #bbcdbd;border-radius:16px;background:#e5eee4;color:#153f2c}
+.training-pause-banner p{margin:8px 0}
