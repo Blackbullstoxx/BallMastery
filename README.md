@@ -148,3 +148,7 @@ Jede Abschlusskarte hat jetzt „Kartenanimation ansehen“. Der ausdrückliche 
 ### 2026.11.10.13
 
 - Oberer Abstand beim automatischen Ausrichten der Kartenfläche auf 11 Pixel erhöht.
+
+### 2026.11.10.14
+
+- Oberer Abstand beim automatischen Ausrichten der Kartenfläche auf 13 Pixel erhöht.
