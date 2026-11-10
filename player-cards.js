@@ -102,8 +102,8 @@ const playerCards=(()=>{
   mount(host,{section,animate,from:animate?reveal.from:null,to:animate?reveal.to:snapshot()});
   });
  }
- function collectionMarkup(){return '<details class="card" id="my-player-card"><summary>Meine Spielerkarte</summary><div data-player-card></div></details>'}
- function collection(){const panel=document.querySelector('#my-player-card');if(!panel)return;panel.addEventListener('toggle',()=>{if(panel.open)mount(panel.querySelector('[data-player-card]'))})}
+ function collectionMarkup(){return '<section id="my-player-card" aria-label="Spielerkarte"><div data-player-card></div></section>'}
+ function collection(){const panel=document.querySelector('#my-player-card');if(!panel)return;mount(panel.querySelector('[data-player-card]'))}
  function correction(before){
   if(isReadOnly())return;init();const to=snapshot();state.playerCard.lastShown=to;save();
   if(to.values.every((v,i)=>v===before.values[i])&&to.total===before.total)return;

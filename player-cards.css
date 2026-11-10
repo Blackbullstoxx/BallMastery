@@ -205,4 +205,5 @@
 .player-card-dialog>button{width:100%;margin-top:12px}
 .card-photo-controls label{gap:12px}
 .card-photo-controls input{width:55%}
-#my-player-card>summary{font-weight:700;cursor:pointer}
+#my-player-card #fvo-card-preview .fp-result{display:none}
+#my-player-card{margin-bottom:16px}
