@@ -119,3 +119,10 @@ Einstellungen → Weitere Einstellungen → Signaltöne → Kartensounds: standa
 `node tests/card-audio.cjs` prüft Aktivierung beim Tipp, Buffer-Wiederverwendung, Klickfolge/Slots, die letzten acht Auslöseereignisse, Stopp, Hintergrund, Stummschaltung, reduzierte Bewegung, Leseansicht und Offline-Dateien. `tests/area-completion.cjs` deckt zusätzlich doppelte Abschluss-Tipps und Tabwechsel während der Tonvorbereitung ab.
 
 Browserprüfung vor Veröffentlichung: isolierte exakte App-Dateien in Cloud Chrome mit synthetischen Daten und einer ausschließlich lokalen Audio-Auslöseprotokollierung. Whooshstart, an sichtbare Gesamtwerte gekoppelte Schlussklicks bis zum Zielwert 42, direktes Stoppen beim Überspringen und über einen Neustart erhaltene Stummschaltung geprüft. Keine Dropbox-Anmeldung. Die Prüfung zeichnet Auslöseereignisse auf; sie ersetzt keinen Hör-/Latenztest auf echtem iPhone/iPad.
+
+
+### Kartenanimation gezielt erneut ansehen (2026.11.10.8)
+
+Jede Abschlusskarte hat jetzt „Kartenanimation ansehen“. Der ausdrückliche Tipp aktiviert/erneuert die Audioausgabe und lädt bei Bedarf die lokalen Sound-Assets, richtet die Karte aus und startet die Enthüllung erneut. Bestwerte, Trainingszeit, Fleiß, Bereichsabschluss und die gespeicherten Enthüllungsdaten bleiben unverändert. Passt der letzte echte Abschluss noch zu den aktuellen Werten, werden seine Änderungen wieder gezeigt; sonst zählt die Animation zum aktuellen Stand ohne erfundene Veränderungen. Mehrfach-Tipps und ein Tab-/Tageswechsel während der Vorbereitung sind abgesichert. Leseansichten können nicht neu abspielen. Bei tatsächlich fehlgeschlagener Tonvorbereitung wird eine kurze Meldung mit dem Hinweis zum erneuten Versuch angezeigt; der Bereichsabschluss funktioniert weiterhin.
+
+„Erneut trainieren“ mit anschließendem Verwerfen bleibt ein Abbruch eines begonnenen Wiederholungsdurchgangs und vergibt keine neue Belohnung. Die bereits betrachtete Abschlusskarte wird dabei statisch gezeigt. Für einen Ton-/Animationstest ist kein zusätzliches Training mehr erforderlich.

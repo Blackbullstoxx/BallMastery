@@ -1,0 +1,16 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+(async()=>{
+ let day='2026-11-10',reading=false,prepares=0,ready,mode='ready',messages=[],mounts=[];
+ let host={isConnected:true};const button={disabled:false,textContent:'Kartenanimation ansehen'};
+ const ctx={Date,date:()=>day,isReadOnly:()=>reading,state:{current:0,groups:{ball:true,toe:true},scores:[],practiceCounts:{},sessions:['2026-11-09'],blockDone:{'2026-11-10':['juggling']}},drills:Array.from({length:105},(_,i)=>({id:String(i)})),tab:'today',run:null,validTrainingDate:d=>/^\d{4}-\d{2}-\d{2}$/.test(d),document:{querySelector:s=>s==='#replay-card'?button:s==='[data-player-card]'?host:null},cardAudio:{enabled:()=>mode!=='muted',prepare:()=>{prepares++;return mode==='wait'?new Promise(resolve=>ready=resolve):Promise.resolve(mode!=='failed')},create:()=>null},toast:t=>messages.push(t),mountPlayerCard:(h,o)=>{mounts.push(o);return ()=>{}}};
+ vm.createContext(ctx);vm.runInContext(fs.readFileSync(__dirname+'/../player-cards.js','utf8')+';this.cards=playerCards;',ctx);const cards=ctx.cards;cards.init();cards.completed('juggling');ctx.state.playerCard.reveal.seen=true;ctx.state.playerCard.reveal.from.values[3]=30;
+ const original=JSON.stringify(ctx.state);await cards.replay('juggling');assert.equal(prepares,1);assert.equal(mounts.length,1);assert(mounts[0].animate);assert.equal(mounts[0].from.values[3],30,'genuine original change retained');assert.equal(JSON.stringify(ctx.state),original,'no training, points, records, flags or reveal changes');assert.equal(button.disabled,false);
+ mode='wait';const before=prepares;const waiting=cards.replay('juggling');await cards.replay('juggling');assert.equal(prepares,before+1,'duplicate taps ignored');host.isConnected=false;ready(true);await waiting;assert.equal(mounts.length,1,'discarded host cannot replay after delayed audio preparation');
+ host={isConnected:true};const pending=cards.replay('juggling');ctx.tab='records';ready(true);await pending;assert.equal(mounts.length,1);ctx.tab='today';
+ mode='ready';ctx.state.current=10;await cards.replay('juggling');assert.deepEqual(mounts.at(-1).from,mounts.at(-1).to,'changed current state cannot show invented or stale deltas');
+ mode='failed';await cards.replay('juggling');assert.equal(messages.length,1);assert(mounts.at(-1).animate,'sound failure still allows visual replay');assert.equal(button.disabled,false);
+ mode='muted';const beforeMuted=prepares;await cards.replay('juggling');assert.equal(prepares,beforeMuted);reading=true;const beforeReadonly=mounts.length;await cards.replay('juggling');assert.equal(mounts.length,beforeReadonly);reading=false;
+ mode='wait';const oldDay=day;const past=cards.replay('juggling');day='2026-11-11';ready(true);await past;assert.equal(mounts.length,beforeReadonly);day=oldDay;
+ console.log('PASS: explicit audio preparation, genuine replay without changing progress, duplicate taps, detached/changed views, day changes, current values, failure fallback, mute and read-only.');
+})().catch(e=>{console.error(e);process.exitCode=1});

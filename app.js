@@ -141,8 +141,8 @@ function animateReward(host){
  const motion=p.animate([{transform:'translate(0,0) rotate(0)',opacity:0},{transform:`translate(${dx*.65}px,${dy-50}px) rotate(${i*19}deg)`,opacity:1,offset:.3},{transform:`translate(${dx}px,${dy+190}px) rotate(${i*37}deg)`,opacity:0}],{duration:1800,delay:100+i%5*35,easing:'ease-out',fill:'both'});motion.onfinish=()=>p.remove();motion.oncancel=()=>p.remove()}
 }
 function renderCompletion(section){
- $('#runner').innerHTML=`<div class="reward-finish player-card-completion"><div data-player-card></div><div class="reward-check" aria-hidden="true">✓</div><h2 class="center">${sectionNames[section]} geschafft!</h2>${section==='ball'?ballMasteryMarkup():''}${ballTrainingMarkup(section)}${colourPerception.summary()}<button class="primary" id="close">Erneut trainieren</button></div>`;
- $('#close').onclick=start;void syncScreenAwake();
+ $('#runner').innerHTML=`<div class="reward-finish player-card-completion"><div data-player-card></div><div class="reward-check" aria-hidden="true">✓</div><h2 class="center">${sectionNames[section]} geschafft!</h2>${section==='ball'?ballMasteryMarkup():''}${ballTrainingMarkup(section)}${colourPerception.summary()}<button type="button" id="replay-card">Kartenanimation ansehen</button><button class="primary" id="close">Erneut trainieren</button></div>`;
+ $('#close').onclick=start;$('#replay-card').onclick=()=>playerCards.replay(section);void syncScreenAwake();
  playerCards.completion(section);
 }
 
@@ -158,7 +158,7 @@ function renderRunner(){colourPerception.sync();save();refreshDayOverview();void
 function finishArea(){
  if(isReadOnly()||run?.phase!=='review'||run.index!==run.plan.length-1||run.finishPending)return;
  const expected=run;expected.finishPending=true;const button=$('#finish-area');if(button){button.disabled=true;button.textContent='Karte wird vorbereitet …'}
- const finish=()=>{delete expected.finishPending;if(run!==expected||tab!=='today'||run.phase!=='review'||isReadOnly())return;silence();complete();render()};
+ const finish=ready=>{delete expected.finishPending;if(run!==expected||tab!=='today'||run.phase!=='review'||isReadOnly())return;if(ready===false)toast('Kartensound konnte nicht gestartet werden. Versuche die Kartenanimation erneut.');silence();complete();render()};
  if(typeof cardAudio!=='undefined'&&cardAudio.enabled())void cardAudio.prepare().then(finish,finish);else finish();
 }
 

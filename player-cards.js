@@ -98,7 +98,7 @@ const playerCards=(()=>{
  const feintCurve=[[0,30],[30,40],[120,55],[360,70],[780,85],[1200,95],[1460,99]];
  const juggleCurve=[[0,30],[30,40],[120,50],[600,60],[1800,70],[3600,80],[6600,90],[10200,99]];
  const bonusCurves={toe:[[0,0],[25,3],[50,6],[100,9],[200,12],[300,15]],free:[[0,0],[10,3],[25,6],[50,9],[100,12],[200,15]]};
- let clock=null,dispose=null;
+ let clock=null,dispose=null,replayPending=false;
  const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
  function curve(value,points){
   if(value<=points[0][0])return points[0][1];
@@ -165,6 +165,22 @@ const playerCards=(()=>{
   const cancel=dispose,stopFitting=fitPlayerCardCompletion(host,animate);dispose=()=>{stopFitting();if(cancel)cancel()};
   });
  }
+ async function replay(section){
+  if(isReadOnly()||replayPending||tab!=='today')return;
+  const host=document.querySelector('[data-player-card]'),button=document.querySelector('#replay-card'),day=date();
+  if(!host||!state.blockDone?.[day]?.includes(section))return;
+  replayPending=true;if(button){button.disabled=true;button.textContent='Karte wird vorbereitet …'}
+  try{
+   const ready=typeof cardAudio!=='undefined'&&cardAudio.enabled()?await cardAudio.prepare():true;
+   if(!host.isConnected||tab!=='today'||date()!==day||isReadOnly())return;
+   if(!ready)toast('Kartensound konnte nicht gestartet werden. Versuche die Kartenanimation erneut.');
+   const current=snapshot(),reveal=state.playerCard?.reveal;
+   const same=reveal?.day===day&&reveal.section===section&&reveal.to.total===current.total&&reveal.to.tier===current.tier&&reveal.to.values.every((n,i)=>n===current.values[i])&&reveal.to.visible.every((n,i)=>n===current.visible[i]);
+   mount(host,{section,animate:true,from:same?reveal.from:current,to:current});
+   const cancel=dispose,stopFitting=fitPlayerCardCompletion(host,true);dispose=()=>{stopFitting();if(cancel)cancel()};
+  }finally{replayPending=false;if(button){button.disabled=false;button.textContent='Kartenanimation ansehen'}}
+ }
+
  function collectionMarkup(){return '<section id="my-player-card" aria-label="Spielerkarte"><div data-player-card></div></section>'}
  function collection(){const panel=document.querySelector('#my-player-card');if(!panel)return;mount(panel.querySelector('[data-player-card]'))}
  function correction(before){
@@ -234,5 +250,5 @@ const playerCards=(()=>{
    if(changed)confirmInline(panel.querySelector('#card-settings-confirm'),'Kartenbereiche ändern? Die Gesamtbewertung wird mit den gewählten Bereichen neu berechnet.',apply);else apply();
   };
  }
- return {curve,bonus,snapshot,config,init,sync,resetClock:()=>clock=null,completedSet,completed,mount,completion,destroy,collectionMarkup,collection,correction,valid,settingsMarkup,bindSettings,trainingPaused,pauseMarkup,bindPause,pauseBanner,bindPauseBanner};
+ return {curve,bonus,snapshot,config,init,sync,resetClock:()=>clock=null,completedSet,completed,mount,completion,replay,destroy,collectionMarkup,collection,correction,valid,settingsMarkup,bindSettings,trainingPaused,pauseMarkup,bindPause,pauseBanner,bindPauseBanner};
 })();
