@@ -11,7 +11,7 @@ function mountPlayerCard(host,options){
  let serial=0,timers=[],animations=[],targetTier=2,target=[70,80,60,85],targetOverall=74;
  const normal=options.from.values,higher=options.to.values;
  function overall(v){return v===normal?options.from.total:options.to.total;}
- function cancel(){serial++;timers.forEach(clearTimeout);timers=[];animations.forEach(a=>a.cancel());animations=[];q('.fp-glints').replaceChildren();q('.fp-mist').style.opacity='0';q('.fp-new-back').style.clipPath='inset(0 0 100% 0)';q('.fp-back img').style.clipPath='inset(0 0 0 0)';}
+ function cancel(){options.sounds?.stop();serial++;timers.forEach(clearTimeout);timers=[];animations.forEach(a=>a.cancel());animations=[];q('.fp-glints').replaceChildren();q('.fp-mist').style.opacity='0';q('.fp-new-back').style.clipPath='inset(0 0 100% 0)';q('.fp-back img').style.clipPath='inset(0 0 0 0)';}
  function at(ms,fn){const token=serial;timers.push(setTimeout(()=>{if(token===serial)fn()},ms));}
  function anim(el,keyframes,duration,delay=0){const a=el.animate(keyframes,{duration,delay,easing:'cubic-bezier(.33,0,.2,1)',fill:'forwards'});animations.push(a);return a;}
  function side(which){back.hidden=which!=='back';front.hidden=which!=='front';turn.style.transform='none';}
@@ -53,6 +53,7 @@ function mountPlayerCard(host,options){
          el.textContent=next.value;
          if(elapsed>=fastDuration)anim(el,[{transform:'translateY(-3px)',opacity:.6},{transform:'translateY(0)',opacity:1}],Math.min(180,110+elapsed/60));
        }
+       if(el===total)options.sounds?.countFrame(elapsed,next&&next.value>fastTarget?next.value-fastTarget:0);
        if(index<steps.length)requestAnimationFrame(roll);
        else el.textContent=target;
      }
@@ -74,7 +75,7 @@ function mountPlayerCard(host,options){
   const previous=q('.fp-back img'),incoming=q('.fp-new-back'),mist=q('.fp-mist');
   incoming.src=backs[next];q('.fp-mist-clip').style.maskImage='url('+backs[old]+'),url('+backs[next]+')';
   at(900,()=>{
-    result.textContent='Das neue Material entsteht …';
+    options.sounds?.shine();result.textContent='Das neue Material entsteht …';
     anim(q('.fp-halo'),[{opacity:0},{opacity:.25,offset:.35},{opacity:0}],6200);
     const token=serial;let started;
     function sweep(now){
@@ -106,8 +107,9 @@ function mountPlayerCard(host,options){
    targetTier=options.to.tier;target=to;targetOverall=after;values(from,before);if(mode!=='fall')conceal();
    if(reduced){finish();ratings.forEach((el,i)=>{if(options.relevant[i])showChange(el,to[i]-from[i])});return;}
    if(mode==='rise'||mode==='fall'){side('front');result.textContent=mode==='rise'?'Dein Training verbessert die Kartenwerte …':'Berichtigte Trainingsdaten passen die Werte an …';at(1200,()=>count(from,to,before,after));if(mode==='fall')at(4500,()=>{material(targetTier);result.textContent='Gesamt '+before+' → '+after;});return;}
+   options.sounds=options.soundFactory?.()||null;
    side('back');result.textContent=mode==='upgrade'?names[t]+' → '+names[options.to.tier]:'Ein besonderer Moment für dein Training …';
-   if(mode==='reveal'){const shine=q('.fp-back-light');const a=shine.animate([{backgroundPosition:'90% 0%'},{backgroundPosition:'10% 0%'}],{duration:3900,easing:'linear',fill:'forwards'});animations.push(a);}
+   if(mode==='reveal'){options.sounds?.shine();const shine=q('.fp-back-light');const a=shine.animate([{backgroundPosition:'90% 0%'},{backgroundPosition:'10% 0%'}],{duration:3900,easing:'linear',fill:'forwards'});animations.push(a);}
    if(mode==='upgrade')upgrade(t,options.to.tier);
    const start=mode==='upgrade'?7700:4200;flip(start);
    at(start+5200,()=>{count(from,to,before,after);result.textContent=mode==='upgrade'?'Neue Kartenstufe: '+names[targetTier]:'Training geschafft · Deine Werte steigen';});

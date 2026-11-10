@@ -150,7 +150,7 @@ const playerCards=(()=>{
   if(!host)return;destroy();
   const c=config(),old=from||to;
   const relevant=correction?to.values.map((v,i)=>v!==old.values[i]):[section==='ball',section==='juggling',section==='feints',true];
-  dispose=mountPlayerCard(host,{from:old,to,section,relevant,name:state.name||'DEIN NAME',portrait:c.portrait||'',layout:c.layout,animate,correction});
+  dispose=mountPlayerCard(host,{from:old,to,section,relevant,name:state.name||'DEIN NAME',portrait:c.portrait||'',layout:c.layout,animate,correction,soundFactory:animate&&!correction&&typeof cardAudio!=='undefined'?()=>cardAudio.create():null});
  }
  function completion(section){
   const host=document.querySelector('[data-player-card]');if(!host)return;
@@ -179,6 +179,7 @@ const playerCards=(()=>{
   if(c!==undefined&&(!c||c.version!==1||!c.areas||!areas.every(k=>typeof c.areas[k]==='boolean')||!c.techniques||!['toe','free'].every(k=>typeof c.techniques[k]==='boolean')||typeof c.portrait!=='string'||c.portrait.length>1000000||c.portrait&&!/^data:image\/(png|webp);base64,[A-Za-z0-9+/=]+$/.test(c.portrait)||!c.layout||!['scale','x','y'].every(k=>Number.isFinite(c.layout[k]))||c.layout.scale<80||c.layout.scale>150||Math.abs(c.layout.x)>20||Math.abs(c.layout.y)>10||c.lastShown&&!validSnapshot(c.lastShown)||c.reveal&&(!validTrainingDate(c.reveal.day)||!areas.includes(c.reveal.section)||typeof c.reveal.seen!=='boolean'||!validSnapshot(c.reveal.from)||!validSnapshot(c.reveal.to))))return false;
   if(t!==undefined&&(!t||t.version!==1||!validTrainingDate(t.since)||!t.days||typeof t.days!=='object'||Array.isArray(t.days)||!Object.entries(t.days).every(([day,row])=>validTrainingDate(day)&&row&&['feints','juggling'].every(k=>Number.isSafeInteger(row[k])&&row[k]>=0&&row[k]<=90000000))||!Array.isArray(t.completedDays)||!t.completedDays.every(validTrainingDate)))return false;
   if(data.diligence!==undefined&&!diligenceRules.valid(data.diligence))return false;
+  if(data.cardSounds!==undefined&&typeof data.cardSounds!=='boolean')return false;
   return true;
  }
  function trainingPaused(){return diligenceRules.paused(state,date())}
