@@ -198,13 +198,12 @@
 #fvo-card-preview .fp-title strong{font-size:24px}
 #fvo-card-preview .fp-name{margin:0}
 #fvo-card-preview .fp-perspective{max-width:100%;min-height:0;border:0;border-radius:0}
-#fvo-card-preview .fp-result{margin:10px 0 0;min-height:30px}
+#fvo-card-preview .fp-result{display:none}
 .player-card-dialog{width:min(430px,calc(100% - 24px));max-height:95dvh;overflow:auto;border:0;border-radius:20px;padding:12px;background:#f4eee6}
 .player-card-dialog::backdrop{background:#152b21aa}
 .player-card-dialog>button{width:100%;margin-top:12px}
 .card-photo-controls label{gap:12px}
 .card-photo-controls input{width:55%}
-#my-player-card #fvo-card-preview .fp-result{display:none}
 #my-player-card{margin-bottom:16px}
 
 #fvo-card-preview .fp-portrait img.fp-default-portrait{height:100%;object-fit:contain;object-position:center bottom}
@@ -213,9 +212,10 @@
 .training-pause-banner p{margin:8px 0}
 
 .player-card-completion{min-height:100vh;min-height:100svh}
-.player-card-completion #fvo-card-preview .fp-result{min-height:3em}
 
 .player-card-panel{border:1px solid #dfd6c9;border-radius:16px;overflow:hidden;background:radial-gradient(ellipse at 50% 46%,#fffaf0 0,#efe7dd 64%,#e4dbce 100%);margin-bottom:20px}
 .player-card-panel #fvo-card-preview .fp-stage{background:transparent;border-radius:0}
 .player-card-actions{display:flex;justify-content:center;padding:6px 16px 18px}
 .player-card-actions #replay-card{margin:0;min-height:44px;padding:10px 18px;border:1px solid #c7c0b4;border-radius:10px;background:#fffbf5;color:#264734;font:500 14px/1.4 Arial,sans-serif}
+
+.player-card-actions[hidden]{display:none}

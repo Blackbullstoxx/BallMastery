@@ -131,3 +131,8 @@ Jede Abschlusskarte hat jetzt „Kartenanimation ansehen“. Der ausdrückliche 
 
 - „Kartenanimation ansehen“ sitzt mit eigenem Innenabstand innerhalb der beige umrandeten Kartenfläche. Die Erfolgsüberschrift und „Erneut trainieren“ folgen darunter.
 - Automatisches Einpassen und Scrollen richten sich ausschließlich nach der Karte selbst, ohne Überschrift, Ergebnistext oder Wiederholen-Schaltfläche.
+
+### 2026.11.10.10
+
+- Kleine Erläuterungen unter der Spielerkarte ausgeblendet; die Kartenfläche zeigt direkt die Aktion „Kartenanimation erneut ansehen“.
+- Die Aktion erscheint erst nach Ende der Animation, auch bei erneutem Abspielen; ein Überspringen der Animation gibt sie sofort frei.

@@ -20,7 +20,7 @@ function mountPlayerCard(host,options){
  function deltas(){ratings.forEach(el=>{el.className='';el.querySelector('small')?.remove()});}
  function selection(){return options.from.tier;}
  function reset(){cancel();deltas();const player='player';front.dataset.player=player;q('.fp-portrait img').src=options.portrait||'cards/default-portrait.webp';q('.fp-portrait img').alt=options.portrait?'Freigestelltes Portrait von '+options.name:'Spielersilhouette';q('.fp-name').textContent=options.name.toUpperCase();const t=selection();targetTier=t;target=scene.value==='fall'?[...higher]:[...normal];targetOverall=overall(target);material(t);values(target,targetOverall);if(scene.value==='rise')conceal();title.style.opacity='1';side(['rise','fall'].includes(scene.value)?'front':'back');result.textContent='Deine Spielerkarte';}
- function finish(){cancel();material(targetTier);side('front');values(target,targetOverall);title.style.opacity='1';result.textContent='Deine Spielerkarte · '+names[targetTier];}
+ function finish(){cancel();material(targetTier);side('front');values(target,targetOverall);title.style.opacity='1';result.textContent='Deine Spielerkarte · '+names[targetTier];options.onComplete?.();}
  function sparks(duration=2200){q('.fp-glints').replaceChildren();for(let i=0;i<18;i++){const e=document.createElement('i');e.style.left=(5+Math.random()*90)+'%';e.style.top=(8+Math.random()*78)+'%';q('.fp-glints').append(e);anim(e,[{opacity:0,transform:'scale(.1) rotate(45deg)'},{opacity:1,transform:'scale(1.4) rotate(90deg)',offset:.4},{opacity:0,transform:'scale(.1) translateY(-20px) rotate(140deg)'}],duration,i*50);}}
  function count(from,to,oldOverall,newOverall){if(scene.value!=='fall'){surpriseCount(from,to,oldOverall,newOverall);return;}const token=serial;ratings.forEach((el,i)=>{const d=to[i]-from[i];if(!d||!options.relevant[i])return;el.className=d>0?'fp-up':'fp-down';const delta=document.createElement('small');delta.textContent=(d>0?'+':'')+d;el.append(delta);anim(el.querySelector('.fp-num'),[{transform:'translateY(0) scale(1)'},{transform:'translateY(-4px) scale(1.12)',offset:.3},{transform:'translateY(0) scale(1)'}],2800)});if(oldOverall!==newOverall)anim(total,[{filter:'brightness(1)'},{filter:'brightness(1.6)',offset:.5},{filter:'brightness(1)'}],2800);let start;function step(now){if(token!==serial)return;if(start===undefined)start=now;const p=Math.min(1,(now-start)/3000);values(from.map((v,i)=>Math.round(v+(to[i]-v)*p)),Math.round(oldOverall+(newOverall-oldOverall)*p));if(p<1)requestAnimationFrame(step);}requestAnimationFrame(step);}
  function conceal(){ratings.forEach((el,i)=>el.querySelector('.fp-num').textContent=options.relevant[i]?'–':options.to.values[i]);total.textContent='–';}
@@ -35,6 +35,7 @@ function mountPlayerCard(host,options){
    const token=serial,duration=6400,fastDuration=1800;
    deltas();values([0,0,0,0],0);
    const fields=[...ratings.flatMap((el,i)=>options.relevant[i]&&options.to.visible[i]?[{el:el.querySelector('.fp-num'),target:to[i]}]:[]),{el:total,target:newOverall}];
+   let pending=fields.length;
    // Accelerate from zero; then let the final eight unit steps take longer
    // and longer. Every intermediate value is below its final target.
    fields.forEach(({el,target})=>{
@@ -55,7 +56,7 @@ function mountPlayerCard(host,options){
        }
        if(el===total)options.sounds?.countFrame(elapsed,next&&next.value>fastTarget?next.value-fastTarget:0);
        if(index<steps.length)requestAnimationFrame(roll);
-       else el.textContent=target;
+       else {el.textContent=target;if(--pending===0)at(1000,()=>options.onComplete?.());}
      }
      requestAnimationFrame(roll);
    });
@@ -106,7 +107,7 @@ function mountPlayerCard(host,options){
    if(mode==='upgrade'){targetTier=options.to.tier;}
    targetTier=options.to.tier;target=to;targetOverall=after;values(from,before);if(mode!=='fall')conceal();
    if(reduced){finish();ratings.forEach((el,i)=>{if(options.relevant[i])showChange(el,to[i]-from[i])});return;}
-   if(mode==='rise'||mode==='fall'){side('front');result.textContent=mode==='rise'?'Dein Training verbessert die Kartenwerte …':'Berichtigte Trainingsdaten passen die Werte an …';at(1200,()=>count(from,to,before,after));if(mode==='fall')at(4500,()=>{material(targetTier);result.textContent='Gesamt '+before+' → '+after;});return;}
+   if(mode==='rise'||mode==='fall'){side('front');result.textContent=mode==='rise'?'Dein Training verbessert die Kartenwerte …':'Berichtigte Trainingsdaten passen die Werte an …';at(1200,()=>count(from,to,before,after));if(mode==='fall')at(4500,()=>{material(targetTier);result.textContent='Gesamt '+before+' → '+after;options.onComplete?.();});return;}
    options.sounds=options.soundFactory?.()||null;
    side('back');result.textContent=mode==='upgrade'?names[t]+' → '+names[options.to.tier]:'Ein besonderer Moment für dein Training …';
    if(mode==='reveal'){options.sounds?.shine();const shine=q('.fp-back-light');const a=shine.animate([{backgroundPosition:'90% 0%'},{backgroundPosition:'10% 0%'}],{duration:3900,easing:'linear',fill:'forwards'});animations.push(a);}

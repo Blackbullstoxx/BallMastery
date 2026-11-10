@@ -146,11 +146,12 @@ const playerCards=(()=>{
   c.reveal={day:date(),section,from,to,seen:false};c.lastShown=to;
  }
  function destroy(){if(dispose)dispose();dispose=null}
- function mount(host,{section='ball',animate=false,from=null,to=snapshot(),correction=false}={}){
+ function mount(host,{section='ball',animate=false,from=null,to=snapshot(),correction=false,allowReplay=false}={}){
   if(!host)return;destroy();
-  const c=config(),old=from||to;
+  const c=config(),old=from||to,actions=allowReplay?document.querySelector('.player-card-actions'):null;
+  if(actions)actions.hidden=animate;
   const relevant=correction?to.values.map((v,i)=>v!==old.values[i]):[section==='ball',section==='juggling',section==='feints',true];
-  dispose=mountPlayerCard(host,{from:old,to,section,relevant,name:state.name||'DEIN NAME',portrait:c.portrait||'',layout:c.layout,animate,correction,soundFactory:animate&&!correction&&typeof cardAudio!=='undefined'?()=>cardAudio.create():null});
+  dispose=mountPlayerCard(host,{onComplete:()=>{if(actions&&host.isConnected&&actions.isConnected)actions.hidden=false},from:old,to,section,relevant,name:state.name||'DEIN NAME',portrait:c.portrait||'',layout:c.layout,animate,correction,soundFactory:animate&&!correction&&typeof cardAudio!=='undefined'?()=>cardAudio.create():null});
  }
  function completion(section){
   const host=document.querySelector('[data-player-card]');if(!host)return;
@@ -161,7 +162,7 @@ const playerCards=(()=>{
   // Persist before starting, so changing tabs or reopening never replays it.
   if(animate){reveal.seen=true;save()}
   rewardShown.add(date()+':'+section);if(run)run.rewardPending=false;
-  mount(host,{section,animate,from:animate?reveal.from:null,to:animate?reveal.to:snapshot()});
+  mount(host,{section,animate,allowReplay:true,from:animate?reveal.from:null,to:animate?reveal.to:snapshot()});
   const cancel=dispose,stopFitting=fitPlayerCardCompletion(host,animate);dispose=()=>{stopFitting();if(cancel)cancel()};
   });
  }
@@ -176,9 +177,9 @@ const playerCards=(()=>{
    if(!ready)toast('Kartensound konnte nicht gestartet werden. Versuche die Kartenanimation erneut.');
    const current=snapshot(),reveal=state.playerCard?.reveal;
    const same=reveal?.day===day&&reveal.section===section&&reveal.to.total===current.total&&reveal.to.tier===current.tier&&reveal.to.values.every((n,i)=>n===current.values[i])&&reveal.to.visible.every((n,i)=>n===current.visible[i]);
-   mount(host,{section,animate:true,from:same?reveal.from:current,to:current});
+   mount(host,{section,animate:true,allowReplay:true,from:same?reveal.from:current,to:current});
    const cancel=dispose,stopFitting=fitPlayerCardCompletion(host,true);dispose=()=>{stopFitting();if(cancel)cancel()};
-  }finally{replayPending=false;if(button){button.disabled=false;button.textContent='Kartenanimation ansehen'}}
+  }finally{replayPending=false;if(button){button.disabled=false;button.textContent='Kartenanimation erneut ansehen'}}
  }
 
  function collectionMarkup(){return '<section id="my-player-card" aria-label="Spielerkarte"><div data-player-card></div></section>'}

@@ -141,7 +141,7 @@ function animateReward(host){
  const motion=p.animate([{transform:'translate(0,0) rotate(0)',opacity:0},{transform:`translate(${dx*.65}px,${dy-50}px) rotate(${i*19}deg)`,opacity:1,offset:.3},{transform:`translate(${dx}px,${dy+190}px) rotate(${i*37}deg)`,opacity:0}],{duration:1800,delay:100+i%5*35,easing:'ease-out',fill:'both'});motion.onfinish=()=>p.remove();motion.oncancel=()=>p.remove()}
 }
 function renderCompletion(section){
- $('#runner').innerHTML=`<div class="reward-finish player-card-completion"><div class="player-card-panel"><div data-player-card></div><div class="player-card-actions"><button type="button" id="replay-card">Kartenanimation ansehen</button></div></div><div class="reward-check" aria-hidden="true">✓</div><h2 class="center">${sectionNames[section]} geschafft!</h2>${section==='ball'?ballMasteryMarkup():''}${ballTrainingMarkup(section)}${colourPerception.summary()}<button class="primary" id="close">Erneut trainieren</button></div>`;
+ $('#runner').innerHTML=`<div class="reward-finish player-card-completion"><div class="player-card-panel"><div data-player-card></div><div class="player-card-actions" hidden><button type="button" id="replay-card">Kartenanimation erneut ansehen</button></div></div><div class="reward-check" aria-hidden="true">✓</div><h2 class="center">${sectionNames[section]} geschafft!</h2>${section==='ball'?ballMasteryMarkup():''}${ballTrainingMarkup(section)}${colourPerception.summary()}<button class="primary" id="close">Erneut trainieren</button></div>`;
  $('#close').onclick=start;$('#replay-card').onclick=()=>playerCards.replay(section);void syncScreenAwake();
  playerCards.completion(section);
 }
