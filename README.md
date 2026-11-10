@@ -84,3 +84,7 @@ Jonglier- und Fintenzeit wird seit Einführung exakt in Arbeitsphasen erfasst, o
 Nach einem Bereichsabschluss laufen stets Gesamt, der betreffende Skill und FLEISS hoch, auch ohne Veränderung. Andere Skills bleiben stehen. Die letzten Einer-Schritte werden langsamer; Änderungen erscheinen erst nach Stillstand. Keine Kartentöne. Änderungen nur an tatsächlich geänderten Skills, niemals unter Gesamt. Bei Datenkorrekturen bleibt die direkte Auf-/Abzählung erhalten. Der Materialaufstieg verwendet die freigegebene Nebelverwandlung der Rückseite. Antippen schließt die Animation sofort ab; reduzierte Bewegung zeigt sofort das Ergebnis.
 
 Der gezeigte Stand wird vor Animationsbeginn gesichert. Tabwechsel und erneutes Öffnen spielen denselben Abschluss nicht nochmals ab und erzeugen keine Trainingszeit. Leseansichten verändern weder Kartenstand noch Daten. Alte Backups ohne neue Kartenfelder bleiben gültig. Nach Wiederherstellung gilt der Kartenstand des jeweiligen Profils.
+
+### Automatische Portraitgröße
+
+Ab Version 2026.11.10.2 passt der Import große Portraits automatisch an die interne Größenbegrenzung an. Zuerst wird WebP in hoher Qualität versucht. Gibt der Browser stattdessen PNG zurück, wird das Bild schrittweise auf passende Abmessungen verkleinert; Transparenz und Seitenverhältnis bleiben erhalten. Beide bereitgestellten Original-PNGs wurden im Cloud-Chrome-Test mit erzwungener PNG-Ausgabe erfolgreich importiert und gespeichert (900 × 822 Pixel). Das ist ein Test des PNG-Fallbacks, kein echter iPhone-Safari-Test.

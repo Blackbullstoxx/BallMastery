@@ -1,4 +1,32 @@
 'use strict';
+const MAX_CARD_PORTRAIT_LENGTH=1000000;
+async function prepareCardPortrait(file){
+ if(!['image/png','image/webp'].includes(file.type)||file.size>15000000)throw Error('Bitte ein freigestelltes PNG oder WebP bis 15 MB auswählen.');
+ const image=await createImageBitmap(file);
+ try{
+  const canvas=document.createElement('canvas'),context=canvas.getContext('2d');
+  let checkedTransparency=false;
+  // Safari may return a PNG when WebP canvas encoding is unavailable. Its
+  // quality argument then has no effect, so reduce dimensions automatically.
+  for(const edge of [1000,900,800,700,600,500,400,320]){
+   const scale=Math.min(1,edge/Math.max(image.width,image.height));
+   canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
+   context.drawImage(image,0,0,canvas.width,canvas.height);
+   if(!checkedTransparency){
+    const pixels=context.getImageData(0,0,canvas.width,canvas.height).data;let transparent=false;
+    for(let i=3;i<pixels.length;i+=4)if(pixels[i]<250){transparent=true;break}
+    if(!transparent)throw Error('Dieses Bild hat keinen transparenten Hintergrund. Bitte zuerst freistellen lassen.');
+    checkedTransparency=true;
+   }
+   for(const quality of [.94,.90,.86]){
+    const portrait=canvas.toDataURL('image/webp',quality);
+    if(/^data:image\/(png|webp);base64,/.test(portrait)&&portrait.length<=MAX_CARD_PORTRAIT_LENGTH)return portrait;
+    if(!portrait.startsWith('data:image/webp;'))break;
+   }
+  }
+  throw Error('Das Portrait konnte nicht vorbereitet werden. Bitte ein anderes freigestelltes PNG oder WebP auswählen.');
+ }finally{image.close()}
+}
 // Pure rating rules and device-local card state. No network or audio.
 const playerCards=(()=>{
  const areas=['ball','juggling','feints'],weights=[.4,.25,.15,.2];
@@ -102,12 +130,7 @@ const playerCards=(()=>{
   panel.querySelector('#card-portrait').onchange=async e=>{
    const file=e.target.files[0];if(!file)return;
    try{
-    if(!['image/png','image/webp'].includes(file.type)||file.size>15000000)throw Error('Bitte ein freigestelltes PNG oder WebP bis 15 MB auswählen.');
-    const image=await createImageBitmap(file);const canvas=document.createElement('canvas');const scale=Math.min(1,1000/Math.max(image.width,image.height));canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);const context=canvas.getContext('2d');context.drawImage(image,0,0,canvas.width,canvas.height);image.close();
-    const pixels=context.getImageData(0,0,canvas.width,canvas.height).data;let transparent=false;for(let i=3;i<pixels.length;i+=4)if(pixels[i]<250){transparent=true;break}
-    if(!transparent)throw Error('Dieses Bild hat keinen transparenten Hintergrund. Bitte zuerst freistellen lassen.');
-    const portrait=canvas.toDataURL('image/webp',.94);if(portrait.length>1000000)throw Error('Das Portrait ist zu groß. Bitte eine kleinere freigestellte Datei verwenden.');
-    draft.portrait=portrait;status.textContent='Portrait geladen. Zum Übernehmen speichern.';preview();
+    draft.portrait=await prepareCardPortrait(file);status.textContent='Portrait geladen. Zum Übernehmen speichern.';preview();
    }catch(error){status.textContent=error.message||'Das Portrait konnte nicht geladen werden.'}
   };
   panel.querySelector('#save-card-settings').onclick=()=>{
