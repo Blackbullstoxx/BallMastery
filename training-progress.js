@@ -44,6 +44,7 @@ function selection(level){
 }
 function countCompletedSet(d){
  if(isReadOnly())return;
+ playerCards.completedSet();
  const completed=new Set(run.completedSets||[]);completed.add(run.index);run.completedSets=[...completed];recordOverviewSet(run,run.index);
  const first=run.index-(d.set-1),last=first+d.total-1;
  if(d.set!==d.total||!Array.from({length:d.total},(_,i)=>first+i).every(i=>completed.has(i)))return;

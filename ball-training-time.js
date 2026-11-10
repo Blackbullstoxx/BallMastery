@@ -9,6 +9,7 @@ function ballTrainingState(){return state.ballTraining||(state.ballTraining=norm
 // The checkpoint contains totals, never a running clock. Restored sessions are
 // paused, so closed time cannot be counted again on the next page load.
 function syncBallTime(){
+ if(typeof playerCards!=='undefined')playerCards.sync();
  if(typeof isReadOnly==='function'&&isReadOnly()){ballClock=null;return}
  const now=Date.now(),previous=ballClock;ballClock=null;
  if(previous){
@@ -20,7 +21,7 @@ function syncBallTime(){
   ballClock={from:now,until:Math.min(run.deadline,midnight.getTime()),day:run.day};
  }
 }
-function resetBallClock(){ballClock=null}
+function resetBallClock(){ballClock=null;if(typeof playerCards!=='undefined')playerCards.resetClock()}
 function ballTrainingTotals(){
  const data=ballTrainingState(),values=Object.values(data.days);
  return {milliseconds:values.reduce((sum,ms)=>sum+ms,0),days:values.filter(ms=>ms>0).length,since:data.since};

@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path'),root=path.resolve(__dirname,'..');let today='2026-11-07',readonly=false;
-const ctx={date:()=>today,isReadOnly:()=>readonly,esc:String,drills:[{id:'001'},{id:'002'}],state:{current:0,finished:false,scores:[],colourScores:[],weeklyLearning:null},run:{index:0,section:'ball',plan:[{kind:'Wochenübung',key:'001',work:30}]},crypto:require('crypto').webcrypto,techNames:{},markPracticeDay:()=>{},window:{}};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(root,'record-charts.js'),'utf8'),ctx);vm.runInContext(fs.readFileSync(path.join(root,'weekly-learning.js'),'utf8'),ctx);
+const ctx={date:()=>today,isReadOnly:()=>readonly,esc:String,drills:[{id:'001'},{id:'002'}],state:{current:0,finished:false,scores:[],colourScores:[],weeklyLearning:null},run:{index:0,section:'ball',plan:[{kind:'Wochenübung',key:'001',work:30}]},crypto:require('crypto').webcrypto,techNames:{},markPracticeDay:()=>{},window:{}};vm.createContext(ctx);vm.runInContext(fs.readFileSync(root+'/player-cards.js','utf8'),ctx);vm.runInContext(fs.readFileSync(path.join(root,'record-charts.js'),'utf8'),ctx);vm.runInContext(fs.readFileSync(path.join(root,'weekly-learning.js'),'utf8'),ctx);
 const make=values=>({key:'001',since:'2026-11-01',entries:values.map((value,i)=>({date:'2026-11-'+String(i+1).padStart(2,'0'),value,duration:30,scoreId:'s'+i}))});
 const trend=values=>ctx.weeklyLearningTrend(make(values),'001',30,today);
 assert.equal(trend([14,15]),null);

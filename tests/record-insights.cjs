@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const root=require('path').resolve(__dirname,'..');
-const context={console,Date,Map,Math,crypto:require('crypto').webcrypto,setTimeout,clearTimeout,setInterval,clearInterval,document:{querySelector:()=>null},window:{},isReadOnly:()=>false,date:()=> '2026-11-07',esc:s=>String(s),state:{scores:[],colourScores:[],colourTraining:[]},run:null};vm.createContext(context);
+const context={console,Date,Map,Math,crypto:require('crypto').webcrypto,setTimeout,clearTimeout,setInterval,clearInterval,document:{querySelector:()=>null},window:{},isReadOnly:()=>false,date:()=> '2026-11-07',esc:s=>String(s),state:{scores:[],colourScores:[],colourTraining:[]},run:null};vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/player-cards.js','utf8'),context);
 vm.runInContext(fs.readFileSync(root+'/colour-perception.js','utf8')+';this.cp=colourPerception',context);
 vm.runInContext(fs.readFileSync(root+'/record-charts.js','utf8'),context);
 const score=(n,value,duration=30)=>({key:'001',duration,date:'2026-10-'+String(n).padStart(2,'0'),value});

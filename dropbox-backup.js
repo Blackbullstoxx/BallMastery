@@ -17,6 +17,7 @@ const dropboxBackup=(()=>{
   // Completed sets are represented in overviewDay/practiceCounts; explicit
   // interruptions request an immediate full snapshot even without new records.
   delete copy.activeTraining;
+  if(copy.cardTraining)copy.cardTraining={version:copy.cardTraining.version,since:copy.cardTraining.since,completedDays:copy.cardTraining.completedDays};
   if(copy.ballTraining)copy.ballTraining={version:copy.ballTraining.version,since:copy.ballTraining.since};
   const overview=copy.overviewDay;
   if(overview?.day!==today||!Object.values(overview.sections||{}).some(section=>Object.values(section||{}).some(row=>row?.completed?.length)))delete copy.overviewDay;

@@ -18,13 +18,13 @@ function bindRecordHistory(){
   host.querySelectorAll('[data-edit],[data-delete]').forEach(button=>button.addEventListener('click',()=>{
    if(isReadOnly())return;
    const id=button.dataset.edit||button.dataset.delete,row=state.scores.find(row=>row.id===id);if(!row)return;
-   let changed=false;
+   const beforeCard=playerCards.snapshot();let changed=false;
    if(button.hasAttribute('data-edit')){
     const value=prompt('Richtiger Wert:',row.value);if(value===null||value.trim()==='')return;
     const n=Number(value);if(!Number.isInteger(n)||n<0||n>99999)return;
     row.value=n;correctWeeklyLearningScore(id,n);changed=true;
    }else if(confirm('Diesen Eintrag löschen?')){state.scores=state.scores.filter(row=>row.id!==id);removeWeeklyLearningScore(id);changed=true}
-   if(changed){view.open=true;save();render()}
+   if(changed){view.open=true;save();render();playerCards.correction(beforeCard)}
   }));
  });
 }

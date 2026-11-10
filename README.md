@@ -58,3 +58,29 @@ Exportbasis: veröffentlichter App-Stand 89, Quellstand `0501c59abae4dc8f2cf7a85
 
 Ein temporärer Link kann während seiner Gültigkeit weitergegeben werden; berechtigte Nutzer können Inhalte speichern. Eine fehlende Datei, Offline-Zustand oder eine abgelaufene Verbindung führen zu einer Fehlermeldung mit erneutem Ladeversuch, nie zum Rückfall auf einen öffentlichen Link. Zugangsdaten und temporäre Links werden weder in das Repository noch in Trainingsbackups geschrieben. Alte Trainingsbackups können noch frühere öffentliche Links enthalten, die die neue Videowiedergabe ignoriert. Die Offline-Speicherung enthält ausschließlich App-Dateien und Pfad-Metadaten, keine Videodateien.
 
+
+## Persönliche Spielerkarten
+
+Unter **Einstellungen → Spielerkarte** ein freigestelltes PNG oder WebP auswählen. Transparenz ist erforderlich; die App stellt Fotos nicht selbst frei. Bildgröße und Position lassen sich innerhalb des festen Portraitfensters anpassen. Der waagerechte, kurz weich auslaufende Bildabschluss und die inneren Rahmenbegrenzungen bleiben auf allen Stufen erhalten. Unter **Rekorde → Meine Spielerkarte** ist die aktuelle Karte jederzeit sichtbar.
+
+Nur die acht unpersönlichen Bronze-/Silber-/Gold-/Legende-Vorlagen und das Vereinslogo liegen in `cards/`. Portraits, Ausschnitt, Kartenbereiche, Zeitkonten und der zuletzt gezeigte Stand gehören zum gerätelokalen Trainingszustand und zur privaten Backup-Datei. Keine Portraits oder Trainingsbackups in Git veröffentlichen. Die Fotodatei wird mit Transparenz auf maximal 1000 Pixel Kantenlänge vorbereitet.
+
+### Bewertungsregeln
+
+Alle Werte liegen zwischen 30 und 99. BALL = gerundet 30 + 69 × gemeisterte Drills / Gesamtzahl; 99 erst mit dem letzten Drill. FINT und der Zeitanteil von JONG werden zwischen diesen Minuten-/Rating-Paaren linear interpoliert; die Anzeige verwendet ganze Punkte ohne vorzeitiges Aufrunden:
+
+- FINT: 0/30, 30/40, 120/55, 360/70, 780/85, 1200/95, 1460/99.
+- JONG: 0/30, 30/40, 120/50, 600/60, 1800/70, 3600/80, 6600/90, 10200/99.
+- FLEISS: Trainingstage/Rating 0/30, 5/40, 20/55, 50/70, 100/85, 180/95, 250/99. Ein vollständig beendeter Satz belegt einen Tag, mehrere Sätze zählen denselben Tag nur einmal. Historische belegte Übungsdurchgänge werden berücksichtigt.
+
+JONG erhält zusätzlich bis zu 15 Leistungspunkte: Pro Technik werden Tagesmaxima gebildet. In jedem Fenster von sechs unterschiedlichen Eintragstagen belegt der vierthöchste Wert die regelmäßige Leistung. Das höchste belegte Fenster zählt; fehlende Tage sind keine Nullen. Nach Korrekturen oder Löschungen wird neu gerechnet. Zwischen den Bonusankern wird kontinuierlich interpoliert: Zehen 0/0, 25/3, 50/6, 100/9, 200/12, 300/15; frei 0/0, 10/3, 25/6, 50/9, 100/12, 200/15. Bei zwei ausgewählten Techniken werden die Boni gemittelt. Gezielte Kontakte tragen Trainingszeit, aber keinen Kontaktbonus bei.
+
+Gesamt: BALL 40 %, JONG 25 %, FINT 15 %, FLEISS 20 %, über die dauerhaft gewählten Kartenbereiche neu normiert. Die Auswahl ist unabhängig vom Wochenplan und wird bei einer Änderung bestätigt. Gesamt 99 setzt 99 in allen einbezogenen Skills voraus. Bronze bis 49, Silber ab 50, Gold ab 70, Legende ab 85. Pausen oder Krankheit senken keinen Wert.
+
+Jonglier- und Fintenzeit wird seit Einführung exakt in Arbeitsphasen erfasst, ohne Countdown, Pause und geschlossene App. Fehlende historische Zeit wird nicht aus heutigen Einstellungen geschätzt. `cardTraining` ergänzt die bisherige Ballzeit; beide bleiben getrennt.
+
+### Enthüllung und Sicherungen
+
+Nach einem Bereichsabschluss laufen stets Gesamt, der betreffende Skill und FLEISS hoch, auch ohne Veränderung. Andere Skills bleiben stehen. Die letzten Einer-Schritte werden langsamer; Änderungen erscheinen erst nach Stillstand. Keine Kartentöne. Änderungen nur an tatsächlich geänderten Skills, niemals unter Gesamt. Bei Datenkorrekturen bleibt die direkte Auf-/Abzählung erhalten. Der Materialaufstieg verwendet die freigegebene Nebelverwandlung der Rückseite. Antippen schließt die Animation sofort ab; reduzierte Bewegung zeigt sofort das Ergebnis.
+
+Der gezeigte Stand wird vor Animationsbeginn gesichert. Tabwechsel und erneutes Öffnen spielen denselben Abschluss nicht nochmals ab und erzeugen keine Trainingszeit. Leseansichten verändern weder Kartenstand noch Daten. Alte Backups ohne neue Kartenfelder bleiben gültig. Nach Wiederherstellung gilt der Kartenstand des jeweiligen Profils.

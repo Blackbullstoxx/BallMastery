@@ -39,7 +39,7 @@ function renderReadOnlyUI(){
  // actions, input forms and record corrections are unavailable in this view.
  view.querySelectorAll('input,select,textarea').forEach(el=>el.disabled=true);
  view.querySelectorAll('[data-score],#home-mastery,[data-edit],[data-delete]').forEach(el=>el.hidden=true);
- const allowed='[data-section],[data-library-area],[data-chart-period],[data-ball-total],[data-history-more]';
+ const allowed='[data-section],[data-library-area],[data-chart-period],[data-ball-total],[data-history-more],.fp-perspective';
  view.querySelectorAll('button').forEach(button=>{if(!button.matches(allowed)){button.disabled=true;button.hidden=true}});
 }
 
