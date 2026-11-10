@@ -19,7 +19,7 @@ function mountPlayerCard(host,options){
  function values(v,o){ratings.forEach((el,i)=>el.querySelector('.fp-num').textContent=options.relevant[i]?v[i]:options.to.values[i]);total.textContent=o;}
  function deltas(){ratings.forEach(el=>{el.className='';el.querySelector('small')?.remove()});}
  function selection(){return options.from.tier;}
- function reset(){cancel();deltas();const player='player';front.dataset.player=player;if(options.portrait)q('.fp-portrait img').src=options.portrait;q('.fp-portrait img').alt='Freigestelltes Portrait von '+player;q('.fp-name').textContent=options.name.toUpperCase();const t=selection();targetTier=t;target=scene.value==='fall'?[...higher]:[...normal];targetOverall=overall(target);material(t);values(target,targetOverall);if(scene.value==='rise')conceal();title.style.opacity='1';side(['rise','fall'].includes(scene.value)?'front':'back');result.textContent='Deine Spielerkarte';}
+ function reset(){cancel();deltas();const player='player';front.dataset.player=player;q('.fp-portrait img').src=options.portrait||'cards/default-portrait.webp';q('.fp-portrait img').alt=options.portrait?'Freigestelltes Portrait von '+options.name:'Spielersilhouette';q('.fp-name').textContent=options.name.toUpperCase();const t=selection();targetTier=t;target=scene.value==='fall'?[...higher]:[...normal];targetOverall=overall(target);material(t);values(target,targetOverall);if(scene.value==='rise')conceal();title.style.opacity='1';side(['rise','fall'].includes(scene.value)?'front':'back');result.textContent='Deine Spielerkarte';}
  function finish(){cancel();material(targetTier);side('front');values(target,targetOverall);title.style.opacity='1';result.textContent='Deine Spielerkarte · '+names[targetTier];}
  function sparks(duration=2200){q('.fp-glints').replaceChildren();for(let i=0;i<18;i++){const e=document.createElement('i');e.style.left=(5+Math.random()*90)+'%';e.style.top=(8+Math.random()*78)+'%';q('.fp-glints').append(e);anim(e,[{opacity:0,transform:'scale(.1) rotate(45deg)'},{opacity:1,transform:'scale(1.4) rotate(90deg)',offset:.4},{opacity:0,transform:'scale(.1) translateY(-20px) rotate(140deg)'}],duration,i*50);}}
  function count(from,to,oldOverall,newOverall){if(scene.value!=='fall'){surpriseCount(from,to,oldOverall,newOverall);return;}const token=serial;ratings.forEach((el,i)=>{const d=to[i]-from[i];if(!d||!options.relevant[i])return;el.className=d>0?'fp-up':'fp-down';const delta=document.createElement('small');delta.textContent=(d>0?'+':'')+d;el.append(delta);anim(el.querySelector('.fp-num'),[{transform:'translateY(0) scale(1)'},{transform:'translateY(-4px) scale(1.12)',offset:.3},{transform:'translateY(0) scale(1)'}],2800)});if(oldOverall!==newOverall)anim(total,[{filter:'brightness(1)'},{filter:'brightness(1.6)',offset:.5},{filter:'brightness(1)'}],2800);let start;function step(now){if(token!==serial)return;if(start===undefined)start=now;const p=Math.min(1,(now-start)/3000);values(from.map((v,i)=>Math.round(v+(to[i]-v)*p)),Math.round(oldOverall+(newOverall-oldOverall)*p));if(p<1)requestAnimationFrame(step);}requestAnimationFrame(step);}
@@ -117,15 +117,13 @@ function mountPlayerCard(host,options){
 
  const image=q('.fp-portrait img');
  q('.fp-name').style.fontSize=Math.min(34,Math.floor(280/(Math.max(1,options.name.length)*.62)))+'px';
- if(!options.portrait){image.removeAttribute('src');image.style.display='none';q('.fp-portrait').classList.add('fp-portrait-empty')}
- const layout=options.layout||{scale:114,x:-2,y:0};
+ const layout=options.portrait?(options.layout||{scale:114,x:-2,y:0}):{scale:100,x:0,y:0};
+ if(!options.portrait)image.classList.add('fp-default-portrait');
  image.style.width=layout.scale+'%';image.style.left=layout.x+'%';image.style.top=layout.y+'%';
  ratings.forEach((el,i)=>el.style.display=options.to.visible[i]?'':'none');
  [...root.querySelectorAll('.fp-skill-labels span')].forEach((el,i)=>el.style.display=options.to.visible[i]?'':'none');
  q('.fp-perspective').onclick=()=>{finish();deltas();ratings.forEach((el,i)=>{if(options.relevant[i]&&options.animate)showChange(el,options.to.values[i]-options.from.values[i])})};
  reset();
- if(!options.portrait)image.removeAttribute('src');
  if(options.animate)play();else {targetTier=options.to.tier;target=options.to.values;targetOverall=options.to.total;finish()}
- if(!options.portrait)image.removeAttribute('src');
  return cancel;
 }
