@@ -140,3 +140,7 @@ Jede Abschlusskarte hat jetzt „Kartenanimation ansehen“. Der ausdrückliche 
 ### 2026.11.10.11
 
 - Beim Start der Kartenanimation richtet sich die Oberkante der umgebenden Kartenfläche am sichtbaren Displayrand aus, einschließlich der Stufenüberschrift. Die Größenanpassung der Karte bleibt unverändert.
+
+### 2026.11.10.12
+
+- Automatische Kartenausrichtung mit 8 Pixeln Abstand oberhalb der umgebenden Kartenfläche.
