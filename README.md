@@ -99,3 +99,10 @@ Nach 28 vollständigen, nicht pausierten Kalendertagen wird wöchentlich bewerte
 Einstellungen → Trainingspause und Fleiß: offene Pause oder Enddatum einschließlich wählen. Während der Pause sind Trainingsstarts und Fortsetzungen gesperrt, laufende Timer werden angehalten. Pausentage bewegen weder die Wochen noch die Vergleichsfenster. Beenden am selben Tag entfernt den noch nicht verstrichenen Pausentag; ältere Pausentage bleiben gespeichert. Ein Enddatum lässt die Pause am Folgetag automatisch auslaufen. Wochentage/Trainingsgruppen ändern die Fleißregeln nicht. `diligence` und ihre Pausen gehören zum geräteeigenen Backup; Leseansichten verändern sie nicht.
 
 Prüfung: `node tests/diligence.cjs` simuliert Punkteanteile, Tageslimit, mehr Bereiche, Altbestände, 80-%-Grenze, moderates dauerhaftes Training, Spitzenwochen, Trainingsstopp bis zum Mindestwert, Wiederaufnahme, Pausen/Enddatum und ungültige Daten. Die separate Browserprüfung erfolgt mit synthetischen Daten und ohne Dropbox-Anmeldung.
+
+
+### Bereich bewusst abschließen (2026.11.10.6)
+
+Das letzte Timerende führt in jedem Bereich zu einer Bestätigungsansicht. Auch Finten und die Jonglierart „gezielte Kontakte“ ohne Bestwerte warten auf „… abschließen“. Bestwerte können vorher eingegeben werden; das Eintragen löst keine Karte aus. Die Abschlussansicht und ihre Einmal-Enthüllung entstehen erst durch den Abschlussknopf.
+
+Eine neue Enthüllung wird noch vor dem ersten Bild sofort mit 8 px Abstand am oberen sichtbaren Viewportrand ausgerichtet. Die gesamte Karte einschließlich Überschrift und Beschriftung wird bei geringer sichtbarer Höhe proportional eingepasst. Browserleisten-/Tastaturänderungen passen die Größe an, ohne erneut zu scrollen. Bereits betrachtete Abschlusskarten werden beim Wiederöffnen nicht ungefragt angesprungen. Resize-Listener werden bei Abbruch/Tabwechsel entfernt. `node tests/area-completion.cjs` prüft alle Endarten, Score-Eingabe, Bestätigung und Viewportberechnung.

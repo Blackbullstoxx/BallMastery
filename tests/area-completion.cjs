@@ -1,0 +1,21 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const app=fs.readFileSync(__dirname+'/../app.js','utf8');
+const fn=(name,next)=>app.slice(app.indexOf('function '+name+'('),app.indexOf('\nfunction '+next+'('));
+let completes=0,renders=0,sets=0,listener=null;
+const runner={innerHTML:''};
+const ctx={Date,esc:String,run:null,tick:1,activeSection:'juggling',isReadOnly:()=>false,syncScreenAwake:()=>{},syncBallTime:()=>{},checkTrainingDay:()=>false,refreshTimerRing:()=>{},save:()=>{},refreshDayOverview:()=>{},beep:()=>{},clearInterval:()=>{},colourPerception:{sync:()=>{},finishSet:()=>{},summary:()=>''},countCompletedSet:()=>sets++,complete:()=>completes++,render:()=>renders++,dropboxBackup:{changed:()=>{}},drills:[],completedExercises:()=>[],canPreviewNext:()=>false,sectionNames:{ball:'Ballbeherrschung',juggling:'Jonglieren',feints:'Finten'},ballTrainingMarkup:()=>'',trainingPositionText:()=>'',trainingProgress:()=>0,scoreForm:()=>'<form data-score="toe"></form>',masteredControl:()=>'',canEndRepeat:()=>false,bindScores:()=>{}};
+ctx.$=selector=>selector==='#runner'?runner:selector==='#finish-area'&&runner.innerHTML.includes('id="finish-area"')?{addEventListener:(_,fn)=>listener=fn}:null;
+vm.createContext(ctx);vm.runInContext(fn('update','sameNext'),ctx);vm.runInContext(fn('renderRunner','trainingFinished'),ctx);
+for(const [section,noScore,juggling] of [['juggling',false,true],['juggling',true,true],['feints',true,false],['ball',false,false]]){
+ completes=renders=sets=0;listener=null;runner.innerHTML='';ctx.activeSection=section;ctx.run={section,phase:'work',paused:false,plan:[{key:juggling?'toe':'feints',kind:section==='ball'?'Wochenübung':section,set:1,total:1,noScore,juggling,work:30}],index:0,last:1,deadline:Date.now()-1};
+ ctx.update();assert.equal(ctx.run.phase,'review');assert.equal(sets,1);assert.equal(completes,0,'timer cannot launch reveal');assert.equal(renders,0);assert(runner.innerHTML.includes(ctx.sectionNames[section]+' abschließen'));assert(listener,'explicit finish action present');listener();assert.equal(completes,1);assert.equal(renders,1);
+}
+// Saving a score keeps the finished timer in review; it does not trigger completion.
+const form={dataset:{score:'toe',duration:'0',colourScore:'false'},querySelector:()=>({value:'24'})};ctx.document={querySelectorAll:()=>[form]};ctx.recordScore=()=>true;ctx.toast=()=>{};ctx.run.phase='review';completes=0;vm.runInContext(fn('bindScores','scoreCategory'),ctx);ctx.bindScores();form.onsubmit({preventDefault:()=>{}});assert.equal(completes,0);assert.equal(ctx.run.phase,'review');
+// Completion cards fit the visual viewport as a whole, and resize listeners are owned.
+const events=new Map(),vEvents=new Map(),scrolls=[];const viewport={height:360,offsetTop:10,addEventListener:(k,v)=>vEvents.set(k,v),removeEventListener:(k,v)=>{assert.equal(vEvents.get(k),v);vEvents.delete(k)}};
+const viewCtx={window:{visualViewport:viewport,innerHeight:900,scrollY:500,scrollTo:o=>scrolls.push(o),addEventListener:(k,v)=>events.set(k,v),removeEventListener:(k,v)=>{assert.equal(events.get(k),v);events.delete(k)}}};vm.createContext(viewCtx);vm.runInContext(fs.readFileSync(__dirname+'/../player-cards.js','utf8'),viewCtx);
+const root={offsetHeight:600,style:{}},host={isConnected:true,style:{},querySelector:()=>root,getBoundingClientRect:()=>({top:180})};const stop=viewCtx.fitPlayerCardCompletion(host,true);assert.equal(host.style.height,'344px');assert(root.style.transform.startsWith('scale('));assert.equal(scrolls[0].top,662);assert.equal(scrolls[0].behavior,'instant');viewport.height=800;vEvents.get('resize')();assert.equal(host.style.height,'600px');assert.equal(root.style.transform,'');assert.equal(scrolls.length,1,'resizing never takes scroll control again');stop();assert.equal(events.size+vEvents.size,0,'listeners removed on card cancellation');
+const cleanup=viewCtx.fitPlayerCardCompletion(host,false);assert.equal(scrolls.length,1,'revisiting finished area never auto-scrolls');cleanup();
+console.log('PASS: all areas wait for explicit completion, score submission preserves review, complete card fits short visual viewport, initial top alignment, resize without scroll theft, cancellation and static revisit.');

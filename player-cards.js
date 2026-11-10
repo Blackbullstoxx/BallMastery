@@ -72,6 +72,25 @@ const diligenceRules=(()=>{
  return {qualifying,paused,valid,report,earned,number,day};
 })();
 
+// Size the whole card together (including type), then align before first paint.
+// Resize handles browser chrome/keyboard changes without scrolling the child again.
+function fitPlayerCardCompletion(host,scroll=false){
+ const root=host.querySelector?.('#fvo-card-preview');if(!root)return ()=>{};
+ const viewport=window.visualViewport;
+ const fit=()=>{
+  if(!host.isConnected)return;
+  const height=viewport?.height||window.innerHeight,natural=root.offsetHeight;
+  if(!natural||!height)return;
+  const scale=Math.min(1,Math.max(1,height-16)/natural);
+  root.style.transformOrigin='top center';root.style.transform=scale<1?'scale('+scale+')':'';
+  host.style.height=Math.ceil(natural*scale)+'px';
+ };
+ fit();
+ if(scroll)window.scrollTo({top:Math.max(0,window.scrollY+host.getBoundingClientRect().top-(viewport?.offsetTop||0)-8),behavior:'instant'});
+ window.addEventListener('resize',fit);viewport?.addEventListener('resize',fit);
+ return ()=>{window.removeEventListener('resize',fit);viewport?.removeEventListener('resize',fit)};
+}
+
 // Pure rating rules and device-local card state. No network or audio.
 const playerCards=(()=>{
  const areas=['ball','juggling','feints'],weights=[.4,.25,.15,.2];
@@ -143,6 +162,7 @@ const playerCards=(()=>{
   if(animate){reveal.seen=true;save()}
   rewardShown.add(date()+':'+section);if(run)run.rewardPending=false;
   mount(host,{section,animate,from:animate?reveal.from:null,to:animate?reveal.to:snapshot()});
+  const cancel=dispose,stopFitting=fitPlayerCardCompletion(host,animate);dispose=()=>{stopFitting();if(cancel)cancel()};
   });
  }
  function collectionMarkup(){return '<section id="my-player-card" aria-label="Spielerkarte"><div data-player-card></div></section>'}
