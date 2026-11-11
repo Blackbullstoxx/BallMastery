@@ -40,14 +40,14 @@ const colourPerception=(()=>{
  function abort(r){if(!r)return;r.onend=null;r.onresult=null;r.onerror=null;r.onstart=null;r.onspeechstart=null;try{r.abort()}catch{}}
  // Called directly from a start/resume tap, before awaiting audio activation.
  function prepare(r=run){
-  if(isReadOnly()||!r?.plan?.some(d=>d.colour))return Promise.resolve(true);
+  if(isReadOnly()||!eligible(r)||document.hidden||tab!=='today')return Promise.resolve(true);
   if(preparedRun===r)return Promise.resolve(true);
   if(warm)return warm.promise;
   let recognizer;try{recognizer=createRecognizer()}catch(e){toast(e.message);return Promise.resolve(false)}
-  const token=generation;let resolve;
+  const token=generation,index=r.index;let resolve;
   const promise=new Promise(done=>resolve=done),entry={promise,recognizer,finish:null};warm=entry;
   const timeout=setTimeout(()=>finish(false,'Spracherkennung konnte nicht gestartet werden. Bitte erneut versuchen.'),10000);
-  function finish(ok,message){if(warm!==entry)return;clearTimeout(timeout);abort(recognizer);warm=null;if(ok&&token===generation&&run===r&&!document.hidden)preparedRun=r;else ok=false;if(message)toast(message);resolve(ok)}
+  function finish(ok,message){if(warm!==entry)return;clearTimeout(timeout);abort(recognizer);warm=null;if(ok&&token===generation&&run===r&&r.index===index&&eligible(r)&&tab==='today'&&!document.hidden)preparedRun=r;else ok=false;if(message)toast(message);resolve(ok)}
   entry.finish=finish;recognizer.onstart=()=>finish(true);recognizer.onerror=e=>finish(false,errorText(e.error));recognizer.onend=()=>finish(false,'Spracherkennung wurde beendet. Bitte erneut starten.');
   try{recognizer.start()}catch{finish(false,'Spracherkennung konnte nicht gestartet werden. Bitte erneut versuchen.')}
   return promise;
@@ -94,7 +94,8 @@ const colourPerception=(()=>{
  function stop(reset=false){
   const s=session;session=null;if(s){clearInterval(s.clock);clearTimeout(s.retry);clearTimeout(s.startTimeout);if(s.trial?.open){s.trial.open=false;s.stats.interrupted=(s.stats.interrupted||0)+1;diagnose(s,'colour_interrupted',{colour:s.trial.colour,colourId:s.trial.id})}diagnose(s,'set_stopped')}
   abort(recognition);recognition=null;paint();
-  if(reset){generation++;preparedRun=null;if(warm)warm.finish(false)}
+  if(warm)warm.finish(false);
+  if(reset){generation++;preparedRun=null}
  }
  function sync(){
   if(!eligible()||run.phase!=='work'||run.paused||document.hidden||tab!=='today'||isReadOnly()){stop();return}

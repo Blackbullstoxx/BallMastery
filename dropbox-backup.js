@@ -17,6 +17,9 @@ const dropboxBackup=(()=>{
   // Completed sets are represented in overviewDay/practiceCounts; explicit
   // interruptions request an immediate full snapshot even without new records.
   delete copy.activeTraining;
+  // Display-only recovered timer totals change continuously with active clocks.
+  // They are still included in the full payload at genuine backup checkpoints.
+  delete copy.areaTrainingHistory;
   if(copy.cardTraining)copy.cardTraining={version:copy.cardTraining.version,since:copy.cardTraining.since,completedDays:copy.cardTraining.completedDays};
   if(copy.ballTraining)copy.ballTraining={version:copy.ballTraining.version,since:copy.ballTraining.since};
   const overview=copy.overviewDay;
