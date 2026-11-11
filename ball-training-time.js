@@ -26,7 +26,8 @@ function resetBallClock(){ballClock=null;if(typeof playerCards!=='undefined')pla
 // exist yet. Reconstruct only durations explicitly saved with completed timers.
 function historicalAreaTraining(section){
  const data=state.cardTraining,days=new Set(),times=new Map(),valid=day=>validTrainingDate(day)&&day<=date(),keys=section==='juggling'?['toe','free','touches']:['feints'];
- const add=(day,ms=0)=>{if(!valid(day))return;days.add(day);if(Number.isFinite(ms)&&ms>0)times.set(day,Math.max(times.get(day)||0,ms))};
+ const add=(day,ms=0)=>{if(!valid(day))return;days.add(day);if(Number.isFinite(ms)&&ms>0)times.set(day,Math.max(times.get(day)||0,Math.min(90000000,ms)))};
+ for(const [day,ms] of Object.entries(state.areaTrainingHistory?.[section]||{}))if(ms>0)add(day,ms);
  for(const [day,row] of Object.entries(data?.days||{}))if(row[section]>0)add(day,row[section]);
  for(const key of keys)for(const [day,n] of Object.entries(state.practiceCounts?.[key]||{}))if(Number.isInteger(n)&&n>0)add(day);
  if(section==='juggling')for(const score of state.scores||[])if(keys.includes(score.key)&&Number.isInteger(score.value)&&score.value>=0)add(score.date);
@@ -40,8 +41,10 @@ function historicalAreaTraining(section){
  const saved=state.activeTraining,r=saved?.version===1?saved.runs?.[section]:null;
  if(r&&r.day===saved.day&&Array.isArray(r.plan)&&Array.isArray(r.completedSets)){let total=0;for(const i of new Set(r.completedSets))if(Number.isInteger(i)&&i>=0&&i<r.plan.length)total+=rowTime(r.plan[i]);if(total)add(r.day,total)}
  const unknownDays=[...days].filter(day=>!times.has(day)).length;
- return {milliseconds:[...times.values()].reduce((n,v)=>n+v,0),days:days.size,since:[...days,data?.since||date()].sort()[0],unknownDays};
+ return {milliseconds:[...times.values()].reduce((n,v)=>n+v,0),days:days.size,since:[...days,data?.since||date()].sort()[0],unknownDays,timedDays:Object.fromEntries(times)};
 }
+function validAreaTrainingHistory(value){return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(k=>['juggling','feints'].includes(k))&&Object.values(value).every(days=>days&&typeof days==='object'&&!Array.isArray(days)&&Object.entries(days).every(([day,ms])=>validTrainingDate(day)&&Number.isSafeInteger(ms)&&ms>0&&ms<=90000000))}
+function rememberAreaTrainingTimes(){state.areaTrainingHistory=Object.fromEntries(['juggling','feints'].map(section=>[section,historicalAreaTraining(section).timedDays]))}
 function ballTrainingTotals(section='ball'){
  if(section!=='ball')return historicalAreaTraining(section);
  const data=ballTrainingState(),values=Object.values(data.days);

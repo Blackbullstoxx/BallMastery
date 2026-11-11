@@ -19,3 +19,5 @@ assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,1680000,'saved comp
 ctx.state.cardTraining.days['2026-11-01']={juggling:840000,feints:0};assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,1680000,'time and plan on the same day must not double count');
 assert.equal(ctx.ballTrainingTotals('juggling').since,'2026-11-01');
 console.log('PASS: area-isolated times and days, zero/future exclusion, empty legacy data, seconds, singular, since date and pure display.');
+
+ctx.rememberAreaTrainingTimes();const archived=JSON.stringify(ctx.state.areaTrainingHistory);delete ctx.state.completedPlans;delete ctx.state.blockDone;delete ctx.state.cardTraining.days['2026-11-01'];assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,1680000,'historical timer durations survive daily-plan cleanup');assert(ctx.validAreaTrainingHistory(ctx.state.areaTrainingHistory));assert(!ctx.validAreaTrainingHistory({juggling:{'2026-11-01':-1}}));ctx.state=JSON.parse(JSON.stringify(ctx.state));assert.equal(JSON.stringify(ctx.state.areaTrainingHistory),archived,'backup round trip preserves recovered timers');
