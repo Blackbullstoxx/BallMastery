@@ -219,3 +219,28 @@
 .player-card-actions #replay-card{margin:0;min-height:44px;padding:10px 18px;border:1px solid #c7c0b4;border-radius:10px;background:#fffbf5;color:#264734;font:500 14px/1.4 Arial,sans-serif}
 
 .player-card-actions[hidden]{display:none}
+
+/* Dark material-specific ink; decorative rules are independent of the artwork. */
+#fvo-card-preview .fp-front{--card-ink:#432b1c}
+#fvo-card-preview .fp-front[data-card-tier="1"]{--card-ink:#30363b}
+#fvo-card-preview .fp-front[data-card-tier="2"]{--card-ink:#44301a}
+#fvo-card-preview .fp-front[data-card-tier="3"]{--card-ink:#40301c}
+#fvo-card-preview .fp-name{font-family:Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:0;color:var(--card-ink)}
+#fvo-card-preview .fp-total{font-family:Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:-2px;color:var(--card-ink)}
+#fvo-card-preview .fp-ges{font-family:Georgia,'Times New Roman',serif;font-weight:700;color:var(--card-ink)}
+#fvo-card-preview .fp-name:after,#fvo-card-preview .fp-ges:after{content:'';position:absolute;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.6;pointer-events:none}
+#fvo-card-preview .fp-name:after{left:13%;right:13%;bottom:-4px}
+#fvo-card-preview .fp-ges:after{left:18%;right:18%;bottom:-5px}
+#fvo-card-preview .fp-skill-labels,#fvo-card-preview .fp-ratings span,#fvo-card-preview .fp-ratings span.fp-up,#fvo-card-preview .fp-ratings span.fp-down{color:var(--card-ink)}
+@supports(font-size:1cqw){
+ #fvo-card-preview .fp-perspective{container-type:inline-size}
+ #fvo-card-preview .fp-name{font-size:calc(var(--name-relative,10.625)*1cqw)!important}
+ #fvo-card-preview .fp-total{font-size:17.8125cqw;letter-spacing:-.625cqw}
+ #fvo-card-preview .fp-ges{font-size:6.875cqw}
+ #fvo-card-preview .fp-skill-labels{font-size:5cqw}
+ #fvo-card-preview .fp-ratings span{font-size:9.6875cqw}
+ #fvo-card-preview .fp-ratings small{font-size:5cqw}
+ #fvo-card-preview .fp-badges{height:7.1875cqw;gap:3.75cqw}
+ #fvo-card-preview .fp-flag{width:11.875cqw;height:7.1875cqw}
+ #fvo-card-preview .fp-badges img{width:7.1875cqw;height:7.1875cqw}
+}

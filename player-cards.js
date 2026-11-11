@@ -134,6 +134,7 @@ const playerCards=(()=>{
   if(!state.cardTraining)state.cardTraining={version:1,since:date(),days:{},completedDays:[]};
   if(!state.diligence)state.diligence={version:1,since:date(),pauses:[]};
   if(!state.playerCard.lastShown)state.playerCard.lastShown=snapshot();
+  if(!state.playerCard.sectionReveals){state.playerCard.sectionReveals={};const legacy=state.playerCard.reveal;if(legacy)state.playerCard.sectionReveals[legacy.section]=JSON.parse(JSON.stringify(legacy))}
  }
  function sync(){
   const now=Date.now(),previous=clock;clock=null;if(isReadOnly())return;
@@ -144,7 +145,7 @@ const playerCards=(()=>{
  function completed(section){
   if(isReadOnly())return;init();
   const c=state.playerCard,to=snapshot(),from=c.lastShown||to;
-  c.reveal={day:date(),section,from,to,seen:false};c.lastShown=to;
+  c.reveal={day:date(),section,from,to,seen:false};c.lastShown=to;c.sectionReveals[section]=JSON.parse(JSON.stringify(c.reveal));
  }
  function destroy(){if(dispose)dispose();dispose=null}
  function mount(host,{section='ball',animate=false,from=null,to=snapshot(),correction=false,allowReplay=false}={}){
@@ -176,9 +177,9 @@ const playerCards=(()=>{
    const ready=typeof cardAudio!=='undefined'&&cardAudio.enabled()?await cardAudio.prepare():true;
    if(!host.isConnected||tab!=='today'||date()!==day||isReadOnly())return;
    if(!ready)toast('Kartensound konnte nicht gestartet werden. Versuche die Kartenanimation erneut.');
-   const current=snapshot(),reveal=state.playerCard?.reveal;
-   const same=reveal?.day===day&&reveal.section===section&&reveal.to.total===current.total&&reveal.to.tier===current.tier&&reveal.to.values.every((n,i)=>n===current.values[i])&&reveal.to.visible.every((n,i)=>n===current.visible[i]);
-   mount(host,{section,animate:true,allowReplay:true,from:same?reveal.from:current,to:current});
+   const current=snapshot(),saved=state.playerCard?.sectionReveals?.[section],legacy=state.playerCard?.reveal;
+   const reveal=saved?.day===day?saved:legacy?.day===day&&legacy.section===section?legacy:null;
+   mount(host,{section,animate:true,allowReplay:true,from:reveal?reveal.from:current,to:reveal?reveal.to:current});
    const cancel=dispose,stopFitting=fitPlayerCardCompletion(host,true);dispose=()=>{stopFitting();if(cancel)cancel()};
   }finally{replayPending=false;if(button){button.disabled=false;button.textContent='Kartenanimation erneut ansehen'}}
  }
@@ -195,6 +196,7 @@ const playerCards=(()=>{
  function valid(data){
   const c=data.playerCard,t=data.cardTraining;
   if(c!==undefined&&(!c||c.version!==1||!c.areas||!areas.every(k=>typeof c.areas[k]==='boolean')||!c.techniques||!['toe','free'].every(k=>typeof c.techniques[k]==='boolean')||typeof c.portrait!=='string'||c.portrait.length>1000000||c.portrait&&!/^data:image\/(png|webp);base64,[A-Za-z0-9+/=]+$/.test(c.portrait)||!c.layout||!['scale','x','y'].every(k=>Number.isFinite(c.layout[k]))||c.layout.scale<80||c.layout.scale>150||Math.abs(c.layout.x)>20||Math.abs(c.layout.y)>10||c.lastShown&&!validSnapshot(c.lastShown)||c.reveal&&(!validTrainingDate(c.reveal.day)||!areas.includes(c.reveal.section)||typeof c.reveal.seen!=='boolean'||!validSnapshot(c.reveal.from)||!validSnapshot(c.reveal.to))))return false;
+  if(c?.sectionReveals!==undefined&&(!c.sectionReveals||typeof c.sectionReveals!=='object'||Array.isArray(c.sectionReveals)||Object.keys(c.sectionReveals).length>3||!Object.entries(c.sectionReveals).every(([key,r])=>areas.includes(key)&&r&&r.section===key&&validTrainingDate(r.day)&&typeof r.seen==='boolean'&&validSnapshot(r.from)&&validSnapshot(r.to))))return false;
   if(t!==undefined&&(!t||t.version!==1||!validTrainingDate(t.since)||!t.days||typeof t.days!=='object'||Array.isArray(t.days)||!Object.entries(t.days).every(([day,row])=>validTrainingDate(day)&&row&&['feints','juggling'].every(k=>Number.isSafeInteger(row[k])&&row[k]>=0&&row[k]<=90000000))||!Array.isArray(t.completedDays)||!t.completedDays.every(validTrainingDate)))return false;
   if(data.diligence!==undefined&&!diligenceRules.valid(data.diligence))return false;
   if(data.cardSounds!==undefined&&typeof data.cardSounds!=='boolean')return false;

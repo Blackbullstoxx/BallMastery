@@ -152,3 +152,15 @@ Jede Abschlusskarte hat jetzt „Kartenanimation ansehen“. Der ausdrückliche 
 ### 2026.11.10.14
 
 - Oberer Abstand beim automatischen Ausrichten der Kartenfläche auf 13 Pixel erhöht.
+
+### 2026.11.11.1
+
+- „Heute“ startet mit der vorhandenen Spielerkarte, „Zum Training“ und dem nächsten Stufenziel samt fehlenden Gesamtpunkten. Ab Legende wird die erreichte höchste Kartenstufe angezeigt.
+- Kompakte Bereichsauswahl mit Fußball, Jonglierschuh und Schlängelpfeil, Restzeit und aktuellem Rating. Bei einem einzigen Bereich geht es direkt zur vertrauten Trainingsansicht. Alle bisherigen Trainingsinformationen und Abläufe bleiben verfügbar.
+- „Heute abgeschlossen ✓“ bedeutet: alle geplanten Sätze/Zeiten erledigt. Der manuelle Abschluss zum Start der Kartenenthüllung bleibt unabhängig davon bestehen.
+- Ansicht und Scrollposition bleiben während der Sitzung beim Tabwechsel erhalten. Erneutes Öffnen zeigt bei begonnenem Training vorrangig die Wiederherstellung, sonst die Spielerkarte. Tageswechsel und Backupwechsel setzen die neue Navigation passend zurück.
+- Die große Karte im Rekorde-Tab wird durch „Zur Spielerkarte“ ersetzt. Trainingsdaten und Ratingregeln bleiben unverändert; bestehende Sicherungen bleiben kompatibel.
+- Name, Gesamtbewertung und GES verwenden kräftige Serifenschrift mit dunklen, materialabhängigen Farben und sanft auslaufenden Linien. GES bleibt unter dem Rating. Schrift und Abzeichen passen sich der Kartengröße an; vorhandene Rahmen und Porträts bleiben erhalten.
+- „Zur nächsten Wochenübung?“ steht auch im laufenden Training in einem eigenen Wechselbereich über „Jetzt wechseln“, getrennt von der Ergebniseingabe.
+- Geprüft: automatische Daten-/Navigationstests; isolierte Chrome-Vorschau einschließlich 390-Pixel-Ansicht, Tageszuständen, Tab-Rückkehr, Wiederherstellung und beiden vorhandenen Porträts auf allen vier Stufen. Kein echter iPhone-Safari-Test.
+- Pro Trainingsbereich wird der letzte Abschluss mit Vorher-/Nachherwerten gespeichert. „Kartenanimation erneut ansehen“ zeigt genau diese Einzelwertänderungen, auch nach dem Training anderer Bereiche. Neue optionale Snapshotdaten werden beim Backup validiert; alte Sicherungen bleiben lesbar.

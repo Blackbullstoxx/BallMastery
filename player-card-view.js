@@ -119,7 +119,7 @@ function mountPlayerCard(host,options){
  ratings.forEach(el=>{const value=el.textContent;el.replaceChildren();const num=document.createElement('b');num.className='fp-num';num.textContent=value;el.append(num)});
 
  const image=q('.fp-portrait img');
- q('.fp-name').style.fontSize=Math.min(34,Math.floor(280/(Math.max(1,options.name.length)*.62)))+'px';
+ q('.fp-name').style.fontSize=Math.min(34,Math.floor(280/(Math.max(1,options.name.length)*.72)))+'px';q('.fp-name').style.setProperty('--name-relative',String(Math.min(34,Math.floor(280/(Math.max(1,options.name.length)*.72)))/3.2));
  const layout=options.portrait?(options.layout||{scale:114,x:-2,y:0}):{scale:100,x:0,y:0};
  if(!options.portrait)image.classList.add('fp-default-portrait');
  image.style.width=layout.scale+'%';image.style.left=layout.x+'%';image.style.top=layout.y+'%';

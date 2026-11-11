@@ -121,6 +121,7 @@ function restoreTraining(){
   run=runs[activeSection]||null;
  }
  progressReady=true;
+ if(typeof todayNavigation!=='undefined')todayNavigation.restore();
 }
 function renderRecovery(){
  const d=run.plan[run.index],timed=['count','work','rest'].includes(run.phase),remaining=Math.ceil(run.remaining);
