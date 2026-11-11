@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const ctx={date:()=> '2026-11-11',esc:String,state:{cardTraining:{since:'2026-11-01',days:{'2026-11-01':{juggling:90000,feints:60000},'2026-11-02':{juggling:0,feints:120000},'2026-11-11':{juggling:30000,feints:0},'2026-11-12':{juggling:600000,feints:600000}}}},document:{querySelectorAll:()=>[]}};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync(__dirname+'/../ball-training-time.js','utf8'),ctx);
+const before=JSON.stringify(ctx.state);
+assert.equal(ctx.ballTrainingText('juggling'),'Gesamt: schon 2 Min. / 2 Trainingstage');
+assert.equal(ctx.ballTrainingText('feints'),'Gesamt: schon 3 Min. / 2 Trainingstage');
+assert(ctx.ballTrainingMarkup('juggling').includes('data-ball-total="juggling"'));
+assert.equal(ctx.ballTrainingSince('feints'),'01.11.2026');
+assert.equal(JSON.stringify(ctx.state),before,'display must not change training evidence');
+ctx.state={};assert.equal(ctx.ballTrainingText('juggling'),'Gesamt: schon 0 Min. / 0 Trainingstage');assert.equal(JSON.stringify(ctx.state),'{}','old backups remain untouched');
+ctx.state={cardTraining:{since:'2026-11-01',days:{'2026-11-11':{juggling:45000,feints:0}}}};
+assert.equal(ctx.ballTrainingText('juggling'),'Gesamt: schon 45 Sek. / 1 Trainingstag');
+console.log('PASS: area-isolated times and days, zero/future exclusion, empty legacy data, seconds, singular, since date and pure display.');

@@ -22,24 +22,29 @@ function syncBallTime(){
  }
 }
 function resetBallClock(){ballClock=null;if(typeof playerCards!=='undefined')playerCards.resetClock()}
-function ballTrainingTotals(){
+function ballTrainingTotals(section='ball'){
+ if(section!=='ball'){
+  const data=state.cardTraining,values=Object.entries(data?.days||{}).filter(([day])=>validTrainingDate(day)&&day<=date()).map(([,row])=>row[section]||0);
+  return {milliseconds:values.reduce((sum,ms)=>sum+ms,0),days:values.filter(ms=>ms>0).length,since:data?.since||date()};
+ }
  const data=ballTrainingState(),values=Object.values(data.days);
  return {milliseconds:values.reduce((sum,ms)=>sum+ms,0),days:values.filter(ms=>ms>0).length,since:data.since};
 }
-function ballTrainingText(){
- const totals=ballTrainingTotals(),seconds=Math.floor(totals.milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
+function ballTrainingText(section='ball'){
+ const totals=ballTrainingTotals(section),seconds=Math.floor(totals.milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
  const duration=hours?`${hours} Std. ${minutes%60} Min.`:minutes?`${minutes} Min.`:seconds?`${seconds} Sek.`:'0 Min.';
  return `Gesamt: schon ${duration} / ${totals.days} ${totals.days===1?'Trainingstag':'Trainingstage'}`;
 }
-function ballTrainingSince(){return ballTrainingState().since.split('-').reverse().join('.')}
+function ballTrainingSince(section='ball'){return ballTrainingTotals(section).since.split('-').reverse().join('.')}
 function ballTrainingMarkup(section){
- if(section!=='ball')return '';
- return `<button type="button" class="ball-training-total" data-ball-total title="Erfassung seit ${ballTrainingSince()}" aria-label="${esc(ballTrainingText())} · Erfassungsbeginn anzeigen">${esc(ballTrainingText())}</button>`;
+ if(!['ball','juggling','feints'].includes(section))return '';
+ return `<button type="button" class="ball-training-total" data-ball-total="${section}" title="Erfassung seit ${ballTrainingSince(section)}" aria-label="${esc(ballTrainingText(section))} · Erfassungsbeginn anzeigen">${esc(ballTrainingText(section))}</button>`;
 }
 function refreshBallTimeDisplay(){
- const text=ballTrainingText();document.querySelectorAll('[data-ball-total]').forEach(button=>{
+ document.querySelectorAll('[data-ball-total]').forEach(button=>{
+  const section=button.dataset.ballTotal||'ball',text=ballTrainingText(section);
   if(button.textContent!==text)button.textContent=text;
-  button.title='Erfassung seit '+ballTrainingSince();button.setAttribute('aria-label',text+' · Erfassungsbeginn anzeigen');
+  button.title='Erfassung seit '+ballTrainingSince(section);button.setAttribute('aria-label',text+' · Erfassungsbeginn anzeigen');
  });
 }
-function showBallTrainingStart(event){if(event.target.closest('[data-ball-total]'))toast('Erfassung seit '+ballTrainingSince())}
+function showBallTrainingStart(event){const button=event.target.closest('[data-ball-total]');if(button)toast('Erfassung seit '+ballTrainingSince(button.dataset.ballTotal||'ball'))}
