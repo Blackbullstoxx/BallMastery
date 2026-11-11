@@ -7,6 +7,7 @@ const todayNavigation=(()=>{
  function restoreScroll(){const top=positions.get(key())||0;window.requestAnimationFrame(()=>window.scrollTo({top,behavior:'instant'}))}
  function restore(){const unfinished=Object.keys(runs).filter(k=>runs[k].day===date()&&runs[k].phase!=='done');screen=unfinished.length?'section':'home';if(unfinished.length&&!unfinished.includes(activeSection)){activeSection=unfinished[0];run=runs[activeSection]}positions.clear()}
  function open(next){
+  if(tab==='today'&&screen===next)return;
   if(tab==='today')capture();
   if(run&&!run.paused&&!['ready','review','done'].includes(run.phase))pauseRun();
   document.querySelectorAll('video').forEach(v=>v.pause());
@@ -43,11 +44,15 @@ const todayNavigation=(()=>{
   if(screen==='section')return false;
   const list=sections(),values=list.map(status);
   if(screen==='home'){
-   $('#view').innerHTML=`<section class="today-home" aria-label="Deine Spielerkarte"><div class="home-player-card"><div data-home-player-card></div></div><button class="primary" id="to-training">Zum Training</button>${goal()}</section>`;
+   $('#view').innerHTML=`${areaMarkup()}<section class="today-home" aria-label="Deine Spielerkarte"><div class="home-player-card"><div data-home-player-card></div></div><button class="primary" id="to-training">Zum Training</button>${goal()}</section>`;
    playerCards.mount(document.querySelector('[data-home-player-card]'));
-  }else $('#view').innerHTML=`<button class="today-back" data-today-view="home">‹ Zurück zur Spielerkarte</button><h2 class="training-question">Was möchtest du trainieren?</h2>${list.length?summary(values):'<div class="today-summary">Heute ist trainingsfrei.</div>'}<div class="training-areas">${values.map(v=>`<button class="training-area" data-training-area="${v.section}">${icon(v.section)}<span class="training-area-copy"><strong>${sectionNames[v.section]}</strong><small>${label(v)}</small></span>${rating(v.section)}<span class="area-chevron" aria-hidden="true">›</span></button>`).join('')}</div>`;
+  }else $('#view').innerHTML=`${areaMarkup()}<h2 class="training-question">Was möchtest du trainieren?</h2>${list.length?summary(values):'<div class="today-summary">Heute ist trainingsfrei.</div>'}<div class="training-areas">${values.map(v=>`<button class="training-area" data-training-area="${v.section}">${icon(v.section)}<span class="training-area-copy"><strong>${sectionNames[v.section]}</strong><small>${label(v)}</small></span>${rating(v.section)}<span class="area-chevron" aria-hidden="true">›</span></button>`).join('')}</div>`;
   bind();return true;
  }
- function areaMarkup(){return '<div class="today-area-navigation"><button class="today-back" data-today-view="areas">‹ Zur Trainingsübersicht</button></div>'}
+ function areaMarkup(){
+  const items=[['home','Spielerkarte'],['areas','Übersicht']];
+  if(screen==='section')items.push(['section',sectionNames[activeSection]]);
+  return `<nav class="today-subnav${screen==='section'?' has-area':''}" aria-label="Heute-Ansichten">${items.map(([view,label])=>`<button type="button" data-today-view="${view}"${screen===view?' aria-current="page"':''}>${esc(label)}</button>`).join('')}</nav>`;
+ }
  return {capture,restoreScroll,restore,open,render:renderView,rating,status,label,sections,goal,areaMarkup,bind,screen:()=>screen};
 })();
