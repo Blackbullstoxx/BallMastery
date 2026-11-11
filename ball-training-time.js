@@ -22,18 +22,35 @@ function syncBallTime(){
  }
 }
 function resetBallClock(){ballClock=null;if(typeof playerCards!=='undefined')playerCards.resetClock()}
-function ballTrainingTotals(section='ball'){
- if(section!=='ball'){
-  const data=state.cardTraining,values=Object.entries(data?.days||{}).filter(([day])=>validTrainingDate(day)&&day<=date()).map(([,row])=>row[section]||0);
-  return {milliseconds:values.reduce((sum,ms)=>sum+ms,0),days:values.filter(ms=>ms>0).length,since:data?.since||date()};
+// Older records prove training days even when the active-time ledger did not
+// exist yet. Reconstruct only durations explicitly saved with completed timers.
+function historicalAreaTraining(section){
+ const data=state.cardTraining,days=new Set(),times=new Map(),valid=day=>validTrainingDate(day)&&day<=date(),keys=section==='juggling'?['toe','free','touches']:['feints'];
+ const add=(day,ms=0)=>{if(!valid(day))return;days.add(day);if(Number.isFinite(ms)&&ms>0)times.set(day,Math.max(times.get(day)||0,ms))};
+ for(const [day,row] of Object.entries(data?.days||{}))if(row[section]>0)add(day,row[section]);
+ for(const key of keys)for(const [day,n] of Object.entries(state.practiceCounts?.[key]||{}))if(Number.isInteger(n)&&n>0)add(day);
+ if(section==='juggling')for(const score of state.scores||[])if(keys.includes(score.key)&&Number.isInteger(score.value)&&score.value>=0)add(score.date);
+ const rowTime=row=>row&&keys.includes(row.key)&&Number.isInteger(row.work)&&row.work>0&&row.work<=7200?row.work*1000:0;
+ for(const [day,closed] of Object.entries(state.blockDone||{}))if(Array.isArray(closed)&&closed.includes(section)){
+  const rows=state.completedPlans?.[day]?.[section];add(day,Array.isArray(rows)?rows.reduce((n,row)=>n+rowTime(row),0):0);
  }
+ const overview=state.overviewDay;
+ let ms=0;for(const row of Object.values(overview?.sections?.[section]||{}))if(Array.isArray(row.completed)){const completed=new Set(row.completed.filter(n=>Number.isInteger(n)&&n>=1&&n<=row.total));ms+=rowTime(row)*completed.size}
+ if(ms)add(overview.day,ms);
+ const saved=state.activeTraining,r=saved?.version===1?saved.runs?.[section]:null;
+ if(r&&r.day===saved.day&&Array.isArray(r.plan)&&Array.isArray(r.completedSets)){let total=0;for(const i of new Set(r.completedSets))if(Number.isInteger(i)&&i>=0&&i<r.plan.length)total+=rowTime(r.plan[i]);if(total)add(r.day,total)}
+ const unknownDays=[...days].filter(day=>!times.has(day)).length;
+ return {milliseconds:[...times.values()].reduce((n,v)=>n+v,0),days:days.size,since:[...days,data?.since||date()].sort()[0],unknownDays};
+}
+function ballTrainingTotals(section='ball'){
+ if(section!=='ball')return historicalAreaTraining(section);
  const data=ballTrainingState(),values=Object.values(data.days);
  return {milliseconds:values.reduce((sum,ms)=>sum+ms,0),days:values.filter(ms=>ms>0).length,since:data.since};
 }
 function ballTrainingText(section='ball'){
  const totals=ballTrainingTotals(section),seconds=Math.floor(totals.milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
  const duration=hours?`${hours} Std. ${minutes%60} Min.`:minutes?`${minutes} Min.`:seconds?`${seconds} Sek.`:'0 Min.';
- return `Gesamt: schon ${duration} / ${totals.days} ${totals.days===1?'Trainingstag':'Trainingstage'}`;
+ return `Gesamt: ${totals.unknownDays?'mind. ':'schon '}${duration} / ${totals.days} ${totals.days===1?'Trainingstag':'Trainingstage'}`;
 }
 function ballTrainingSince(section='ball'){return ballTrainingTotals(section).since.split('-').reverse().join('.')}
 function ballTrainingMarkup(section){
@@ -47,4 +64,4 @@ function refreshBallTimeDisplay(){
   button.title='Erfassung seit '+ballTrainingSince(section);button.setAttribute('aria-label',text+' · Erfassungsbeginn anzeigen');
  });
 }
-function showBallTrainingStart(event){const button=event.target.closest('[data-ball-total]');if(button)toast('Erfassung seit '+ballTrainingSince(button.dataset.ballTotal||'ball'))}
+function showBallTrainingStart(event){const button=event.target.closest('[data-ball-total]');if(!button)return;const section=button.dataset.ballTotal||'ball',totals=ballTrainingTotals(section);toast('Erfassung seit '+ballTrainingSince(section)+(totals.unknownDays?' · Für '+totals.unknownDays+' ältere Trainingstage ist keine Dauer gespeichert.':''))}

@@ -225,7 +225,7 @@
 #fvo-card-preview .fp-front[data-card-tier="1"]{--card-ink:#30363b}
 #fvo-card-preview .fp-front[data-card-tier="2"]{--card-ink:#44301a}
 #fvo-card-preview .fp-front[data-card-tier="3"]{--card-ink:#40301c}
-#fvo-card-preview .fp-name{font-family:Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:0;color:var(--card-ink)}
+#fvo-card-preview .fp-name{font-family:'Times New Roman',Times,'Liberation Serif',serif;font-weight:700;font-variant-numeric:lining-nums;font-feature-settings:'lnum' 1;letter-spacing:0;color:var(--card-ink)}
 #fvo-card-preview .fp-total{font-family:'Times New Roman',Times,'Liberation Serif',serif;font-weight:700;font-variant-numeric:lining-nums tabular-nums;font-feature-settings:'lnum' 1,'tnum' 1;letter-spacing:-2px;color:var(--card-ink)}
 #fvo-card-preview .fp-ges{font-family:Georgia,'Times New Roman',serif;font-weight:700;color:var(--card-ink)}
 #fvo-card-preview .fp-name:after,#fvo-card-preview .fp-ges:after{content:'';position:absolute;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.6;pointer-events:none}

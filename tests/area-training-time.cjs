@@ -11,4 +11,11 @@ assert.equal(JSON.stringify(ctx.state),before,'display must not change training 
 ctx.state={};assert.equal(ctx.ballTrainingText('juggling'),'Gesamt: schon 0 Min. / 0 Trainingstage');assert.equal(JSON.stringify(ctx.state),'{}','old backups remain untouched');
 ctx.state={cardTraining:{since:'2026-11-01',days:{'2026-11-11':{juggling:45000,feints:0}}}};
 assert.equal(ctx.ballTrainingText('juggling'),'Gesamt: schon 45 Sek. / 1 Trainingstag');
+ctx.state={practiceCounts:{toe:{'2026-11-01':1,'2026-11-02':1},free:{'2026-11-01':1}},scores:[{key:'toe',date:'2026-11-03',value:0},{key:'toe',date:'2026-11-12',value:12}],cardTraining:{since:'2026-11-03',days:{'2026-11-03':{juggling:840000,feints:0}}},juggleMinutes:{toe:7,free:7}};
+assert.equal(ctx.ballTrainingTotals('juggling').days,3,'historical days are unioned across techniques and records');
+assert.equal(ctx.ballTrainingText('juggling'),'Gesamt: mind. 14 Min. / 3 Trainingstage','current settings cannot invent historical durations');
+ctx.state.blockDone={'2026-11-01':['juggling']};ctx.state.completedPlans={'2026-11-01':{juggling:[{key:'toe',work:420},{key:'free',work:420}]}};
+assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,1680000,'saved completed timer durations can be recovered');
+ctx.state.cardTraining.days['2026-11-01']={juggling:840000,feints:0};assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,1680000,'time and plan on the same day must not double count');
+assert.equal(ctx.ballTrainingTotals('juggling').since,'2026-11-01');
 console.log('PASS: area-isolated times and days, zero/future exclusion, empty legacy data, seconds, singular, since date and pure display.');
