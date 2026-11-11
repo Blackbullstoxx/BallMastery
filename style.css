@@ -232,8 +232,7 @@ nav button{flex:1 1 auto;min-width:0}
 @media(max-width:350px){.mastery-row{font-size:12px;gap:5px}.mastery-star,.mastery-star svg{width:14px;height:14px}}
 
 /* Personal card home and lightweight navigation around the familiar training views. */
-.today-home{max-width:600px;margin:auto}.home-player-card{overflow:hidden;border:1px solid #dfd6c9;border-radius:16px;background:#f4eee6;margin-bottom:14px}
-.home-player-card #fvo-card-preview .fp-stage{padding:14px 12px 16px}.home-player-card #fvo-card-preview .fp-title{margin-bottom:8px}
+#my-player-card{max-width:600px;margin:0 auto 14px;overflow:hidden;border:1px solid #dfd6c9;border-radius:16px;background:#f4eee6}
 .next-tier{padding:16px 18px;margin:14px 0}.next-tier>small{font-size:11px;font-weight:700;letter-spacing:.08em}.next-tier h2{margin:5px 0 8px}.next-tier p{margin:7px 0 0;font-size:13px}.next-tier progress{display:block;margin:0;height:7px}.tier-shield{width:34px;height:40px;color:#6e7479}.tier-2{color:#8d6b25}.tier-3{color:#88601d}
 
 .training-question{font-size:clamp(16px,4.55vw,25px);letter-spacing:-.4px;white-space:nowrap;margin:10px 0 18px}.today-summary{display:flex;gap:10px;align-items:center;background:#e0eddc;border-radius:14px;padding:14px 16px;margin-bottom:16px;font-size:14px}.today-summary>span:last-child{margin-left:auto;white-space:nowrap}.today-summary>span:first-child{font-size:23px;margin-left:0}
@@ -244,9 +243,11 @@ nav button{flex:1 1 auto;min-width:0}
 
 .run-mastery{margin-top:28px;padding:18px;border:1px solid #dce6da;border-radius:16px;background:#f7faf5}.run-mastery h3{margin:0 0 14px}.run-mastery>button{width:100%}
 
-.today-layout .today-subnav{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin:0 0 18px;padding:3px;border:1px solid #b9cebb;border-radius:13px;background:#f7faf5}
-.today-layout .today-subnav.has-area{grid-template-columns:.95fr .85fr 1.4fr}
+.today-layout .today-subnav{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:3px;margin:0 0 18px;padding:3px;border:1px solid #b9cebb;border-radius:13px;background:#f7faf5}
+.today-subnav:not(.has-area) button{grid-column:1}
 .today-subnav button{min-width:0;min-height:40px;padding:8px 5px;border-radius:9px;background:transparent;color:#365a40;font-size:clamp(11.5px,3.2vw,14px);line-height:1.2;white-space:nowrap}
 .today-subnav button[aria-current="page"]{background:#d8eabd;color:#23452e;font-weight:700}
 .today-subnav button:hover{background:#e8f1df}
 .today-subnav button[aria-current="page"]:hover{background:#d8eabd}
+
+#my-player-card+.next-tier{max-width:600px;margin-left:auto;margin-right:auto}

@@ -99,7 +99,7 @@ const playerCards=(()=>{
  const feintCurve=[[0,30],[30,40],[120,55],[360,70],[780,85],[1200,95],[1460,99]];
  const juggleCurve=[[0,30],[30,40],[120,50],[600,60],[1800,70],[3600,80],[6600,90],[10200,99]];
  const bonusCurves={toe:[[0,0],[25,3],[50,6],[100,9],[200,12],[300,15]],free:[[0,0],[10,3],[25,6],[50,9],[100,12],[200,15]]};
- let clock=null,dispose=null,replayPending=false;
+ let clock=null,dispose=null,replayPending=false,presented=null;
  const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
  function curve(value,points){
   if(value<=points[0][0])return points[0][1];
@@ -128,6 +128,30 @@ const playerCards=(()=>{
   if(total===99&&!values.every((n,i)=>!visible[i]||n===99))total=98;
   return {values,total,tier:total>=85?3:total>=70?2:total>=50?1:0,visible};
  }
+ // Commit ratings only at explicit area completion. The daily baseline and
+ // committed active times travel with backups; unfinished repeats cannot leak in.
+ function totalFor(values,visible){const weight=weights.reduce((n,w,i)=>n+(visible[i]?w:0),0);let total=Math.round(values.reduce((n,v,i)=>n+(visible[i]?v*weights[i]:0),0)/weight);if(total===99&&!values.every((v,i)=>!visible[i]||v===99))total=98;return {values,total,tier:total>=85?3:total>=70?2:total>=50?1:0,visible}}
+ function activeTimes(){return {ball:state.ballTraining?.days?.[date()]||0,juggling:state.cardTraining?.days?.[date()]?.juggling||0,feints:state.cardTraining?.days?.[date()]?.feints||0}}
+ function dailyState(){
+  const c=config();if(c.dailyRatings?.day===date())return c.dailyRatings;
+  const current=snapshot(),yesterday=diligenceRules.day(diligenceRules.number(date())-1),previous=snapshot(state,drills,yesterday);
+  const reveals=[c.reveal,...Object.values(c.sectionReveals||{})].filter(r=>r?.day===date());
+  // Ball progress has no historical daily counter; old reveals preserve its baseline.
+  previous.values[0]=Math.min(current.values[0],...reveals.map(r=>r.from.values[0]));
+  const from=totalFor(previous.values,current.visible),values=[...from.values],done=state.blockDone?.[date()]||[],times=activeTimes();
+  areas.forEach((area,i)=>{if(done.includes(area))values[i]=current.values[i];else times[area]=0});
+  const daily={day:date(),from,to:totalFor(values,current.visible),times};
+  daily.to.values[3]=committedDiligence(daily,done);daily.to=totalFor(daily.to.values,current.visible);
+  return daily;
+ }
+ function committedDiligence(daily,done){
+  const today=date(),data={...state,ballTraining:{...state.ballTraining,days:{...state.ballTraining?.days,[today]:daily.times.ball}},cardTraining:{...state.cardTraining,days:{...state.cardTraining?.days,[today]:{juggling:daily.times.juggling,feints:daily.times.feints}},completedDays:(state.cardTraining?.completedDays||[]).filter(d=>d!==today)},sessions:(state.sessions||[]).filter(d=>d!==today),practiceCounts:Object.fromEntries(Object.entries(state.practiceCounts||{}).map(([key,days])=>[key,Object.fromEntries(Object.entries(days).filter(([d])=>d!==today))]))};
+  if(done.length)data.sessions.push(today);
+  return diligenceRules.report(data,today).rating;
+ }
+ function collectionSnapshot(){return dailyState().to}
+ function wantsCompletion(section){const r=state.playerCard?.reveal;return !isReadOnly()&&r?.day===date()&&r.section===section&&(!r.seen||presented===r)}
+ function leaveCompletion(){presented=null}
  function init(){
   if(isReadOnly())return;
   if(!state.playerCard)state.playerCard=config();
@@ -135,6 +159,7 @@ const playerCards=(()=>{
   if(!state.diligence)state.diligence={version:1,since:date(),pauses:[]};
   if(!state.playerCard.lastShown)state.playerCard.lastShown=snapshot();
   if(!state.playerCard.sectionReveals){state.playerCard.sectionReveals={};const legacy=state.playerCard.reveal;if(legacy)state.playerCard.sectionReveals[legacy.section]=JSON.parse(JSON.stringify(legacy))}
+  if(state.playerCard.dailyRatings?.day!==date())state.playerCard.dailyRatings=dailyState();
  }
  function sync(){
   const now=Date.now(),previous=clock;clock=null;if(isReadOnly())return;
@@ -144,16 +169,18 @@ const playerCards=(()=>{
  function completedSet(){if(isReadOnly()||trainingPaused())return;init();if(!state.cardTraining.completedDays.includes(run.day))state.cardTraining.completedDays.push(run.day)}
  function completed(section){
   if(isReadOnly())return;init();
-  const c=state.playerCard,to=snapshot(),from=c.lastShown||to;
+  const c=state.playerCard,daily=c.dailyRatings,raw=snapshot(),from=daily.to,values=[...from.values],index=areas.indexOf(section);
+  daily.times[section]=activeTimes()[section];values[index]=raw.values[index];values[3]=committedDiligence(daily,[...new Set([...(state.blockDone?.[date()]||[]),section])]);
+  const to=totalFor(values,raw.visible);daily.to=to;
   c.reveal={day:date(),section,from,to,seen:false};c.lastShown=to;c.sectionReveals[section]=JSON.parse(JSON.stringify(c.reveal));
  }
  function destroy(){if(dispose)dispose();dispose=null}
- function mount(host,{section='ball',animate=false,from=null,to=snapshot(),correction=false,allowReplay=false}={}){
+ function mount(host,{section='ball',animate=false,from=null,to=snapshot(),correction=false,allowReplay=false,displayChanges=false}={}){
   if(!host)return;destroy();
   const c=config(),old=from||to,actions=allowReplay?document.querySelector('.player-card-actions'):null;
   if(actions)actions.hidden=animate;
-  const relevant=correction?to.values.map((v,i)=>v!==old.values[i]):[section==='ball',section==='juggling',section==='feints',true];
-  dispose=mountPlayerCard(host,{onComplete:()=>{if(actions&&host.isConnected&&actions.isConnected)actions.hidden=false},from:old,to,section,relevant,name:state.name||'DEIN NAME',portrait:c.portrait||'',layout:c.layout,animate,correction,soundFactory:animate&&!correction&&typeof cardAudio!=='undefined'?()=>cardAudio.create():null});
+  const relevant=correction||displayChanges?to.values.map((v,i)=>v!==old.values[i]):[section==='ball',section==='juggling',section==='feints',true];
+  dispose=mountPlayerCard(host,{onComplete:()=>{if(actions&&host.isConnected&&actions.isConnected)actions.hidden=false},from:old,to,section,relevant,name:state.name||'DEIN NAME',portrait:c.portrait||'',layout:c.layout,animate,correction,displayChanges,soundFactory:animate&&!correction&&typeof cardAudio!=='undefined'?()=>cardAudio.create():null});
  }
  function completion(section){
   const host=document.querySelector('[data-player-card]');if(!host)return;
@@ -162,9 +189,9 @@ const playerCards=(()=>{
   const reveal=state.playerCard?.reveal;
   const animate=!isReadOnly()&&reveal?.day===date()&&reveal.section===section&&!reveal.seen;
   // Persist before starting, so changing tabs or reopening never replays it.
-  if(animate){reveal.seen=true;save()}
+  if(animate){presented=reveal;reveal.seen=true;save()}
   rewardShown.add(date()+':'+section);if(run)run.rewardPending=false;
-  mount(host,{section,animate,allowReplay:true,from:animate?reveal.from:null,to:animate?reveal.to:snapshot()});
+  mount(host,{section,animate,allowReplay:true,from:reveal?.from,to:reveal?.to||snapshot(),displayChanges:!animate});
   const cancel=dispose,stopFitting=fitPlayerCardCompletion(host,animate);dispose=()=>{stopFitting();if(cancel)cancel()};
   });
  }
@@ -185,9 +212,9 @@ const playerCards=(()=>{
  }
 
  function collectionMarkup(){return '<section id="my-player-card" aria-label="Spielerkarte"><div data-player-card></div></section>'}
- function collection(){const panel=document.querySelector('#my-player-card');if(!panel)return;mount(panel.querySelector('[data-player-card]'))}
+ function collection(){const panel=document.querySelector('#my-player-card');if(!panel)return;const daily=dailyState();mount(panel.querySelector('[data-player-card]'),{from:daily.from,to:daily.to,displayChanges:true})}
  function correction(before){
-  if(isReadOnly())return;init();const to=snapshot();state.playerCard.lastShown=to;save();
+  if(isReadOnly())return;init();const to=snapshot();state.playerCard.lastShown=to;state.playerCard.dailyRatings.to=to;save();
   if(to.values.every((v,i)=>v===before.values[i])&&to.total===before.total)return;
   const dialog=document.createElement('dialog');dialog.className='player-card-dialog';dialog.innerHTML='<div data-player-card></div><button type="button">Schließen</button>';document.body.append(dialog);
   const close=()=>{destroy();dialog.close();dialog.remove()};dialog.querySelector('button').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close()});dialog.showModal();mount(dialog.querySelector('[data-player-card]'),{from:before,to,animate:true,correction:true});
@@ -197,6 +224,7 @@ const playerCards=(()=>{
   const c=data.playerCard,t=data.cardTraining;
   if(c!==undefined&&(!c||c.version!==1||!c.areas||!areas.every(k=>typeof c.areas[k]==='boolean')||!c.techniques||!['toe','free'].every(k=>typeof c.techniques[k]==='boolean')||typeof c.portrait!=='string'||c.portrait.length>1000000||c.portrait&&!/^data:image\/(png|webp);base64,[A-Za-z0-9+/=]+$/.test(c.portrait)||!c.layout||!['scale','x','y'].every(k=>Number.isFinite(c.layout[k]))||c.layout.scale<80||c.layout.scale>150||Math.abs(c.layout.x)>20||Math.abs(c.layout.y)>10||c.lastShown&&!validSnapshot(c.lastShown)||c.reveal&&(!validTrainingDate(c.reveal.day)||!areas.includes(c.reveal.section)||typeof c.reveal.seen!=='boolean'||!validSnapshot(c.reveal.from)||!validSnapshot(c.reveal.to))))return false;
   if(c?.sectionReveals!==undefined&&(!c.sectionReveals||typeof c.sectionReveals!=='object'||Array.isArray(c.sectionReveals)||Object.keys(c.sectionReveals).length>3||!Object.entries(c.sectionReveals).every(([key,r])=>areas.includes(key)&&r&&r.section===key&&validTrainingDate(r.day)&&typeof r.seen==='boolean'&&validSnapshot(r.from)&&validSnapshot(r.to))))return false;
+  if(c?.dailyRatings!==undefined){const d=c.dailyRatings;if(!d||!validTrainingDate(d.day)||!validSnapshot(d.from)||!validSnapshot(d.to)||!d.times||!areas.every(k=>Number.isSafeInteger(d.times[k])&&d.times[k]>=0&&d.times[k]<=90000000))return false}
   if(t!==undefined&&(!t||t.version!==1||!validTrainingDate(t.since)||!t.days||typeof t.days!=='object'||Array.isArray(t.days)||!Object.entries(t.days).every(([day,row])=>validTrainingDate(day)&&row&&['feints','juggling'].every(k=>Number.isSafeInteger(row[k])&&row[k]>=0&&row[k]<=90000000))||!Array.isArray(t.completedDays)||!t.completedDays.every(validTrainingDate)))return false;
   if(data.diligence!==undefined&&!diligenceRules.valid(data.diligence))return false;
   if(data.cardSounds!==undefined&&typeof data.cardSounds!=='boolean')return false;
@@ -254,5 +282,5 @@ const playerCards=(()=>{
    if(changed)confirmInline(panel.querySelector('#card-settings-confirm'),'Kartenbereiche ändern? Die Gesamtbewertung wird mit den gewählten Bereichen neu berechnet.',apply);else apply();
   };
  }
- return {curve,bonus,snapshot,config,init,sync,resetClock:()=>clock=null,completedSet,completed,mount,completion,replay,destroy,collectionMarkup,collection,correction,valid,settingsMarkup,bindSettings,trainingPaused,pauseMarkup,bindPause,pauseBanner,bindPauseBanner};
+ return {curve,bonus,snapshot,config,init,sync,resetClock:()=>clock=null,completedSet,completed,mount,completion,replay,destroy,wantsCompletion,leaveCompletion,collectionSnapshot,collectionMarkup,collection,correction,valid,settingsMarkup,bindSettings,trainingPaused,pauseMarkup,bindPause,pauseBanner,bindPauseBanner};
 })();

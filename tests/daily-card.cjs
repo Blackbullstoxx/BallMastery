@@ -1,0 +1,26 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+let day='2026-11-11',reading=false;
+const ctx={Date,date:()=>day,isReadOnly:()=>reading,validTrainingDate:d=>/^\d{4}-\d{2}-\d{2}$/.test(d),drills:Array.from({length:105},(_,i)=>({id:String(i)})),state:{current:0,groups:{ball:true,toe:true,feints:true},scores:[],practiceCounts:{},sessions:[],blockDone:{}},document:{querySelector:()=>null}};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync(__dirname+'/../player-cards.js','utf8')+';this.cards=playerCards;',ctx);
+const cards=ctx.cards;cards.init();const baseline=JSON.stringify(cards.collectionSnapshot());
+ctx.state.current=13;ctx.state.cardTraining.days[day]={juggling:1800000,feints:1800000};ctx.state.ballTraining={days:{[day]:1800000}};ctx.state.practiceCounts={toe:{[day]:1}};
+assert.equal(JSON.stringify(cards.collectionSnapshot()),baseline,'unfinished work cannot change the records card');
+ctx.state.blockDone[day]=['juggling'];cards.completed('juggling');let shown=cards.collectionSnapshot();
+assert.equal(shown.values[0],30);assert.equal(shown.values[1],40);assert.equal(shown.values[2],30);
+assert.equal(shown.values[3],35,'only committed juggling time contributes to diligence');
+assert(cards.wantsCompletion('juggling'));ctx.state.playerCard.reveal.seen=true;
+assert(!cards.wantsCompletion('juggling'),'a previously seen reveal is not displayed on a new visit');
+ctx.state.blockDone[day].push('ball');cards.completed('ball');shown=cards.collectionSnapshot();
+assert.equal(shown.values[0],39);assert.equal(shown.values[1],40);assert.equal(shown.values[2],30);
+assert.equal(ctx.state.playerCard.dailyRatings.from.values[1],30,'the baseline stays fixed across areas');
+assert(cards.valid(ctx.state));const backup=JSON.parse(JSON.stringify(ctx.state));ctx.state=backup;cards.init();assert.equal(cards.collectionSnapshot().values[1],40,'backup round trip retains cumulative changes');
+const invalid=JSON.parse(JSON.stringify(backup));invalid.playerCard.dailyRatings.times.ball=-1;assert(!cards.valid(invalid));
+// A correction may be negative and remains relative to the same daily baseline.
+ctx.state.current=0;ctx.save=()=>{};ctx.state.playerCard.dailyRatings.from.values[0]=40;
+ctx.document={querySelector:()=>null,createElement:()=>({showModal(){},querySelector:()=>({}),addEventListener(){}}),body:{append(){}}};ctx.mountPlayerCard=()=>()=>{};
+cards.correction(cards.snapshot());assert.equal(cards.collectionSnapshot().values[0],30);assert.equal(ctx.state.playerCard.dailyRatings.from.values[0],40);
+day='2026-11-12';cards.init();assert.equal(ctx.state.playerCard.dailyRatings.day,day);assert.equal(ctx.state.playerCard.dailyRatings.from.values[1],40,'new day starts with yesterday’s earned rating');
+reading=true;const before=JSON.stringify(ctx.state);cards.collectionSnapshot();assert.equal(JSON.stringify(ctx.state),before,'read-only display cannot mutate a backup');
+const app=fs.readFileSync(__dirname+'/../app.js','utf8');const records=app.slice(app.indexOf('function renderRecords('),app.indexOf('function renderRecords(')+5000);assert(records.indexOf('playerCards.collectionMarkup()')<records.indexOf('todayNavigation.goal()'));
+console.log('PASS: committed area ratings, cumulative daily baseline, isolated diligence times, backup validation/round trip, negative correction, next day, read-only and goal placement.');

@@ -1,11 +1,11 @@
 'use strict';
 // View state stays in memory; training progress continues to use the existing ledger.
 const todayNavigation=(()=>{
- let screen='home';const positions=new Map();
+ let screen='areas';const positions=new Map();
  const key=()=>screen==='section'?'section:'+activeSection:screen;
- function capture(){positions.set(key(),window.scrollY)}
+ function capture(){positions.set(key(),window.scrollY);if(screen==='section')playerCards.leaveCompletion?.()}
  function restoreScroll(){const top=positions.get(key())||0;window.requestAnimationFrame(()=>window.scrollTo({top,behavior:'instant'}))}
- function restore(){const unfinished=Object.keys(runs).filter(k=>runs[k].day===date()&&runs[k].phase!=='done');screen=unfinished.length?'section':'home';if(unfinished.length&&!unfinished.includes(activeSection)){activeSection=unfinished[0];run=runs[activeSection]}positions.clear()}
+ function restore(){const unfinished=Object.keys(runs).filter(k=>runs[k].day===date()&&runs[k].phase!=='done');screen=unfinished.length?'section':'areas';if(unfinished.length&&!unfinished.includes(activeSection)){activeSection=unfinished[0];run=runs[activeSection]}positions.clear()}
  function open(next){
   if(tab==='today'&&screen===next)return;
   if(tab==='today')capture();
@@ -32,25 +32,21 @@ const todayNavigation=(()=>{
   const arrow='<path d="M7 42c32-3 32-13 14-17S4 14 38 7m-9-3 10 3-6 9"/>';
   return `<svg class="area-icon" viewBox="0 0 48 50" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${section==='ball'?ball:section==='juggling'?shoe:arrow}</svg>`;
  }
- function goal(){const s=playerCards.snapshot(),tiers=['Bronze','Silber','Gold','Legende'],thresholds=[30,50,70,85];if(s.tier===3)return '<section class="card next-tier"><small>DEIN KARTENZIEL</small><h2>Legende erreicht ✓</h2></section>';
+ function goal(){const s=playerCards.collectionSnapshot(),tiers=['Bronze','Silber','Gold','Legende'],thresholds=[30,50,70,85];if(s.tier===3)return '<section class="card next-tier"><small>DEIN KARTENZIEL</small><h2>Legende erreicht ✓</h2></section>';
   const target=thresholds[s.tier+1],missing=target-s.total,progress=Math.max(0,s.total-thresholds[s.tier]);
   return `<section class="card next-tier"><small>DEIN NÄCHSTES ZIEL</small><div class="row"><h2>${tiers[s.tier+1]}</h2><svg class="tier-shield tier-${s.tier+1}" viewBox="0 0 30 36" aria-hidden="true"><path d="M15 2 27 6v13c0 7-6 12-12 15C9 31 3 26 3 19V6Z" fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-width="1.5"/><path d="m7 9 8-3 8 3v10c0 5-4 9-8 11-4-2-8-6-8-11Z" fill="currentColor" fill-opacity=".12"/></svg></div><progress value="${progress}" max="${target-thresholds[s.tier]}" aria-label="Fortschritt zu ${tiers[s.tier+1]}"></progress><p>Noch ${missing} ${missing===1?'Gesamtpunkt':'Gesamtpunkte'} bis ${tiers[s.tier+1]}</p></section>`;
  }
  function summary(values){const done=values.length>0&&values.every(v=>v.done),started=values.some(v=>v.started||v.done),seconds=values.reduce((sum,v)=>sum+v.seconds,0);return `<div class="today-summary" role="status"><span aria-hidden="true">◷</span><strong>${done?'Heute geschafft ✓':'Heute geplant'}</strong>${done?'':`<span>${started?'Noch ca. ':'ca. '}${overviewDuration(seconds)}</span>`}</div>`}
- function choose(section){screen='section';positions.set('section:'+section,0);chooseSection(section);restoreScroll()}
- function toTraining(){open('areas')}
- function bind(){document.querySelectorAll('[data-today-view]').forEach(b=>b.onclick=()=>open(b.dataset.todayView));document.querySelectorAll('[data-training-area]').forEach(b=>b.onclick=()=>choose(b.dataset.trainingArea));document.querySelector('#to-training')?.addEventListener('click',toTraining)}
+ function choose(section){if(screen==='section')playerCards.leaveCompletion?.();screen='section';positions.set('section:'+section,0);chooseSection(section);restoreScroll()}
+ function bind(){document.querySelectorAll('[data-today-view]').forEach(b=>b.onclick=()=>open(b.dataset.todayView));document.querySelectorAll('[data-training-area]').forEach(b=>b.onclick=()=>choose(b.dataset.trainingArea))}
  function renderView(){
   if(screen==='section')return false;
   const list=sections(),values=list.map(status);
-  if(screen==='home'){
-   $('#view').innerHTML=`${areaMarkup()}<section class="today-home" aria-label="Deine Spielerkarte"><div class="home-player-card"><div data-home-player-card></div></div><button class="primary" id="to-training">Zum Training</button>${goal()}</section>`;
-   playerCards.mount(document.querySelector('[data-home-player-card]'));
-  }else $('#view').innerHTML=`${areaMarkup()}<h2 class="training-question">Was möchtest du trainieren?</h2>${list.length?summary(values):'<div class="today-summary">Heute ist trainingsfrei.</div>'}<div class="training-areas">${values.map(v=>`<button class="training-area" data-training-area="${v.section}">${icon(v.section)}<span class="training-area-copy"><strong>${sectionNames[v.section]}</strong><small>${label(v)}</small></span>${rating(v.section)}<span class="area-chevron" aria-hidden="true">›</span></button>`).join('')}</div>`;
+  $('#view').innerHTML=`${areaMarkup()}<h2 class="training-question">Was möchtest du trainieren?</h2>${list.length?summary(values):'<div class="today-summary">Heute ist trainingsfrei.</div>'}<div class="training-areas">${values.map(v=>`<button class="training-area" data-training-area="${v.section}">${icon(v.section)}<span class="training-area-copy"><strong>${sectionNames[v.section]}</strong><small>${label(v)}</small></span>${rating(v.section)}<span class="area-chevron" aria-hidden="true">›</span></button>`).join('')}</div>`;
   bind();return true;
  }
  function areaMarkup(){
-  const items=[['home','Spielerkarte'],['areas','Übersicht']];
+  const items=[['areas','Übersicht']];
   if(screen==='section')items.push(['section',sectionNames[activeSection]]);
   return `<nav class="today-subnav${screen==='section'?' has-area':''}" aria-label="Heute-Ansichten">${items.map(([view,label])=>`<button type="button" data-today-view="${view}"${screen===view?' aria-current="page"':''}>${esc(label)}</button>`).join('')}</nav>`;
  }

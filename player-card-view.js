@@ -125,8 +125,8 @@ function mountPlayerCard(host,options){
  image.style.width=layout.scale+'%';image.style.left=layout.x+'%';image.style.top=layout.y+'%';
  ratings.forEach((el,i)=>el.style.display=options.to.visible[i]?'':'none');
  [...root.querySelectorAll('.fp-skill-labels span')].forEach((el,i)=>el.style.display=options.to.visible[i]?'':'none');
- q('.fp-perspective').onclick=()=>{finish();deltas();ratings.forEach((el,i)=>{if(options.relevant[i]&&options.animate)showChange(el,options.to.values[i]-options.from.values[i])})};
+ q('.fp-perspective').onclick=()=>{finish();deltas();ratings.forEach((el,i)=>{if(options.relevant[i]&&(options.animate||options.displayChanges))showChange(el,options.to.values[i]-options.from.values[i])})};
  reset();
- if(options.animate)play();else {targetTier=options.to.tier;target=options.to.values;targetOverall=options.to.total;finish()}
+ if(options.animate)play();else {targetTier=options.to.tier;target=options.to.values;targetOverall=options.to.total;finish();if(options.displayChanges)ratings.forEach((el,i)=>{if(options.relevant[i])showChange(el,options.to.values[i]-options.from.values[i])})}
  return cancel;
 }
