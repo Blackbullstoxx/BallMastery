@@ -1,10 +1,10 @@
 /* Cache only the versioned app shell; never cache videos, credentials or backups. */
 'use strict';
-const RELEASE="2026.11.11.1";
+const RELEASE="2026.11.11.2";
 const BASE=new URL(self.registration.scope);
 const PREFIX='ballmastery-shell-'+encodeURIComponent(BASE.pathname)+'-';
 const CACHE=PREFIX+RELEASE;
-const ASSETS=["today-navigation.js?v=124", "card-audio.js?v=116", "cards/glanz-whoosh.mp3", "cards/rating-clicks.wav", "player-card-view.js?v=124", "player-cards.js?v=124", "player-cards.css?v=124", "cards/backs-0.webp", "cards/backs-1.webp", "cards/backs-2.webp", "cards/backs-3.webp", "cards/fronts-0.webp", "cards/fronts-1.webp", "cards/fronts-2.webp", "cards/fronts-3.webp", "cards/default-portrait.webp", "cards/fvo-logo.jpg","weekly-learning.js?v=106", "record-history.js?v=110", "private-videos.js?v=94", "./", "index.html", "balltraining-icon-180.png", "balltraining-icon-192.png", "manifest.webmanifest", "style.css?v=124", "videos.js?v=93", "record-charts.js?v=98", "training-progress.js?v=124", "day-overview.js?v=103", "ball-training-time.js?v=114", "dropbox-backup.js?v=110", "read-only.js?v=124", "speech-test-log.js?v=87", "colour-perception.js?v=95", "mastery-progress.js?v=109", "app.js?v=124", "offline.js?v=96", "drills.json?v=93", "dropbox-videos.json", "balltraining-icon-512.png", "drills.json"].map(path=>new URL(path,BASE).href);
+const ASSETS=["today-navigation.js?v=125", "card-audio.js?v=116", "cards/glanz-whoosh.mp3", "cards/rating-clicks.wav", "player-card-view.js?v=124", "player-cards.js?v=124", "player-cards.css?v=125", "cards/backs-0.webp", "cards/backs-1.webp", "cards/backs-2.webp", "cards/backs-3.webp", "cards/fronts-0.webp", "cards/fronts-1.webp", "cards/fronts-2.webp", "cards/fronts-3.webp", "cards/default-portrait.webp", "cards/fvo-logo.jpg","weekly-learning.js?v=106", "record-history.js?v=110", "private-videos.js?v=94", "./", "index.html", "balltraining-icon-180.png", "balltraining-icon-192.png", "manifest.webmanifest", "style.css?v=125", "videos.js?v=93", "record-charts.js?v=98", "training-progress.js?v=124", "day-overview.js?v=103", "ball-training-time.js?v=114", "dropbox-backup.js?v=110", "read-only.js?v=124", "speech-test-log.js?v=87", "colour-perception.js?v=95", "mastery-progress.js?v=109", "app.js?v=125", "offline.js?v=96", "drills.json?v=93", "dropbox-videos.json", "balltraining-icon-512.png", "drills.json"].map(path=>new URL(path,BASE).href);
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
   const cache=await caches.open(CACHE);

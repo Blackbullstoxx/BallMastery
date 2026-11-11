@@ -37,7 +37,7 @@ const todayNavigation=(()=>{
  }
  function summary(values){const done=values.length>0&&values.every(v=>v.done),started=values.some(v=>v.started||v.done),seconds=values.reduce((sum,v)=>sum+v.seconds,0);return `<div class="today-summary" role="status"><span aria-hidden="true">◷</span><strong>${done?'Heute geschafft ✓':'Heute geplant'}</strong>${done?'':`<span>${started?'Noch ca. ':'ca. '}${overviewDuration(seconds)}</span>`}</div>`}
  function choose(section){screen='section';positions.set('section:'+section,0);chooseSection(section);restoreScroll()}
- function toTraining(){const list=sections();if(list.length===1)choose(list[0]);else open('areas')}
+ function toTraining(){open('areas')}
  function bind(){document.querySelectorAll('[data-today-view]').forEach(b=>b.onclick=()=>open(b.dataset.todayView));document.querySelectorAll('[data-training-area]').forEach(b=>b.onclick=()=>choose(b.dataset.trainingArea));document.querySelector('#to-training')?.addEventListener('click',toTraining)}
  function renderView(){
   if(screen==='section')return false;
@@ -48,6 +48,6 @@ const todayNavigation=(()=>{
   }else $('#view').innerHTML=`<button class="today-back" data-today-view="home">‹ Zurück zur Spielerkarte</button><h2 class="training-question">Was möchtest du trainieren?</h2>${list.length?summary(values):'<div class="today-summary">Heute ist trainingsfrei.</div>'}<div class="training-areas">${values.map(v=>`<button class="training-area" data-training-area="${v.section}">${icon(v.section)}<span class="training-area-copy"><strong>${sectionNames[v.section]}</strong><small>${label(v)}</small></span>${rating(v.section)}<span class="area-chevron" aria-hidden="true">›</span></button>`).join('')}</div>`;
   bind();return true;
  }
- function areaMarkup(){return `<div class="today-area-navigation"><button class="today-back" data-today-view="home">‹ Zurück zur Spielerkarte</button>${sections().length>1?'<button class="today-back" data-today-view="areas">Trainingsbereiche ›</button>':''}</div>`}
+ function areaMarkup(){return '<div class="today-area-navigation"><button class="today-back" data-today-view="areas">‹ Zur Trainingsübersicht</button></div>'}
  return {capture,restoreScroll,restore,open,render:renderView,rating,status,label,sections,goal,areaMarkup,bind,screen:()=>screen};
 })();
