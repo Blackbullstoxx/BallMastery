@@ -314,3 +314,5 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 /* The switch row needs the full content width inside an active exercise. */
 .run-mastery{padding:18px 0 0;border:0;border-top:1px solid #dce6da;border-radius:0;background:transparent;margin-top:24px}
 @media(max-width:350px){.weekly-switch-row h3{font-size:12.5px}.weekly-switch-row>button{padding:10px 8px}}
+
+.training-area-copy>.area-complete{display:inline-block;margin-top:6px}

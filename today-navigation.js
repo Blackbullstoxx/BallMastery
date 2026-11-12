@@ -24,7 +24,7 @@ const todayNavigation=(()=>{
   const started=credited.size>0||!!current&&current.phase!=='ready';
   return {section,done,started,seconds:done?0:overviewSeconds(section,entries,current,blocks)};
  }
- function label(value){return value.done?'Heute abgeschlossen ✓':(value.started?'noch ca. ':'ca. ')+overviewDuration(value.seconds)}
+ function label(value){return value.done?'Geschafft ✓':(value.started?'noch ca. ':'ca. ')+overviewDuration(value.seconds)}
  function rating(section){const i={ball:0,juggling:1,feints:2}[section],s=playerCards.snapshot();return s.visible[i]?`<span class="area-rating" aria-label="${sectionNames[section]} Rating ${s.values[i]}"><small>${['BALL','JONG','FINT'][i]}</small><strong>${s.values[i]}</strong></span>`:''}
  function icon(section){
   const ball='<circle cx="24" cy="24" r="19"/><path d="m24 15 8 6-3 10H19l-3-10 8-6Zm0-10v10M6 17l10 4m3 10-7 9m17-9 7 9m-4-19 10-4"/>';
@@ -42,7 +42,7 @@ const todayNavigation=(()=>{
  function renderView(){
   if(screen==='section')return false;
   const list=sections(),values=list.map(status);
-  $('#view').innerHTML=`${areaMarkup()}<h2 class="training-question">Was möchtest du trainieren?</h2>${list.length?summary(values):'<div class="today-summary">Heute ist trainingsfrei.</div>'}<div class="training-areas">${values.map(v=>`<button class="training-area" data-training-area="${v.section}">${icon(v.section)}<span class="training-area-copy"><strong>${sectionNames[v.section]}</strong><small>${label(v)}</small></span>${rating(v.section)}<span class="area-chevron" aria-hidden="true">›</span></button>`).join('')}</div>`;
+  $('#view').innerHTML=`${areaMarkup()}<h2 class="training-question">Was möchtest du trainieren?</h2>${list.length?summary(values):'<div class="today-summary">Heute ist trainingsfrei.</div>'}<div class="training-areas">${values.map(v=>`<button class="training-area" data-training-area="${v.section}">${icon(v.section)}<span class="training-area-copy"><strong>${sectionNames[v.section]}</strong>${v.done?`<span class="technique-status area-complete">${label(v)}</span>`:`<small>${label(v)}</small>`}</span>${rating(v.section)}<span class="area-chevron" aria-hidden="true">›</span></button>`).join('')}</div>`;
   bind();return true;
  }
  function areaMarkup(){

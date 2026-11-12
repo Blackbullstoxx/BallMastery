@@ -143,8 +143,8 @@ function animateReward(host){
 function renderCompletion(section){
  $('#runner').classList?.remove('juggling-runner');
  const showCard=playerCards.wantsCompletion(section);
- $('#runner').innerHTML=`<div class="reward-finish${showCard?' player-card-completion':''}">${showCard?'<div class="player-card-panel"><div data-player-card></div><div class="player-card-actions" hidden><button type="button" id="replay-card">Kartenanimation erneut ansehen</button></div></div>':''}<div class="reward-check" aria-hidden="true">✓</div><h2 class="center">${sectionNames[section]} geschafft!</h2>${section==='ball'?ballMasteryMarkup():''}${ballTrainingMarkup(section)}${colourPerception.summary()}<button class="primary" id="close">Erneut trainieren</button></div>`;
- $('#close').onclick=start;if(showCard)$('#replay-card').onclick=()=>playerCards.replay(section);void syncScreenAwake();
+ $('#runner').innerHTML=`<div class="reward-finish${showCard?' player-card-completion':''}">${showCard?'<div class="player-card-panel"><div data-player-card></div></div>':''}<div class="reward-check" aria-hidden="true">✓</div><h2 class="center">${sectionNames[section]} geschafft!</h2>${section==='ball'?ballMasteryMarkup():''}${ballTrainingMarkup(section)}${colourPerception.summary()}<button class="primary" id="close">Erneut trainieren</button></div>`;
+ $('#close').onclick=start;void syncScreenAwake();
  if(showCard)playerCards.completion(section);
 }
 
