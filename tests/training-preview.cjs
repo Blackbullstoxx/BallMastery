@@ -1,0 +1,13 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const ctx={state:{scores:[],colourScores:[]},date:()=> '2026-11-12',esc:String};vm.createContext(ctx);
+for(const file of ['record-charts.js','training-preview.js'])vm.runInContext(fs.readFileSync(__dirname+'/../'+file,'utf8'),ctx);
+assert.equal(ctx.previewScoreStats('toe',0).today,null);assert.equal(ctx.previewScoreStats('toe',0).average,null);
+const values=[999,10,20,30,40,50,60,0];ctx.state.scores=values.map((value,i)=>({key:'toe',duration:0,date:`2026-11-${String(1+i).padStart(2,'0')}`,value}));
+ctx.state.scores.push({key:'toe',duration:0,date:'2026-11-08',value:0},{key:'toe',duration:0,date:'2026-11-13',value:1000},{key:'toe',duration:30,date:'2026-11-12',value:3000},{key:'free',duration:0,date:'2026-11-12',value:4000});
+let s=ctx.previewScoreStats('toe',0);assert.equal(s.average,30);assert.equal(s.record,999);assert.equal(s.count,7);assert.equal(s.today,null);
+ctx.state.scores.push({key:'toe',duration:0,date:'2026-11-12',value:0});s=ctx.previewScoreStats('toe',0);assert.equal(s.today,0);assert.equal(s.average,200/7);
+ctx.state.scores=[{key:'toe',duration:0,date:'2026-11-01',value:0},{key:'toe',duration:0,date:'2026-11-12',value:4},{key:'toe',duration:0,date:'2026-11-12',value:2}];s=ctx.previewScoreStats('toe',0);assert.equal(s.average,2);assert.equal(s.count,2);assert.equal(s.today,4);
+ctx.state.scores=[];ctx.sectionNames={juggling:'Jonglieren'};ctx.ballTrainingMarkup=()=>'';ctx.techNames={toe:'Zehenjonglieren',free:'Freies Jonglieren',touches:'Gezielte Kontakte'};
+const html=ctx.trainingPreview('juggling',[{key:'toe',name:'Zehenjonglieren',work:420},{key:'free',name:'Freies Jonglieren',work:420},{key:'touches',name:'Gezielte Kontakte',work:60,noScore:true}]);assert.equal((html.match(/id="start"/g)||[]).length,1);assert.equal((html.match(/data-score=/g)||[]).length,2);assert.equal((html.match(/>Heute</g)||[]).length,2);assert(!html.includes('Heute:'));assert(!html.includes('Ohne Pause'));assert(!html.includes('DEIN TRAINING'));
+console.log('PASS: last seven recorded daily maxima, sparse days, duplicates, future/mode/technique isolation, explicit zero vs missing, one shared start and unscored technique.');
