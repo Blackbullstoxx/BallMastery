@@ -293,3 +293,24 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 
 .training-metric strong.training-metric-long{font-size:17px}
 @media(max-width:350px){.training-metric strong.training-metric-long{font-size:14px}}
+
+/* Keep the same technique card throughout the juggling session. */
+.card.juggling-runner{padding:0;margin:0;background:transparent;border:0;box-shadow:none}
+.technique-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.technique-heading h3{margin:0;flex:1;min-width:0}
+.technique-status{flex:none;background:#eaf2dc;color:#3a5b23;border-radius:9px;padding:5px 8px;font-size:12px;line-height:1.4;font-weight:650;white-space:nowrap}
+.technique-progress{padding:16px 20px}
+.technique-progress>div{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:#57705f;line-height:1.5;margin-bottom:10px}
+.technique-progress progress{display:block;height:7px}
+.technique-input-label{font-size:12px;color:#57705f;line-height:1.5;margin:0 0 8px}
+.technique-actions{margin:18px 0 15px}
+.juggling-runner .timer-ring{margin-top:8px;margin-bottom:18px}
+.weekly-switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.weekly-switch-row h3{margin:0;white-space:nowrap;font-size:18px;line-height:1.3}
+.weekly-switch-row>button{flex:none;white-space:nowrap;font-size:14px;padding:10px 14px}
+.run-mastery .weekly-switch-row h3{margin:0}
+@media(max-width:450px){.weekly-switch-row{gap:8px}.weekly-switch-row h3{font-size:15px}.weekly-switch-row>button{font-size:13px;padding:10px 12px}}
+@media(max-width:350px){.weekly-switch-row{gap:6px}.weekly-switch-row h3{font-size:13px}.weekly-switch-row>button{font-size:12px;padding:10px}.run-mastery{padding:14px}.technique-status{font-size:11px;padding:4px 6px}.technique-heading{gap:7px}.technique-progress{padding:16px 18px}.technique-progress>div{font-size:12px}}
+/* The switch row needs the full content width inside an active exercise. */
+.run-mastery{padding:18px 0 0;border:0;border-top:1px solid #dce6da;border-radius:0;background:transparent;margin-top:24px}
+@media(max-width:350px){.weekly-switch-row h3{font-size:12.5px}.weekly-switch-row>button{padding:10px 8px}}
