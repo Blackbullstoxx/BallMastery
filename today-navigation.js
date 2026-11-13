@@ -21,7 +21,7 @@ const todayNavigation=(()=>{
   const blocks=overviewBlocks(section,entries),completed=new Set(current?.completedSets||[]);
   const credited=new Set();blocks.forEach(b=>{if(current)storeOverviewCredits(section,b,b.indices.filter(i=>completed.has(i)).map(i=>entries[i].set));const sets=overviewCredits(section,b);b.indices.forEach((i,n)=>{if(sets.includes(n+1)||completed.has(i))credited.add(i)})});
   const done=closed||entries.length>0&&entries.every((_,i)=>credited.has(i));
-  const started=credited.size>0||!!current&&current.phase!=='ready';
+  const started=!!state.completedPlans?.[date()]?.[section]?.length||credited.size>0||!!current&&current.phase!=='ready';
   return {section,done,started,seconds:done?0:overviewSeconds(section,entries,current,blocks)};
  }
  function label(value){return value.done?'Geschafft ✓':(value.started?'noch ca. ':'ca. ')+overviewDuration(value.seconds)}
