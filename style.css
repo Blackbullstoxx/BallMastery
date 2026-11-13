@@ -323,3 +323,5 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 #runner > :is(#next-drill,#finish-area) + .two{margin-top:12px}
 
 .two.video-back-row{grid-template-columns:1fr 1fr;margin-top:12px}
+
+.video-back-full{margin-top:12px;width:100%}
