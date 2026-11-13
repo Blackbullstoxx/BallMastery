@@ -2,6 +2,8 @@
 let dayOverviewOpen=false,dayOverviewDate='';
 function overviewBlocks(section,entries){
  const occurrences=new Map(),blocks=[];
+ const saved=state.completedPlans?.[date()]?.[section],current=runs[section];
+ if(saved&&entries===current?.plan&&!current.repeatMode&&current.phase!=='done')saved.filter(d=>d.set===1).forEach(d=>{const signature=JSON.stringify([d.kind,d.key,d.work,d.total]);occurrences.set(signature,(occurrences.get(signature)||0)+1)});
  entries.forEach((d,index)=>{
   if(d.set!==1)return;
   const signature=JSON.stringify([d.kind,d.key,d.work,d.total]),occurrence=occurrences.get(signature)||0;occurrences.set(signature,occurrence+1);
@@ -125,4 +127,35 @@ function refreshDayOverview(){
  const data=dayOverviewData();host.querySelector('.overview-title').textContent=data.done?'Training abgeschlossen ✓':'Heute geplant';
  host.querySelector('.overview-time').hidden=data.done;host.querySelector('[data-overview-time]').textContent=overviewTimeLabel(data);
  const body=host.querySelector('.overview-body'),markup=overviewBody(data);if(body._overviewMarkup!==markup){body.innerHTML=markup;body._overviewMarkup=markup}
+}
+
+// Reopen a finished ball area with only the newly requested sets.
+function reopenExtendedBallPlan(){
+ const day=date(),saved=state.completedPlans?.[day]?.ball,current=runs.ball;
+ if(!saved?.length||(!state.blockDone?.[day]?.includes('ball')&&(current?.phase!=='ready'||current.index!==0||current.completedSets?.length)))return;
+ const signature=d=>JSON.stringify([d.kind,d.key,d.work]);
+ const completed=new Map();saved.forEach(d=>completed.set(signature(d),(completed.get(signature(d))||0)+1));
+ let desired=plan('ball');
+ // Completed reviews have already rotated out of selection(). Keep today's
+ // exercises first, filling additional review slots from the current queue.
+ levels.forEach((level,i)=>{
+  const kind='Wiederholung · '+level,old=[...new Map(saved.filter(d=>d.kind===kind).map(d=>[d.key,d])).values()];
+  const fresh=desired.filter(d=>d.kind===kind&&d.set===1);
+  desired=desired.filter(d=>d.kind!==kind);
+  if(!state.groups.ball||!isScheduled('review'))return;
+  const chosen=[...new Map([...old,...fresh].map(d=>[d.key,d])).values()].slice(0,state.reviews[i].count);
+  chosen.forEach(d=>{for(let n=1;n<=state.reviews[i].sets;n++)desired.push({...d,set:n,total:state.reviews[i].sets,work:state.work,rest:state.rest,colour:n>state.reviews[i].sets-state.colourSets.review[i]})});
+ });
+ const pending=[];
+ overviewBlocks('ball',desired).forEach(block=>{
+  const rows=desired.slice(block.start,block.start+block.total),d=rows[0],key=signature(d),done=completed.get(key)||0;
+  completed.set(key,Math.max(0,done-rows.length));
+  const extra=rows.slice(Math.min(done,rows.length));
+  extra.forEach((row,i)=>pending.push({...row,set:i+1,total:extra.length}));
+ });
+ if(!pending.length)return;
+ overviewBlocks('ball',saved).forEach(b=>storeOverviewCredits('ball',b,Array.from({length:b.total},(_,i)=>i+1)));
+ state.blockDone[day]=state.blockDone[day].filter(k=>k!=='ball');
+ const next={repeatMode:false,completedBlocks:[],completedSets:[],day,section:'ball',plan:pending,index:0,phase:'ready',paused:false,remaining:5,rotations:levels.map(()=>0)};
+ refreshColourPlan(next,true,true);runs.ball=next;if(activeSection==='ball')run=next;
 }
