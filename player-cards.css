@@ -123,7 +123,7 @@
 @media(max-width:380px){#fvo-card-preview .fp-ratings small{top:calc(100% + 1px)}}
 
 
-#fvo-card-preview .fp-front:not([data-card-tier="3"]) .fp-ratings small{
+#fvo-card-preview .fp-front:not([data-card-tier="7"]) .fp-ratings small{
   background:radial-gradient(ellipse at center,#fffaf038 0%,#fffaf029 45%,#fffaf010 75%,#fffaf000 100%);
   backdrop-filter:blur(.8px);-webkit-backdrop-filter:blur(.8px);
 }
@@ -172,7 +172,7 @@
 #fvo-card-preview .fp-portrait img{
   top:0;left:1%;width:108%;height:auto;
 }
-#fvo-card-preview .fp-front[data-card-tier="3"] .fp-portrait{
+#fvo-card-preview .fp-front[data-card-tier="7"] .fp-portrait{
   top:14%;height:44%;
 }
 #fvo-card-preview .fp-front .fp-frame-overlay{
@@ -187,7 +187,7 @@
 #fvo-card-preview .fp-portrait-window{clip-path:polygon(9% 8%,91% 8%,91% 58.2%,9% 58.2%)}
 #fvo-card-preview .fp-portrait{top:9%;height:49.2%;mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22f%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220.965%22%20stop-color%3D%22white%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22white%22%20stop-opacity%3D%220%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20fill%3D%22url%28%23f%29%22%20d%3D%22M0%200H100V97Q50%20103%200%2097Z%22%2F%3E%3C%2Fsvg%3E");-webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22f%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220.965%22%20stop-color%3D%22white%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22white%22%20stop-opacity%3D%220%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20fill%3D%22url%28%23f%29%22%20d%3D%22M0%200H100V97Q50%20103%200%2097Z%22%2F%3E%3C%2Fsvg%3E");mask-size:100% 100%;-webkit-mask-size:100% 100%}
 #fvo-card-preview .fp-portrait img{left:-2%;width:114%}
-#fvo-card-preview .fp-front[data-card-tier="3"] .fp-portrait{top:12.5%;height:45.7%}
+#fvo-card-preview .fp-front[data-card-tier="7"] .fp-portrait{top:12.5%;height:45.7%}
 #fvo-card-preview .fp-name{top:59.5%}
 
 #fvo-card-preview .fp-portrait{mask-image:linear-gradient(to bottom,#000 0%,#000 96.5%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 96.5%,transparent 100%)}
@@ -222,9 +222,9 @@
 
 /* Dark material-specific ink; decorative rules are independent of the artwork. */
 #fvo-card-preview .fp-front{--card-ink:#432b1c}
-#fvo-card-preview .fp-front[data-card-tier="1"]{--card-ink:#30363b}
-#fvo-card-preview .fp-front[data-card-tier="2"]{--card-ink:#44301a}
-#fvo-card-preview .fp-front[data-card-tier="3"]{--card-ink:#40301c}
+#fvo-card-preview .fp-front[data-card-tier="2"]{--card-ink:#30363b}
+#fvo-card-preview .fp-front[data-card-tier="3"]{--card-ink:#44301a}
+#fvo-card-preview .fp-front[data-card-tier="7"]{--card-ink:#40301c}
 #fvo-card-preview .fp-name{font-family:'Times New Roman',Times,'Liberation Serif',serif;font-weight:700;font-variant-numeric:lining-nums;font-feature-settings:'lnum' 1;letter-spacing:0;color:var(--card-ink)}
 #fvo-card-preview .fp-total{font-family:'Times New Roman',Times,'Liberation Serif',serif;font-weight:700;font-variant-numeric:lining-nums tabular-nums;font-feature-settings:'lnum' 1,'tnum' 1;letter-spacing:-2px;color:var(--card-ink)}
 #fvo-card-preview .fp-ges{font-family:Georgia,'Times New Roman',serif;font-weight:700;color:var(--card-ink)}
@@ -244,3 +244,26 @@
  #fvo-card-preview .fp-flag{width:11.875cqw;height:7.1875cqw}
  #fvo-card-preview .fp-badges img{width:7.1875cqw;height:7.1875cqw}
 }
+
+
+/* Football God: opt-in material with a safe header, portrait, delta row and badge layout. */
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-portrait-window{clip-path:polygon(9% 23.4%,91% 23.4%,91% 57.4%,9% 57.4%)}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-portrait{top:23.4%;height:34%;left:0;width:100%}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-portrait img{width:76%!important;left:22%!important;top:0!important;height:auto;object-fit:contain}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-portrait img.fp-default-portrait{height:100%;object-position:center top}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-total{top:25.6%}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-ges{top:37.2%}
+#fvo-card-preview .fp-rating-underlay{display:none}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-rating-underlay{display:block;position:absolute;left:9%;top:24.5%;width:26%;height:18%;pointer-events:none;background:radial-gradient(ellipse,#faf8f340 0%,#faf8f330 48%,#faf8f318 68%,#faf8f300 100%);filter:blur(3px)}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-name{top:58.7%}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-skill-labels{top:66.8%}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-ratings{top:70.2%;height:5.45%}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-ratings span{font-size:8.125cqw}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-ratings small{font-size:4cqw;width:13cqw;padding:1px 0;top:calc(100% + 1px)}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-badges{top:82.8%;height:4.2cqw;gap:3cqw}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-flag{width:7cqw;height:4.2cqw}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-badges img{width:4.2cqw;height:4.2cqw}
+
+#fvo-card-preview .fp-front[data-card-tier="1"]{--card-ink:#493427}
+#fvo-card-preview .fp-front[data-card-tier="4"],#fvo-card-preview .fp-front[data-card-tier="5"]{--card-ink:#303a42}
+#fvo-card-preview .fp-front[data-card-tier="6"],#fvo-card-preview .fp-front[data-card-tier="8"]{--card-ink:#40301c}

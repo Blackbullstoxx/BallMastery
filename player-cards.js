@@ -92,6 +92,21 @@ function fitPlayerCardCompletion(host,scroll=false){
  return ()=>{window.removeEventListener('resize',fit);viewport?.removeEventListener('resize',fit)};
 }
 
+// One material table drives rating boundaries, headings and both card faces.
+const playerCardMaterials=[
+ {min:30,name:'BRONZE',label:'Bronze',front:'cards/fronts-0.webp',back:'cards/backs-0.webp',metal:'#85522e'},
+ {min:50,name:'BRONZE +',label:'Bronze +',front:'cards/bronze-plus-vorderseite.webp',back:'cards/bronze-plus-rueckseite.webp',metal:'#956943'},
+ {min:60,name:'SILBER',label:'Silber',front:'cards/fronts-1.webp',back:'cards/backs-1.webp',metal:'#61666e'},
+ {min:65,name:'GOLD',label:'Gold',front:'cards/fronts-2.webp',back:'cards/backs-2.webp',metal:'#9c6a17'},
+ {min:70,name:'PLATIN',label:'Platin',front:'cards/platin-vorderseite.webp',back:'cards/platin-rueckseite.webp',metal:'#66727c'},
+ {min:75,name:'DIAMANT',label:'Diamant',front:'cards/diamant-vorderseite.webp',back:'cards/diamant-rueckseite.webp',metal:'#577b91'},
+ {min:80,name:'ELITE',label:'Elite',front:'cards/elite-vorderseite.webp',back:'cards/elite-rueckseite.webp',metal:'#987332'},
+ {min:90,name:'LEGENDE',label:'Legende',front:'cards/fronts-3.webp',back:'cards/backs-3.webp',metal:'#9c721d'},
+ {min:97,name:'FUSSBALLGOTT',label:'Fußballgott',front:'cards/fussballgott-vorderseite.webp',back:'cards/fussballgott-rueckseite.webp',metal:'#9c721d'}
+];
+function playerCardTier(total){return Math.max(0,playerCardMaterials.findLastIndex(material=>total>=material.min))}
+function playerCardSnapshotMaterial(snapshot){return snapshot?{...snapshot,tier:playerCardTier(snapshot.total)}:snapshot}
+
 // Pure rating rules and device-local card state. No network or audio.
 const playerCards=(()=>{
  const areas=['ball','juggling','feints'],weights=[.4,.25,.15,.2];
@@ -126,14 +141,14 @@ const playerCards=(()=>{
   const sum=weights.reduce((n,w,i)=>n+(visible[i]?w:0),0);
   let total=Math.round(values.reduce((n,v,i)=>n+(visible[i]?v*weights[i]:0),0)/sum);
   if(total===99&&!values.every((n,i)=>!visible[i]||n===99))total=98;
-  return {values,total,tier:total>=85?3:total>=70?2:total>=50?1:0,visible};
+  return {values,total,tier:playerCardTier(total),visible};
  }
  // Commit ratings only at explicit area completion. The daily baseline and
  // committed active times travel with backups; unfinished repeats cannot leak in.
- function totalFor(values,visible){const weight=weights.reduce((n,w,i)=>n+(visible[i]?w:0),0);let total=Math.round(values.reduce((n,v,i)=>n+(visible[i]?v*weights[i]:0),0)/weight);if(total===99&&!values.every((v,i)=>!visible[i]||v===99))total=98;return {values,total,tier:total>=85?3:total>=70?2:total>=50?1:0,visible}}
+ function totalFor(values,visible){const weight=weights.reduce((n,w,i)=>n+(visible[i]?w:0),0);let total=Math.round(values.reduce((n,v,i)=>n+(visible[i]?v*weights[i]:0),0)/weight);if(total===99&&!values.every((v,i)=>!visible[i]||v===99))total=98;return {values,total,tier:playerCardTier(total),visible}}
  function activeTimes(){return {ball:state.ballTraining?.days?.[date()]||0,juggling:state.cardTraining?.days?.[date()]?.juggling||0,feints:state.cardTraining?.days?.[date()]?.feints||0}}
  function dailyState(){
-  const c=config();if(c.dailyRatings?.day===date())return c.dailyRatings;
+  const c=config();if(c.dailyRatings?.day===date())return {...c.dailyRatings,from:playerCardSnapshotMaterial(c.dailyRatings.from),to:playerCardSnapshotMaterial(c.dailyRatings.to)};
   const current=snapshot(),yesterday=diligenceRules.day(diligenceRules.number(date())-1),previous=snapshot(state,drills,yesterday);
   const reveals=[c.reveal,...Object.values(c.sectionReveals||{})].filter(r=>r?.day===date());
   // Ball progress has no historical daily counter; old reveals preserve its baseline.
@@ -155,6 +170,9 @@ const playerCards=(()=>{
  function init(){
   if(isReadOnly())return;
   if(!state.playerCard)state.playerCard=config();
+  const c=state.playerCard;
+  // Reclassify legacy four-tier snapshots by their recorded total only. Keep values, dates and seen flags.
+  for(const saved of [c.lastShown,c.reveal?.from,c.reveal?.to,c.dailyRatings?.from,c.dailyRatings?.to,...Object.values(c.sectionReveals||{}).flatMap(r=>[r.from,r.to])])if(saved)saved.tier=playerCardTier(saved.total);
   if(!state.cardTraining)state.cardTraining={version:1,since:date(),days:{},completedDays:[]};
   if(!state.diligence)state.diligence={version:1,since:date(),pauses:[]};
   if(!state.playerCard.lastShown)state.playerCard.lastShown=snapshot();
@@ -177,7 +195,8 @@ const playerCards=(()=>{
  function destroy(){if(dispose)dispose();dispose=null}
  function mount(host,{section='ball',animate=false,from=null,to=snapshot(),correction=false,allowReplay=false,displayChanges=false}={}){
   if(!host)return;destroy();
-  const c=config(),old=from||to,actions=allowReplay?document.querySelector('.player-card-actions'):null;
+  to=playerCardSnapshotMaterial(to);
+  const c=config(),old=playerCardSnapshotMaterial(from||to),actions=allowReplay?document.querySelector('.player-card-actions'):null;
   if(actions)actions.hidden=animate;
   const relevant=correction||displayChanges?to.values.map((v,i)=>v!==old.values[i]):[section==='ball',section==='juggling',section==='feints',true];
   dispose=mountPlayerCard(host,{onComplete:()=>{if(actions&&host.isConnected&&actions.isConnected)actions.hidden=false},from:old,to,section,relevant,name:state.name||'DEIN NAME',portrait:c.portrait||'',layout:c.layout,animate,correction,displayChanges,soundFactory:animate&&!correction&&typeof cardAudio!=='undefined'?()=>cardAudio.create():null});
@@ -219,7 +238,7 @@ const playerCards=(()=>{
   const dialog=document.createElement('dialog');dialog.className='player-card-dialog';dialog.innerHTML='<div data-player-card></div><button type="button">Schließen</button>';document.body.append(dialog);
   const close=()=>{destroy();dialog.close();dialog.remove()};dialog.querySelector('button').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close()});dialog.showModal();mount(dialog.querySelector('[data-player-card]'),{from:before,to,animate:true,correction:true});
  }
- function validSnapshot(s){return !!s&&Array.isArray(s.values)&&s.values.length===4&&s.values.every(n=>Number.isInteger(n)&&n>=30&&n<=99)&&Number.isInteger(s.total)&&s.total>=30&&s.total<=99&&Number.isInteger(s.tier)&&s.tier>=0&&s.tier<=3&&Array.isArray(s.visible)&&s.visible.length===4&&s.visible.every(n=>typeof n==='boolean')}
+ function validSnapshot(s){return !!s&&Array.isArray(s.values)&&s.values.length===4&&s.values.every(n=>Number.isInteger(n)&&n>=30&&n<=99)&&Number.isInteger(s.total)&&s.total>=30&&s.total<=99&&Number.isInteger(s.tier)&&s.tier>=0&&s.tier<playerCardMaterials.length&&Array.isArray(s.visible)&&s.visible.length===4&&s.visible.every(n=>typeof n==='boolean')}
  function valid(data){
   const c=data.playerCard,t=data.cardTraining;
   if(c!==undefined&&(!c||c.version!==1||!c.areas||!areas.every(k=>typeof c.areas[k]==='boolean')||!c.techniques||!['toe','free'].every(k=>typeof c.techniques[k]==='boolean')||typeof c.portrait!=='string'||c.portrait.length>1000000||c.portrait&&!/^data:image\/(png|webp);base64,[A-Za-z0-9+/=]+$/.test(c.portrait)||!c.layout||!['scale','x','y'].every(k=>Number.isFinite(c.layout[k]))||c.layout.scale<80||c.layout.scale>150||Math.abs(c.layout.x)>20||Math.abs(c.layout.y)>10||c.lastShown&&!validSnapshot(c.lastShown)||c.reveal&&(!validTrainingDate(c.reveal.day)||!areas.includes(c.reveal.section)||typeof c.reveal.seen!=='boolean'||!validSnapshot(c.reveal.from)||!validSnapshot(c.reveal.to))))return false;
@@ -284,3 +303,4 @@ const playerCards=(()=>{
  }
  return {curve,bonus,snapshot,config,init,sync,resetClock:()=>clock=null,completedSet,completed,mount,completion,replay,destroy,wantsCompletion,leaveCompletion,collectionSnapshot,collectionMarkup,collection,correction,valid,settingsMarkup,bindSettings,trainingPaused,pauseMarkup,bindPause,pauseBanner,bindPauseBanner};
 })();
+

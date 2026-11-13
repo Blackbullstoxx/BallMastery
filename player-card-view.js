@@ -2,10 +2,12 @@
 function mountPlayerCard(host,options){
  host.innerHTML="<div id=\"fvo-card-preview\" class=\"viz-dotted-background\">\n  <div class=\"fp-demo\">\n    <div class=\"fp-stage\">\n      <div class=\"fp-title\"><span></span><strong>GOLD</strong><span></span></div>\n      <button type=\"button\" class=\"fp-perspective cursor-interaction\" aria-label=\"Kartenanimation sofort abschlie\u00dfen\">\n        <div class=\"fp-halo\" aria-hidden=\"true\"></div>\n        <div class=\"fp-turn\">\n          <div class=\"fp-face fp-back\"><img alt=\"Goldene Kartenr\u00fcckseite\" draggable=\"false\"><img class=\"fp-new-back\" alt=\"\" aria-hidden=\"true\"><div class=\"fp-back-light\"></div><div class=\"fp-mist-clip\" aria-hidden=\"true\"><div class=\"fp-mist\"></div></div></div>\n          <div class=\"fp-face fp-front\"><img alt=\"Kartenhintergrund ohne pers\u00f6nliche Inhalte\" draggable=\"false\"><div class=\"fp-portrait-window\"><div class=\"fp-portrait\"><img alt=\"Freigestelltes Portrait\" draggable=\"false\"></div></div><img class=\"fp-frame-overlay\" alt=\"\" aria-hidden=\"true\" draggable=\"false\"><div class=\"fp-name\">FRITZ</div><div class=\"fp-ges\">GES</div><div class=\"fp-skill-labels\"><span>BALL</span><span>JONG</span><span>FINT</span><span>FLEISS</span></div><div class=\"fp-total\">74</div><div class=\"fp-ratings\"><span>70</span><span>80</span><span>60</span><span>85</span></div><div class=\"fp-badges\"><span class=\"fp-flag\" role=\"img\" aria-label=\"Deutschland\"></span><img src=\"cards/fvo-logo.jpg\" alt=\"FV Ottendorf-Okrilla 05\"></div><div class=\"fp-shine\"></div><div class=\"fp-glints\" aria-hidden=\"true\"></div></div>\n        </div>\n      </button>\n      <div class=\"fp-result\" aria-live=\"polite\">Bereit zur Enth\u00fcllung</div>\n    </div>\n    \n  </div>\n  </div>";
 
- const backs=["cards/backs-0.webp", "cards/backs-1.webp", "cards/backs-2.webp", "cards/backs-3.webp"],fronts=["cards/fronts-0.webp", "cards/fronts-1.webp", "cards/fronts-2.webp", "cards/fronts-3.webp"];
+ options={...options,from:playerCardSnapshotMaterial(options.from),to:playerCardSnapshotMaterial(options.to)};
+ const backs=playerCardMaterials.map(m=>m.back),fronts=playerCardMaterials.map(m=>m.front);
  const root=host.querySelector('#fvo-card-preview'),q=s=>root.querySelector(s);
  const warmAssets=[...backs,...fronts].map(src=>{const image=new Image();image.src=src;return image;});
- const names=['BRONZE','SILBER','GOLD','LEGENDE'],metals=['#85522e','#61666e','#9c6a17','#9c721d'];
+ const ratingUnderlay=document.createElement('div');ratingUnderlay.className='fp-rating-underlay';host.querySelector('.fp-front').insertBefore(ratingUnderlay,host.querySelector('.fp-name'));
+ const names=playerCardMaterials.map(m=>m.name),metals=playerCardMaterials.map(m=>m.metal);
  const turn=q('.fp-turn'),back=q('.fp-back'),front=q('.fp-front'),title=q('.fp-title'),result=q('.fp-result'),total=q('.fp-total'),ratings=[...root.querySelectorAll('.fp-ratings span')];
  const scene={value:options.correction?'fall':options.to.tier>options.from.tier?'upgrade':'reveal'},tier={value:options.from.tier},reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  let serial=0,timers=[],animations=[],targetTier=2,target=[70,80,60,85],targetOverall=74;
@@ -15,7 +17,7 @@ function mountPlayerCard(host,options){
  function at(ms,fn){const token=serial;timers.push(setTimeout(()=>{if(token===serial)fn()},ms));}
  function anim(el,keyframes,duration,delay=0){const a=el.animate(keyframes,{duration,delay,easing:'cubic-bezier(.33,0,.2,1)',fill:'forwards'});animations.push(a);return a;}
  function side(which){back.hidden=which!=='back';front.hidden=which!=='front';turn.style.transform='none';}
- function material(t){front.dataset.cardTier=String(t);q('.fp-back img').src=backs[t];q('.fp-front img').src=fronts[t];q('.fp-frame-overlay').src=fronts[t];back.style.maskImage='url('+backs[t]+')';front.style.maskImage='url('+fronts[t]+')';q('.fp-back-light').style.maskImage='url('+backs[t]+')';q('.fp-mist-clip').style.maskImage='url('+backs[t]+'),url('+backs[t]+')';q('.fp-stage').style.setProperty('--metal',metals[t]);title.querySelector('strong').textContent=names[t];q('.fp-back img').alt=names[t]+' – Kartenrückseite';}
+ function material(t){front.dataset.cardMaterial=t===8?'football-god':'';front.dataset.cardTier=String(t);q('.fp-back img').src=backs[t];q('.fp-front img').src=fronts[t];q('.fp-frame-overlay').src=fronts[t];back.style.maskImage='url('+backs[t]+')';front.style.maskImage='url('+fronts[t]+')';q('.fp-back-light').style.maskImage='url('+backs[t]+')';q('.fp-mist-clip').style.maskImage='url('+backs[t]+'),url('+backs[t]+')';q('.fp-stage').style.setProperty('--metal',metals[t]);title.querySelector('strong').textContent=names[t];q('.fp-back img').alt=names[t]+' – Kartenrückseite';}
  function values(v,o){ratings.forEach((el,i)=>el.querySelector('.fp-num').textContent=options.relevant[i]?v[i]:options.to.values[i]);total.textContent=o;}
  function deltas(){ratings.forEach(el=>{el.className='';el.querySelector('small')?.remove()});}
  function selection(){return options.from.tier;}
@@ -130,3 +132,4 @@ function mountPlayerCard(host,options){
  if(options.animate)play();else {targetTier=options.to.tier;target=options.to.values;targetOverall=options.to.total;finish();if(options.displayChanges)ratings.forEach((el,i)=>{if(options.relevant[i])showChange(el,options.to.values[i]-options.from.values[i])})}
  return cancel;
 }
+

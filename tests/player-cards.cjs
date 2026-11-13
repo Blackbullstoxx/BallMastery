@@ -40,7 +40,7 @@ const snap=cards.snapshot();assert.deepEqual(Array.from(snap.visible),[true,fals
 ctx.state.groups.toe=true;assert.equal(cards.snapshot().visible[1],false,'weekly plan does not change card membership');
 const view=fs.readFileSync(root+'/player-card-view.js','utf8'),sw=fs.readFileSync(root+'/sw.js','utf8'),index=fs.readFileSync(root+'/index.html','utf8');
 assert(!view.includes('AudioContext'));assert(!view.includes('portraits='));assert(view.includes('options.relevant[i]'));assert(view.includes('duration+300'));
-for(const file of ['player-cards.js?v=127','player-card-view.js?v=127','player-cards.css?v=131'])assert(index.includes(file)&&sw.includes(file));
+for(const file of ['player-cards.js?v=128','player-card-view.js?v=129','player-cards.css?v=134'])assert(index.includes(file)&&sw.includes(file));
 for(const file of fs.readdirSync(root+'/cards'))assert(sw.includes('cards/'+file));
 // Detached intermediate renders cannot consume the one-time reveal.
 ctx.state=fresh();cards.init();cards.completed('ball');
@@ -51,3 +51,4 @@ assert.equal(mounts.length,1);assert.equal(mounts[0].animate,true);assert.equal(
 cards.completion('ball');callbacks.splice(0).forEach(fn=>fn());assert.equal(mounts[1].animate,false,'reopening never replays the same reveal');
 assert(cards.valid({...ctx.state,cardSounds:true}));assert(cards.valid({...ctx.state,cardSounds:false}));assert(!cards.valid({...ctx.state,cardSounds:'false'}));
 console.log('PASS: rating anchors, interpolation, final-drill gate, daily proof, historical windows, deletion, independent membership, exact active time, pause/deadline limits, deduplicated days, read-only, backup validation and offline assets');
+

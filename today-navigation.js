@@ -32,7 +32,7 @@ const todayNavigation=(()=>{
   const arrow='<path d="M7 42c32-3 32-13 14-17S4 14 38 7m-9-3 10 3-6 9"/>';
   return `<svg class="area-icon" viewBox="0 0 48 50" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${section==='ball'?ball:section==='juggling'?shoe:arrow}</svg>`;
  }
- function goal(){const s=playerCards.collectionSnapshot(),tiers=['Bronze','Silber','Gold','Legende'],thresholds=[30,50,70,85];if(s.tier===3)return '<section class="card next-tier"><small>DEIN KARTENZIEL</small><h2>Legende erreicht ✓</h2></section>';
+ function goal(){const s=playerCardSnapshotMaterial(playerCards.collectionSnapshot()),tiers=playerCardMaterials.map(m=>m.label),thresholds=playerCardMaterials.map(m=>m.min);if(s.tier===tiers.length-1)return '<section class="card next-tier"><small>DEIN KARTENZIEL</small><h2>'+tiers[s.tier]+' erreicht ✓</h2></section>';
   const target=thresholds[s.tier+1],missing=target-s.total,progress=Math.max(0,s.total-thresholds[s.tier]);
   return `<section class="card next-tier"><small>DEIN NÄCHSTES ZIEL</small><div class="row"><h2>${tiers[s.tier+1]}</h2><svg class="tier-shield tier-${s.tier+1}" viewBox="0 0 30 36" aria-hidden="true"><path d="M15 2 27 6v13c0 7-6 12-12 15C9 31 3 26 3 19V6Z" fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-width="1.5"/><path d="m7 9 8-3 8 3v10c0 5-4 9-8 11-4-2-8-6-8-11Z" fill="currentColor" fill-opacity=".12"/></svg></div><progress value="${progress}" max="${target-thresholds[s.tier]}" aria-label="Fortschritt zu ${tiers[s.tier+1]}"></progress><p>Noch ${missing} ${missing===1?'Gesamtpunkt':'Gesamtpunkte'} bis ${tiers[s.tier+1]}</p></section>`;
  }
@@ -52,3 +52,4 @@ const todayNavigation=(()=>{
  }
  return {capture,restoreScroll,restore,open,render:renderView,rating,status,label,sections,goal,areaMarkup,bind,screen:()=>screen};
 })();
+

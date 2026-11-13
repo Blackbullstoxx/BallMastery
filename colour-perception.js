@@ -6,6 +6,7 @@ const colourPerception=(()=>{
  const supported=()=>window.SpeechRecognition||window.webkitSpeechRecognition;
  const randomGap=()=>2000+Math.random()*2000;
  function eligible(r=run){return !!r&&r.section==='ball'&&r.plan?.[r.index]?.colour===true}
+ function needsPreparation(r=run){return !!r&&r.section==='ball'&&r.plan?.slice(r.index+(['rest','review','done'].includes(r.phase)?1:0)).some(d=>d.colour===true)}
  function active(s=session){return !!s&&s===session&&run===s.run&&run.index===s.index&&run.phase==='work'&&!run.paused&&!document.hidden&&tab==='today'&&!isReadOnly()}
  function stats(r=run,index=r?.index){return r?.colourResults?.[index]||null}
  function paint(){
@@ -40,14 +41,14 @@ const colourPerception=(()=>{
  function abort(r){if(!r)return;r.onend=null;r.onresult=null;r.onerror=null;r.onstart=null;r.onspeechstart=null;try{r.abort()}catch{}}
  // Called directly from a start/resume tap, before awaiting audio activation.
  function prepare(r=run){
-  if(isReadOnly()||!eligible(r)||document.hidden||tab!=='today')return Promise.resolve(true);
+  if(isReadOnly()||!needsPreparation(r)||document.hidden||tab!=='today')return Promise.resolve(true);
   if(preparedRun===r)return Promise.resolve(true);
   if(warm)return warm.promise;
   let recognizer;try{recognizer=createRecognizer()}catch(e){toast(e.message);return Promise.resolve(false)}
   const token=generation,index=r.index;let resolve;
   const promise=new Promise(done=>resolve=done),entry={promise,recognizer,finish:null};warm=entry;
   const timeout=setTimeout(()=>finish(false,'Spracherkennung konnte nicht gestartet werden. Bitte erneut versuchen.'),10000);
-  function finish(ok,message){if(warm!==entry)return;clearTimeout(timeout);abort(recognizer);warm=null;if(ok&&token===generation&&run===r&&r.index===index&&eligible(r)&&tab==='today'&&!document.hidden)preparedRun=r;else ok=false;if(message)toast(message);resolve(ok)}
+  function finish(ok,message){if(warm!==entry)return;clearTimeout(timeout);abort(recognizer);warm=null;if(ok&&token===generation&&run===r&&r.index===index&&needsPreparation(r)&&tab==='today'&&!document.hidden)preparedRun=r;else ok=false;if(message)toast(message);resolve(ok)}
   entry.finish=finish;recognizer.onstart=()=>finish(true);recognizer.onerror=e=>finish(false,errorText(e.error));recognizer.onend=()=>finish(false,'Spracherkennung wurde beendet. Bitte erneut starten.');
   try{recognizer.start()}catch{finish(false,'Spracherkennung konnte nicht gestartet werden. Bitte erneut versuchen.')}
   return promise;
@@ -151,3 +152,4 @@ function trainingModeCue(d,next=false){
 
 function validColourTrainingRow(r){return !!r&&typeof r.id==='string'&&r.id.length>0&&r.id.length<=200&&typeof r.key==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&Number.isFinite(Date.parse(r.date+'T00:00:00Z'))&&Number.isFinite(r.finishedAt)&&r.finishedAt>=0&&Number.isInteger(r.duration)&&r.duration>0&&r.duration<=600&&['shown','correct','interrupted'].every(k=>Number.isInteger(r[k])&&r[k]>=0&&r[k]<=10000)&&r.correct+r.interrupted<=r.shown}
 function normalizeColourTraining(rows){return Array.isArray(rows)?[...new Map(rows.filter(validColourTrainingRow).map(r=>[r.id,{id:r.id,key:r.key,date:r.date,duration:r.duration,finishedAt:r.finishedAt,shown:r.shown,correct:r.correct,interrupted:r.interrupted}])).values()]:[]}
+
