@@ -173,3 +173,7 @@ Der Renderer unterstützt optional `material: 'football-god'` in `mountPlayerCar
 Die beiden WebP-Texturen haben 480 × 720 Pixel und dieselbe Außenkontur. Wappen und Rand der Rückseite stammen aus der Vorderseite; nur das Innenmotiv unterscheidet sich. Kinderfotos und persönliche Vorschauen gehören nicht ins Repository.
 
 Geprüft: Cloud Chrome mit freigestellten Testportraits beider Kinder, positiven und negativen Änderungen einschließlich +69/−69, freien Bereichen am Kopf und für die Abzeichen. Dies ist kein iPhone-Safari-Test.
+
+### Fußballgott: Layoutfeinschliff (2026.11.13.2)
+
+Portrait und Name stehen 0,8 Prozentpunkte höher. Labels, Einzelwerte und Änderungszeile stehen 1,6 Prozentpunkte höher, damit die äußeren Änderungen nicht auf den unteren Flügeln liegen. Die Aufhellung hinter dem Gesamtrating ist im Zentrum auf rund 25 % Deckkraft reduziert; die Kartentextur bleibt sichtbar. Andere Materialien sind unverändert.
