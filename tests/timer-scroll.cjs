@@ -1,0 +1,9 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const src=fs.readFileSync(__dirname+'/../app.js','utf8');let scrolls=0;const now=Date.now();
+const ctx={Date:{now:()=>now},Math,run:{phase:'rest',index:0,paused:false,last:6,deadline:now+5000,plan:[{key:'001',work:30,rest:10},{key:'001',work:30,rest:10}]},playerCards:{trainingPaused:()=>false},isReadOnly:()=>false,scrollTimerIntoView:()=>scrolls++,renderRunner:()=>{},syncScreenAwake:()=>{},syncBallTime:()=>{},checkTrainingDay:()=>false,refreshTimerRing:()=>{},save:()=>{},refreshDayOverview:()=>{},beep:()=>{},$:()=>null};
+vm.createContext(ctx);vm.runInContext(src.slice(src.indexOf('function begin('),src.indexOf('function pauseRun(')),ctx);
+ctx.update();assert.equal(scrolls,1,'return to timer when the next-set countdown starts');ctx.update();assert.equal(scrolls,1,'no repeated scrolling on timer ticks');
+ctx.begin('rest',5);assert.equal(scrolls,2,'short pauses align immediately');
+ctx.run.plan[1].key='002';ctx.begin('rest',5);assert.equal(scrolls,2,'no automatic countdown for another drill');
+ctx.run.phase='work';ctx.run.last=6;ctx.run.deadline=now+5000;ctx.update();assert.equal(scrolls,2,'work timer does not pull user away while swiping');
+console.log('PASS: next-set countdown scrolls once, short pauses align immediately, work and different-drill pauses do not scroll');
