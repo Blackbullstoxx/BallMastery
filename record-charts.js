@@ -72,7 +72,7 @@ function recordTrendArrow(direction){
 }
 function recordJugglingTrendMarkup(rows){
  if(!rows.length)return '';
- const format=n=>n.toLocaleString('de-DE',{maximumFractionDigits:1}),day=d=>d.split('-').reverse().join('.'),windows=[[6,'Woche'],[24,'Monat']],directionLabel={up:'steigend',flat:'etwa gleich',down:'fallend'};
+ const format=n=>n.toLocaleString('de-DE',{maximumFractionDigits:0}),day=d=>d.split('-').reverse().join('.'),windows=[[6,'Woche'],[24,'Monat']],directionLabel={up:'steigend',flat:'etwa gleich',down:'fallend'};
  const comparisons=windows.map(([size,label])=>({size,label,trend:recordWindowTrend(rows,size)}));
  const icon=({label,trend})=>{if(!trend)return `<span class="record-trend-item" aria-label="${label}: noch nicht genügend Einträge">${label} <span aria-hidden="true">–</span></span>`;
   const value=trend.direction==='flat'?'':trend.percent===null?(trend.difference>0?'+':'')+format(trend.difference): (trend.percent>0?'+':'−')+Math.round(Math.abs(trend.percent))+' %';
@@ -81,3 +81,4 @@ function recordJugglingTrendMarkup(rows){
  const week=comparisons[0].trend,last=rows.at(-1),stale=scoreDay(date())-last.day>30*86400000;
  return `${week?`<p class="record-trend">Zuletzt meist <strong>${format(week.current)}</strong> Kontakte · zuvor ${format(week.previous)}</p>`:''}<details class="record-trend-details"><summary><span>Trend:</span>${comparisons.map(icon).join('<span aria-hidden="true">·</span>')}</summary><div class="record-trend-explanation">${comparisons.map(({size,label,trend})=>trend?`<p><strong>${label}:</strong> letzte ${size} erfasste Tage (${day(trend.recent[0].date)}–${day(trend.recent.at(-1).date)}), Median ${format(trend.current)}; davor ${size} Tage (${day(trend.prior[0].date)}–${day(trend.prior.at(-1).date)}), Median ${format(trend.previous)}.</p>`:`<p><strong>${label}:</strong> verfügbar ab ${size*2} Tagen mit eingetragenem Bestwert (bisher ${rows.length}).</p>`).join('')}<p>Verglichen werden Tagesbestwerte derselben Jonglierart. Fehlende Einträge zählen nicht als null. Die Zeiträume richten sich nach den erfassten Tagen und sind unabhängig vom Diagrammzeitraum.</p><p>Steigend oder fallend ab 10 % und mindestens 3 Kontakten Unterschied; sonst etwa gleich. Bei einem Ausgangswert von null wird die Veränderung in Kontakten angezeigt.</p></div></details>${stale?`<p class="record-trend-stamp">Stand: ${day(last.date)}</p>`:''}`;
 }
+

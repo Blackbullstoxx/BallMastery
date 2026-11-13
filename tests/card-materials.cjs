@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('assert'),fs=require('fs'),vm=require('vm'),path=require('path');const root=path.resolve(__dirname,'..');
+const ctx={state:{current:0,groups:{ball:true},scores:[],practiceCounts:{}},drills:[{id:'001'}],date:()=> '2026-11-13',isReadOnly:()=>false,validTrainingDate:s=>/^\d{4}-\d{2}-\d{2}$/.test(s),Date};vm.createContext(ctx);vm.runInContext(fs.readFileSync(root+'/player-cards.js','utf8')+';this.cards=playerCards;this.materials=playerCardMaterials;this.tier=playerCardTier;',ctx);
+const ranges=[[30,49],[50,59],[60,64],[65,69],[70,74],[75,79],[80,89],[90,96],[97,99]];
+ranges.forEach(([min,max],tier)=>{for(let n=min;n<=max;n++)assert.equal(ctx.tier(n),tier);assert.equal(ctx.materials[tier].min,min);for(const side of ['front','back'])assert(fs.existsSync(path.join(root,ctx.materials[tier][side])))});
+assert.equal(ctx.materials.map(m=>m.name).join('|'),'BRONZE|BRONZE +|SILBER|GOLD|PLATIN|DIAMANT|ELITE|LEGENDE|FUSSBALLGOTT');
+ctx.cards.init();const c=ctx.state.playerCard,legacy={values:[61,61,61,61],total:61,tier:1,visible:[true,true,true,true]};c.lastShown=JSON.parse(JSON.stringify(legacy));c.reveal={day:'2026-11-13',section:'ball',seen:true,from:JSON.parse(JSON.stringify(legacy)),to:{...JSON.parse(JSON.stringify(legacy)),total:97,tier:3}};c.sectionReveals.ball=JSON.parse(JSON.stringify(c.reveal));c.dailyRatings.from=JSON.parse(JSON.stringify(legacy));c.dailyRatings.to=JSON.parse(JSON.stringify(legacy));
+ctx.cards.init();assert.equal(c.lastShown.tier,2);assert.equal(c.reveal.from.tier,2);assert.equal(c.reveal.to.tier,8);assert.equal(c.sectionReveals.ball.to.tier,8);assert.equal(c.dailyRatings.from.tier,2);assert.equal(c.reveal.seen,true);assert.deepEqual(Array.from(c.lastShown.values),[61,61,61,61]);assert.equal(c.lastShown.total,61);assert(ctx.cards.valid(ctx.state));
+c.reveal.to.tier=9;assert(!ctx.cards.valid(ctx.state));c.reveal.to.tier=8;
+console.log('PASS: every rating 30–99 maps to the specified nine tiers, all headings and 18 textures, legacy snapshot reclassification without changed ratings/reveal flags and backup tier bounds.');

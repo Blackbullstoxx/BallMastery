@@ -63,7 +63,7 @@ Ein temporärer Link kann während seiner Gültigkeit weitergegeben werden; bere
 
 Unter **Einstellungen → Spielerkarte** ein freigestelltes PNG oder WebP auswählen. Transparenz ist erforderlich; die App stellt Fotos nicht selbst frei. Bildgröße und Position lassen sich innerhalb des festen Portraitfensters anpassen. Der waagerechte, kurz weich auslaufende Bildabschluss und die inneren Rahmenbegrenzungen bleiben auf allen Stufen erhalten. Unter **Rekorde → Meine Spielerkarte** ist die aktuelle Karte jederzeit sichtbar.
 
-Nur die acht unpersönlichen Bronze-/Silber-/Gold-/Legende-Vorlagen und das Vereinslogo liegen in `cards/`. Portraits, Ausschnitt, Kartenbereiche, Zeitkonten und der zuletzt gezeigte Stand gehören zum gerätelokalen Trainingszustand und zur privaten Backup-Datei. Keine Portraits oder Trainingsbackups in Git veröffentlichen. Die Fotodatei wird mit Transparenz auf maximal 1000 Pixel Kantenlänge vorbereitet.
+Die 18 unpersönlichen Kartenvorlagen (neun Vorder- und Rückseiten), der Standardavatar und das Vereinslogo liegen in `cards/`. Portraits, Ausschnitt, Kartenbereiche, Zeitkonten und der zuletzt gezeigte Stand gehören zum gerätelokalen Trainingszustand und zur privaten Backup-Datei. Keine Portraits oder Trainingsbackups in Git veröffentlichen. Die Fotodatei wird mit Transparenz auf maximal 1000 Pixel Kantenlänge vorbereitet.
 
 ### Bewertungsregeln
 
@@ -75,7 +75,7 @@ Alle Werte liegen zwischen 30 und 99. BALL = gerundet 30 + 69 × gemeisterte Dri
 
 JONG erhält zusätzlich bis zu 15 Leistungspunkte: Pro Technik werden Tagesmaxima gebildet. In jedem Fenster von sechs unterschiedlichen Eintragstagen belegt der vierthöchste Wert die regelmäßige Leistung. Das höchste belegte Fenster zählt; fehlende Tage sind keine Nullen. Nach Korrekturen oder Löschungen wird neu gerechnet. Zwischen den Bonusankern wird kontinuierlich interpoliert: Zehen 0/0, 25/3, 50/6, 100/9, 200/12, 300/15; frei 0/0, 10/3, 25/6, 50/9, 100/12, 200/15. Bei zwei ausgewählten Techniken werden die Boni gemittelt. Gezielte Kontakte tragen Trainingszeit, aber keinen Kontaktbonus bei.
 
-Gesamt: BALL 40 %, JONG 25 %, FINT 15 %, FLEISS 20 %, über die dauerhaft gewählten Kartenbereiche neu normiert. Die Auswahl ist unabhängig vom Wochenplan und wird bei einer Änderung bestätigt. Gesamt 99 setzt 99 in allen einbezogenen Skills voraus. Bronze bis 49, Silber ab 50, Gold ab 70, Legende ab 85. Pausen oder Krankheit senken keinen Wert.
+Gesamt: BALL 40 %, JONG 25 %, FINT 15 %, FLEISS 20 %, über die dauerhaft gewählten Kartenbereiche neu normiert. Die Auswahl ist unabhängig vom Wochenplan und wird bei einer Änderung bestätigt. Gesamt 99 setzt 99 in allen einbezogenen Skills voraus. Bronze 30–49, Bronze + 50–59, Silber 60–64, Gold 65–69, Platin 70–74, Diamant 75–79, Elite 80–89, Legende 90–96 und Fußballgott 97–99. Pausen oder Krankheit senken keinen Wert.
 
 Jonglier- und Fintenzeit wird seit Einführung exakt in Arbeitsphasen erfasst, ohne Countdown, Pause und geschlossene App. Fehlende historische Zeit wird nicht aus heutigen Einstellungen geschätzt. `cardTraining` ergänzt die bisherige Ballzeit; beide bleiben getrennt.
 
@@ -166,14 +166,13 @@ Jede Abschlusskarte hat jetzt „Kartenanimation ansehen“. Der ausdrückliche 
 - Pro Trainingsbereich wird der letzte Abschluss mit Vorher-/Nachherwerten gespeichert. „Kartenanimation erneut ansehen“ zeigt genau diese Einzelwertänderungen, auch nach dem Training anderer Bereiche. Neue optionale Snapshotdaten werden beim Backup validiert; alte Sicherungen bleiben lesbar.
 
 
-### Fußballgott: vorbereitete Materialvorschau (2026.11.13.1)
 
-Der Renderer unterstützt optional `material: 'football-god'` in `mountPlayerCard(host, options)`. Damit werden die neuen Vorder-/Rückseiten und ein eigener Portrait-, Gesamtwert-, Änderungszeilen- und Abzeichenbereich verwendet. Der übliche Portraitimport bleibt erhalten; die Gottkarte begrenzt Bildgröße und Position unabhängig von gespeicherten Foto-Schiebereglern. Die vorhandenen vier Kartenstufen, Ratinggrenzen und gespeicherten Trainingsdaten bleiben unverändert. Die automatische Zuordnung der neun geplanten Stufen ist nicht Bestandteil dieses Entwurfs.
+### Neun Kartenstufen, ganze Jonglierwerte und fließende Farbsätze (2026.11.13.3)
 
-Die beiden WebP-Texturen haben 480 × 720 Pixel und dieselbe Außenkontur. Wappen und Rand der Rückseite stammen aus der Vorderseite; nur das Innenmotiv unterscheidet sich. Kinderfotos und persönliche Vorschauen gehören nicht ins Repository.
+`playerCardMaterials` ist die gemeinsame Quelle für alle neun Ratinggrenzen, Titel, Kartenflächen und das nächste Kartenziel. Alte gespeicherte Kartenstände werden anhand ihres unveränderten Gesamtratings neu zugeordnet; Werte, Zeitkonten und Enthüllungsmerker bleiben erhalten. Alte Backups bleiben lesbar; neue Backups erlauben Kartenstufen 0–8.
 
-Geprüft: Cloud Chrome mit freigestellten Testportraits beider Kinder, positiven und negativen Änderungen einschließlich +69/−69, freien Bereichen am Kopf und für die Abzeichen. Dies ist kein iPhone-Safari-Test.
+Bronze +, Platin, Diamant und Elite haben eigene Vorder-/Rückseiten. Fußballgott verwendet das zuletzt geprüfte große Wappen mit eigenem Portraitlayout, 25 % maximaler Aufhellung hinter dem Gesamtrating und einer freigehaltenen Änderungszeile. Alle neuen Texturen sind transparent und 480 × 720 Pixel groß. Kinderfotos und persönliche Vorschauen gehören nicht ins Repository.
 
-### Fußballgott: Layoutfeinschliff (2026.11.13.2)
+Jonglier-Mediane werden in der Anzeige auf ganze Kontakte gerundet. Die Berechnung und Trendbewertung verwenden weiterhin die präzisen Werte.
 
-Portrait und Name stehen 0,8 Prozentpunkte höher. Labels, Einzelwerte und Änderungszeile stehen 1,6 Prozentpunkte höher, damit die äußeren Änderungen nicht auf den unteren Flügeln liegen. Die Aufhellung hinter dem Gesamtrating ist im Zentrum auf rund 25 % Deckkraft reduziert; die Kartentextur bleibt sichtbar. Andere Materialien sind unverändert.
+Wenn der verbleibende Ballbeherrschungsplan Farbsätze enthält, wird die Mikrofon-/Spracherkennungsfreigabe direkt beim ausdrücklichen Start vorbereitet. Gleichartige Sätze desselben Drills laufen auch beim Wechsel Geschwindigkeit → Farbe über die Pause automatisch weiter. Aktive Farberkennung und Auswertung laufen nur im Farbsatz. Reine Geschwindigkeitspläne, Jonglieren und Finten fordern kein Mikrofon an. Nach einer Unterbrechung erfolgt die Vorbereitung beim ausdrücklichen Fortsetzen; Berechtigungsfehler starten keinen unvorbereiteten Timer.

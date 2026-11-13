@@ -316,3 +316,6 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 @media(max-width:350px){.weekly-switch-row h3{font-size:12.5px}.weekly-switch-row>button{padding:10px 8px}}
 
 .training-area-copy>.area-complete{display:inline-block;margin-top:6px}
+
+
+.tier-shield.tier-1{color:#956943}.tier-shield.tier-2{color:#77818a}.tier-shield.tier-3{color:#ad812d}.tier-shield.tier-4{color:#647780}.tier-shield.tier-5{color:#649bb3}.tier-shield.tier-6{color:#9b7839}.tier-shield.tier-7{color:#a57a1e}.tier-shield.tier-8{color:#bc8a24}
