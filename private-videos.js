@@ -17,7 +17,7 @@ const privateVideos=(()=>{
    let status=null;
    const note=text=>{if(!status){status=document.createElement('p');status.className='hint private-video-status';status.setAttribute('role','status');host.append(status)}status.textContent=text};
    button.onclick=async()=>{
-    if(button.disabled)return;button.disabled=true;note('Video wird geladen …');
+    if(button.disabled)return;button.disabled=true;
     try{
      const link=await dropboxBackup.videoLink(item.path);
      if(!host.isConnected)return;
