@@ -133,7 +133,7 @@ function refreshDayOverview(){
 function reopenExtendedPlans(){['ball','feints','juggling'].forEach(reopenExtendedPlan)}
 function reopenExtendedPlan(section){
  const day=date(),saved=state.completedPlans?.[day]?.[section],current=runs[section];
- if(!saved?.length||(!state.blockDone?.[day]?.includes(section)&&(current?.phase!=='ready'||current.index!==0||current.completedSets?.length)))return;
+ if(!saved?.length||current&&!state.blockDone?.[day]?.includes(section)&&(current.phase!=='ready'||current.index!==0||current.completedSets?.length))return;
  const signature=d=>JSON.stringify([d.kind,d.key,...(section==='juggling'?[]:[d.work])]);
  const completed=new Map();saved.forEach(d=>completed.set(signature(d),(completed.get(signature(d))||0)+(section==='juggling'?d.work:1)));
  let desired=plan(section);
@@ -157,7 +157,20 @@ function reopenExtendedPlan(section){
  });
  if(!pending.length)return;
  overviewBlocks(section,saved).forEach(b=>storeOverviewCredits(section,b,Array.from({length:b.total},(_,i)=>i+1)));
- state.blockDone[day]=state.blockDone[day].filter(k=>k!==section);
+ state.blockDone??={};state.blockDone[day]=(state.blockDone[day]||[]).filter(k=>k!==section);
  const next={repeatMode:false,completedBlocks:[],completedSets:[],day,section,plan:pending,index:0,phase:'ready',paused:false,remaining:5,rotations:levels.map(()=>0)};
  refreshColourPlan(next,true,true);runs[section]=next;if(activeSection===section)run=next;
+}
+
+// Keep actual completed sets when discarding a timer, including an extension.
+function preserveDiscardedWork(value){
+ if(!value||value.day!==date()||value.phase==='done'||value.repeatMode)return;
+ const indices=new Set(value.completedSets||[]),rows=[];
+ overviewBlocks(value.section,value.plan).forEach(block=>{
+  const done=block.indices.filter(i=>indices.has(i)).map(i=>value.plan[i]);
+  done.forEach((d,i)=>rows.push({...d,set:i+1,total:done.length}));
+ });
+ if(!rows.length)return;
+ state.completedPlans??={};state.completedPlans[date()]??={};
+ state.completedPlans[date()][value.section]=[...(state.completedPlans[date()][value.section]||[]),...rows];
 }
