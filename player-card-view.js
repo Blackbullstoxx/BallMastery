@@ -4,7 +4,9 @@ function mountPlayerCard(host,options){
 
  const backs=["cards/backs-0.webp", "cards/backs-1.webp", "cards/backs-2.webp", "cards/backs-3.webp"],fronts=["cards/fronts-0.webp", "cards/fronts-1.webp", "cards/fronts-2.webp", "cards/fronts-3.webp"];
  const root=host.querySelector('#fvo-card-preview'),q=s=>root.querySelector(s);
- const warmAssets=[...backs,...fronts].map(src=>{const image=new Image();image.src=src;return image;});
+ const warmAssets=[...backs,...fronts,...(options.material==='football-god'?['cards/fussballgott-vorderseite.webp','cards/fussballgott-rueckseite.webp']:[])].map(src=>{const image=new Image();image.src=src;return image;});
+ const footballGod=options.material==='football-god';
+ const ratingUnderlay=document.createElement('div');ratingUnderlay.className='fp-rating-underlay';host.querySelector('.fp-front').insertBefore(ratingUnderlay,host.querySelector('.fp-name'));
  const names=['BRONZE','SILBER','GOLD','LEGENDE'],metals=['#85522e','#61666e','#9c6a17','#9c721d'];
  const turn=q('.fp-turn'),back=q('.fp-back'),front=q('.fp-front'),title=q('.fp-title'),result=q('.fp-result'),total=q('.fp-total'),ratings=[...root.querySelectorAll('.fp-ratings span')];
  const scene={value:options.correction?'fall':options.to.tier>options.from.tier?'upgrade':'reveal'},tier={value:options.from.tier},reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -15,7 +17,7 @@ function mountPlayerCard(host,options){
  function at(ms,fn){const token=serial;timers.push(setTimeout(()=>{if(token===serial)fn()},ms));}
  function anim(el,keyframes,duration,delay=0){const a=el.animate(keyframes,{duration,delay,easing:'cubic-bezier(.33,0,.2,1)',fill:'forwards'});animations.push(a);return a;}
  function side(which){back.hidden=which!=='back';front.hidden=which!=='front';turn.style.transform='none';}
- function material(t){front.dataset.cardTier=String(t);q('.fp-back img').src=backs[t];q('.fp-front img').src=fronts[t];q('.fp-frame-overlay').src=fronts[t];back.style.maskImage='url('+backs[t]+')';front.style.maskImage='url('+fronts[t]+')';q('.fp-back-light').style.maskImage='url('+backs[t]+')';q('.fp-mist-clip').style.maskImage='url('+backs[t]+'),url('+backs[t]+')';q('.fp-stage').style.setProperty('--metal',metals[t]);title.querySelector('strong').textContent=names[t];q('.fp-back img').alt=names[t]+' – Kartenrückseite';}
+ function material(t){front.dataset.cardMaterial=footballGod?'football-god':'';if(footballGod){backs[t]='cards/fussballgott-rueckseite.webp';fronts[t]='cards/fussballgott-vorderseite.webp';names[t]='FUSSBALLGOTT';metals[t]='#9c721d';}front.dataset.cardTier=String(t);q('.fp-back img').src=backs[t];q('.fp-front img').src=fronts[t];q('.fp-frame-overlay').src=fronts[t];back.style.maskImage='url('+backs[t]+')';front.style.maskImage='url('+fronts[t]+')';q('.fp-back-light').style.maskImage='url('+backs[t]+')';q('.fp-mist-clip').style.maskImage='url('+backs[t]+'),url('+backs[t]+')';q('.fp-stage').style.setProperty('--metal',metals[t]);title.querySelector('strong').textContent=names[t];q('.fp-back img').alt=names[t]+' – Kartenrückseite';}
  function values(v,o){ratings.forEach((el,i)=>el.querySelector('.fp-num').textContent=options.relevant[i]?v[i]:options.to.values[i]);total.textContent=o;}
  function deltas(){ratings.forEach(el=>{el.className='';el.querySelector('small')?.remove()});}
  function selection(){return options.from.tier;}
@@ -130,3 +132,4 @@ function mountPlayerCard(host,options){
  if(options.animate)play();else {targetTier=options.to.tier;target=options.to.values;targetOverall=options.to.total;finish();if(options.displayChanges)ratings.forEach((el,i)=>{if(options.relevant[i])showChange(el,options.to.values[i]-options.from.values[i])})}
  return cancel;
 }
+

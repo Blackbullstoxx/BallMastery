@@ -244,3 +244,20 @@
  #fvo-card-preview .fp-flag{width:11.875cqw;height:7.1875cqw}
  #fvo-card-preview .fp-badges img{width:7.1875cqw;height:7.1875cqw}
 }
+
+
+/* Football God: opt-in material with a safe header, portrait, delta row and badge layout. */
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-portrait-window{clip-path:polygon(9% 24.2%,91% 24.2%,91% 58.2%,9% 58.2%)}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-portrait{top:24.2%;height:34%;left:0;width:100%}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-portrait img{width:76%!important;left:22%!important;top:0!important;height:auto;object-fit:contain}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-portrait img.fp-default-portrait{height:100%;object-position:center top}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-total{top:25.6%}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-ges{top:37.2%}
+#fvo-card-preview .fp-rating-underlay{display:none}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-rating-underlay{display:block;position:absolute;left:9%;top:24.5%;width:26%;height:18%;pointer-events:none;background:radial-gradient(ellipse,#faf8f3 0%,#faf8f3f5 48%,#faf8f3c0 68%,#faf8f300 100%);filter:blur(3px)}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-ratings{height:5.45%}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-ratings span{font-size:8.125cqw}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-ratings small{font-size:4cqw;width:13cqw;padding:1px 0;top:calc(100% + 1px)}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-badges{top:82.8%;height:4.2cqw;gap:3cqw}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-flag{width:7cqw;height:4.2cqw}
+#fvo-card-preview .fp-front[data-card-material="football-god"] .fp-badges img{width:4.2cqw;height:4.2cqw}

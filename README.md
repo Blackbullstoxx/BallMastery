@@ -164,3 +164,12 @@ Jede Abschlusskarte hat jetzt „Kartenanimation ansehen“. Der ausdrückliche 
 - „Zur nächsten Wochenübung?“ steht auch im laufenden Training in einem eigenen Wechselbereich über „Jetzt wechseln“, getrennt von der Ergebniseingabe.
 - Geprüft: automatische Daten-/Navigationstests; isolierte Chrome-Vorschau einschließlich 390-Pixel-Ansicht, Tageszuständen, Tab-Rückkehr, Wiederherstellung und beiden vorhandenen Porträts auf allen vier Stufen. Kein echter iPhone-Safari-Test.
 - Pro Trainingsbereich wird der letzte Abschluss mit Vorher-/Nachherwerten gespeichert. „Kartenanimation erneut ansehen“ zeigt genau diese Einzelwertänderungen, auch nach dem Training anderer Bereiche. Neue optionale Snapshotdaten werden beim Backup validiert; alte Sicherungen bleiben lesbar.
+
+
+### Fußballgott: vorbereitete Materialvorschau (2026.11.13.1)
+
+Der Renderer unterstützt optional `material: 'football-god'` in `mountPlayerCard(host, options)`. Damit werden die neuen Vorder-/Rückseiten und ein eigener Portrait-, Gesamtwert-, Änderungszeilen- und Abzeichenbereich verwendet. Der übliche Portraitimport bleibt erhalten; die Gottkarte begrenzt Bildgröße und Position unabhängig von gespeicherten Foto-Schiebereglern. Die vorhandenen vier Kartenstufen, Ratinggrenzen und gespeicherten Trainingsdaten bleiben unverändert. Die automatische Zuordnung der neun geplanten Stufen ist nicht Bestandteil dieses Entwurfs.
+
+Die beiden WebP-Texturen haben 480 × 720 Pixel und dieselbe Außenkontur. Wappen und Rand der Rückseite stammen aus der Vorderseite; nur das Innenmotiv unterscheidet sich. Kinderfotos und persönliche Vorschauen gehören nicht ins Repository.
+
+Geprüft: Cloud Chrome mit freigestellten Testportraits beider Kinder, positiven und negativen Änderungen einschließlich +69/−69, freien Bereichen am Kopf und für die Abzeichen. Dies ist kein iPhone-Safari-Test.
