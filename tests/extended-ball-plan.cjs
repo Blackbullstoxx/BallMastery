@@ -1,0 +1,12 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const day='2026-11-13',rows=n=>Array.from({length:n},(_,i)=>({key:'001',kind:'Wochenübung',set:i+1,total:n,work:30,rest:10}));
+const ctx={state:{groups:{ball:true},blockDone:{[day]:['ball']},completedPlans:{[day]:{ball:rows(2)}}},date:()=>day,runs:{},activeSection:'ball',run:null,levels:[],plan:()=>rows(4),refreshColourPlan:()=>{}};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync(__dirname+'/../day-overview.js','utf8'),ctx);
+ctx.reopenExtendedBallPlan();assert.deepEqual([...ctx.state.blockDone[day]],[]);assert.equal(ctx.run.plan.length,2);assert.equal(ctx.run.phase,'ready');assert.equal(ctx.run.completedSets.length,0);
+let blocks=ctx.overviewBlocks('ball',ctx.run.plan);assert.equal(ctx.overviewCredits('ball',blocks[0]).length,0,'new sets must not inherit old credits with identical totals');
+assert.equal(ctx.state.completedPlans[day].ball.length,2);
+ctx.reopenExtendedBallPlan();assert.equal(ctx.run.plan.length,2,'repeated save does not duplicate additions');
+ctx.run.phase='work';const active=ctx.run;ctx.plan=()=>rows(6);ctx.reopenExtendedBallPlan();assert.equal(ctx.run,active,'active training stays intact');
+ctx.run.phase='done';ctx.state.completedPlans[day].ball.push(...rows(2));ctx.state.blockDone[day]=['ball'];ctx.plan=()=>rows(4);ctx.reopenExtendedBallPlan();assert(ctx.state.blockDone[day].includes('ball'),'unchanged plan remains complete');
+ctx.plan=()=>rows(5);ctx.reopenExtendedBallPlan();assert.equal(ctx.run.plan.length,1,'second extension subtracts all previously completed sets');
+console.log('PASS: additional sets only, isolated credits, repeated saves, ongoing run preservation and subsequent extensions');
