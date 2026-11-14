@@ -44,7 +44,7 @@ function historicalAreaTraining(section){
  return {milliseconds:[...times.values()].reduce((n,v)=>n+v,0),days:days.size,since:[...days,data?.since||date()].sort()[0],unknownDays,dayDates:[...days],timedDays:Object.fromEntries(times)};
 }
 function validAreaTrainingHistory(value){return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(k=>['juggling','feints'].includes(k))&&Object.values(value).every(days=>days&&typeof days==='object'&&!Array.isArray(days)&&Object.entries(days).every(([day,ms])=>validTrainingDate(day)&&Number.isSafeInteger(ms)&&ms>0&&ms<=90000000))}
-function rememberAreaTrainingTimes(){state.areaTrainingHistory=Object.fromEntries(['juggling','feints'].map(section=>[section,historicalAreaTraining(section).timedDays]))}
+function rememberAreaTrainingTimes(){state.areaTrainingHistory=Object.fromEntries(['juggling','feints'].map(section=>[section,historicalAreaTraining(section).timedDays]));const techniqueDays=Object.fromEntries(['toe','free','touches'].map(key=>[key,Object.fromEntries(jugglingTechniqueTimes(key))]));if(Object.values(techniqueDays).some(days=>Object.keys(days).length)){if(!state.cardTraining)state.cardTraining={version:1,since:date(),days:{},completedDays:[]};state.cardTraining.techniqueDays=techniqueDays}}
 function ballTrainingTotals(section='ball'){
  const data=section==='ball'?ballTrainingState():null,native=section==='ball'?{milliseconds:Object.values(data.days).reduce((n,v)=>n+v,0),since:data.since,timedDays:data.days}:historicalAreaTraining(section);
  const nativeDays=section==='ball'?Object.keys(data.days).filter(d=>data.days[d]>0):native.dayDates;
@@ -78,3 +78,23 @@ function refreshBallTimeDisplay(){
  });
 }
 function showBallTrainingStart(event){const button=event.target.closest('[data-ball-total]');if(!button)return;const section=button.dataset.ballTotal||'ball',totals=ballTrainingTotals(section);toast('Erfassung seit '+ballTrainingSince(section)+(totals.unknownDays?' · Für '+totals.unknownDays+' ältere Trainingstage ist keine Dauer gespeichert.':''))}
+
+// Technique times are measured by the active clock. Older completed timers are
+// lower bounds only; never infer a duration from today's settings or a score.
+function jugglingTechniqueTimes(key){
+ const times=new Map(),add=(day,ms)=>{if(validTrainingDate(day)&&day<=date()&&Number.isFinite(ms)&&ms>0)times.set(day,Math.max(times.get(day)||0,ms))};
+ for(const [day,ms] of Object.entries(state.cardTraining?.techniqueDays?.[key]||{}))add(day,ms);
+ const sum=rows=>(rows||[]).reduce((n,r)=>n+(r?.key===key&&Number.isInteger(r.work)&&r.work>0?r.work*1000:0),0);
+ for(const [day,sections] of Object.entries(state.completedPlans||{}))if(state.blockDone?.[day]?.includes('juggling'))add(day,sum(sections.juggling));
+ const overview=state.overviewDay;let total=0;
+ for(const row of Object.values(overview?.sections?.juggling||{}))if(row.key===key&&Array.isArray(row.completed))total+=sum([row])*new Set(row.completed.filter(n=>Number.isInteger(n)&&n>=1&&n<=row.total)).size;
+ add(overview?.day,total);
+ const saved=state.activeTraining,r=saved?.version===1?saved.runs?.juggling:null;
+ if(r&&r.day===saved.day&&Array.isArray(r.plan)&&Array.isArray(r.completedSets))add(r.day,sum([...new Set(r.completedSets)].filter(i=>Number.isInteger(i)&&i>=0&&i<r.plan.length).map(i=>r.plan[i])));
+ return times;
+}
+function jugglingTechniqueDuration(key){
+ const times=jugglingTechniqueTimes(key),manual=(state.manualTraining||[]).filter(r=>r.area==='juggling'&&r.key===key&&r.date<=date()),milliseconds=[...times.values()].reduce((n,v)=>n+v,0)+manual.reduce((n,r)=>n+r.milliseconds,0);
+ const unknown=typeof practiceDayList==='function'&&practiceDayList(key).some(day=>!times.has(day)&&!manual.some(r=>r.date===day));
+ return unknown?(milliseconds?'≥ '+trainingSummaryDuration(milliseconds):'–'):trainingSummaryDuration(milliseconds);
+}

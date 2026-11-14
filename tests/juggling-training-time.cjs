@@ -1,0 +1,16 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+let now=Date.parse('2026-11-14T12:00:00Z');
+const ctx={date:()=> '2026-11-14',state:{scores:[],practiceCounts:{},current:0,finished:false,groups:{}},drills:[{id:'001'}],Date:class extends Date{static now(){return now}},document:{hidden:false},tab:'today',run:null,isReadOnly:()=>false,esc:String};
+vm.createContext(ctx);
+for(const file of ['ball-training-time.js','training-progress.js','player-cards.js'])vm.runInContext(fs.readFileSync(__dirname+'/../'+file,'utf8'),ctx);
+vm.runInContext('this.cards=playerCards',ctx);
+ctx.cards.init();ctx.run={section:'juggling',day:ctx.date(),phase:'work',paused:false,deadline:now+60000,plan:[{key:'free'}],index:0};
+ctx.cards.sync();now+=30000;ctx.run.paused=true;ctx.cards.sync();assert.equal(ctx.jugglingTechniqueTimes('free').get(ctx.date()),30000);assert.equal(ctx.jugglingTechniqueDuration('free'),'30 s');assert.equal(ctx.jugglingTechniqueDuration('toe'),'0 min');
+now+=30000;ctx.cards.sync();assert.equal(ctx.jugglingTechniqueDuration('free'),'30 s','paused time excluded');
+ctx.state.manualTraining=[{area:'juggling',key:'free',date:ctx.date(),milliseconds:5400000},{area:'juggling',key:'toe',date:ctx.date(),milliseconds:60000},{area:'juggling',key:'free',date:'2026-11-15',milliseconds:9999999}];assert.equal(ctx.jugglingTechniqueDuration('free'),'1 h 30 min');assert.equal(ctx.jugglingTechniqueDuration('toe'),'1 min');
+ctx.state.practiceCounts.free={'2026-11-01':1};assert.equal(ctx.jugglingTechniqueDuration('free'),'≥ 1 h 30 min');ctx.state.practiceCounts.touches={'2026-11-01':1};assert.equal(ctx.jugglingTechniqueDuration('touches'),'–');
+ctx.state.completedPlans={'2026-11-13':{juggling:[{key:'free',work:120},{key:'toe',work:60}]}};ctx.state.blockDone={'2026-11-13':['juggling']};ctx.state.overviewDay={day:'2026-11-13',sections:{juggling:{a:{key:'free',work:120,total:1,completed:[1,1]}}}};assert.equal(ctx.jugglingTechniqueTimes('free').get('2026-11-13'),120000,'overlapping evidence not added twice');
+ctx.rememberAreaTrainingTimes();delete ctx.state.completedPlans;delete ctx.state.overviewDay;assert.equal(ctx.jugglingTechniqueTimes('free').get('2026-11-13'),120000,'evidence persists when old plans are pruned');
+assert(ctx.cards.valid(ctx.state));const copy=JSON.parse(JSON.stringify(ctx.state));copy.cardTraining.techniqueDays.free[ctx.date()]=-1;assert(!ctx.cards.valid(copy));assert(ctx.cards.valid(JSON.parse(JSON.stringify(ctx.state))),'ledger survives backup round trip');
+console.log('PASS technique active time: pause exclusion, isolation, manual/future entries, historical uncertainty, deduplicated timer evidence, persistence and validation');

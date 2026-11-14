@@ -182,8 +182,8 @@ const playerCards=(()=>{
  }
  function sync(){
   const now=Date.now(),previous=clock;clock=null;if(isReadOnly())return;
-  if(previous){const elapsed=Math.max(0,Math.min(now,previous.until)-previous.from);if(elapsed){init();const row=state.cardTraining.days[previous.day]||(state.cardTraining.days[previous.day]={feints:0,juggling:0});row[previous.section]=Math.min(90000000,row[previous.section]+elapsed)}}
-  if(!trainingPaused()&&run&&['feints','juggling'].includes(run.section)&&run.phase==='work'&&!run.paused&&!document.hidden&&tab==='today'&&run.day===date()&&run.deadline>now){const midnight=new Date(run.day+'T00:00:00');midnight.setDate(midnight.getDate()+1);clock={from:now,until:Math.min(run.deadline,midnight.getTime()),day:run.day,section:run.section}}
+  if(previous){const elapsed=Math.max(0,Math.min(now,previous.until)-previous.from);if(elapsed){init();const row=state.cardTraining.days[previous.day]||(state.cardTraining.days[previous.day]={feints:0,juggling:0});row[previous.section]=Math.min(90000000,row[previous.section]+elapsed);if(previous.section==='juggling'&&['toe','free','touches'].includes(previous.key)){const baseline=jugglingTechniqueTimes(previous.key).get(previous.day)||0;const all=state.cardTraining.techniqueDays||(state.cardTraining.techniqueDays={});const days=all[previous.key]||(all[previous.key]={});days[previous.day]=Math.min(90000000,baseline+elapsed)}}}
+  if(!trainingPaused()&&run&&['feints','juggling'].includes(run.section)&&run.phase==='work'&&!run.paused&&!document.hidden&&tab==='today'&&run.day===date()&&run.deadline>now){const midnight=new Date(run.day+'T00:00:00');midnight.setDate(midnight.getDate()+1);clock={from:now,until:Math.min(run.deadline,midnight.getTime()),day:run.day,section:run.section,key:run.plan?.[run.index]?.key}}
  }
  function completedSet(){if(isReadOnly()||trainingPaused())return;init();if(!state.cardTraining.completedDays.includes(run.day))state.cardTraining.completedDays.push(run.day)}
  function completed(section){
@@ -246,6 +246,7 @@ const playerCards=(()=>{
   if(c?.sectionReveals!==undefined&&(!c.sectionReveals||typeof c.sectionReveals!=='object'||Array.isArray(c.sectionReveals)||Object.keys(c.sectionReveals).length>3||!Object.entries(c.sectionReveals).every(([key,r])=>areas.includes(key)&&r&&r.section===key&&validTrainingDate(r.day)&&typeof r.seen==='boolean'&&validSnapshot(r.from)&&validSnapshot(r.to))))return false;
   if(c?.dailyRatings!==undefined){const d=c.dailyRatings;if(!d||!validTrainingDate(d.day)||!validSnapshot(d.from)||!validSnapshot(d.to)||!d.times||!areas.every(k=>Number.isSafeInteger(d.times[k])&&d.times[k]>=0&&d.times[k]<=90000000))return false}
   if(t!==undefined&&(!t||t.version!==1||!validTrainingDate(t.since)||!t.days||typeof t.days!=='object'||Array.isArray(t.days)||!Object.entries(t.days).every(([day,row])=>validTrainingDate(day)&&row&&['feints','juggling'].every(k=>Number.isSafeInteger(row[k])&&row[k]>=0&&row[k]<=90000000))||!Array.isArray(t.completedDays)||!t.completedDays.every(validTrainingDate)))return false;
+  if(t?.techniqueDays!==undefined&&(!t.techniqueDays||typeof t.techniqueDays!=='object'||Array.isArray(t.techniqueDays)||!Object.entries(t.techniqueDays).every(([key,days])=>['toe','free','touches'].includes(key)&&days&&typeof days==='object'&&!Array.isArray(days)&&Object.entries(days).every(([day,ms])=>validTrainingDate(day)&&Number.isSafeInteger(ms)&&ms>=0&&ms<=90000000))))return false;
   if(data.diligence!==undefined&&!diligenceRules.valid(data.diligence))return false;
   if(data.cardSounds!==undefined&&typeof data.cardSounds!=='boolean')return false;
   return true;

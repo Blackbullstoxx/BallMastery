@@ -3,17 +3,18 @@ const recordChartPeriods=new Map(),recordSelectedDurations=new Map();let recordC
 const scoreDay=date=>/^\d{4}-\d{2}-\d{2}$/.test(date)?Date.parse(date+'T00:00:00Z'):NaN;
 function recordSeries(scores,key,duration,period,today){const end=scoreDay(today),cutoff=period?end-(period-1)*86400000:-Infinity,byDate=new Map();for(const row of scores){const day=scoreDay(row.date);if(row.key!==key||row.duration!==duration||!Number.isFinite(row.value)||row.value<0||!Number.isFinite(day)||day<cutoff||day>end)continue;const previous=byDate.get(row.date);if(!previous||row.value>previous.value)byDate.set(row.date,{date:row.date,value:row.value,day})}return [...byDate.values()].sort((a,b)=>a.day-b.day)}
 // Compact record summaries stay visible in the exercise disclosure heading.
-function recordMetric(value,label,accessible=''){
- return `<span class="record-tile"${accessible?` aria-label="${esc(accessible)}"`:''}><strong>${value}</strong><span class="record-tile-label">${label}</span></span>`;
+function recordMetric(value,label,accessible='',valueClass=''){
+ return `<span class="record-tile"${accessible?` aria-label="${esc(accessible)}"`:''}><strong${valueClass?` class="${esc(valueClass)}"`:''}>${value}</strong><span class="record-tile-label">${label}</span></span>`;
 }
 function recordCompactMetrics(key,duration,days,colour=false){
  const rows=recordSeries(colour?state.colourScores:state.scores,key,duration,0,date()),juggling=!colour&&['toe','free'].includes(key),week=juggling?recordWindowTrend(rows,6):null,month=juggling?recordWindowTrend(rows,24):null,info=!colour&&!juggling&&key!=='touches'?recordBallTrend(key,duration):null;
  const trend=juggling?week:info?.trend,typical=rows.length?recordMedian(rows.slice(-(juggling?6:5))):null,format=n=>n===null?'–':Math.round(n).toLocaleString('de-DE');
  const direction=trend?.direction,description=direction?{up:'steigend',flat:'etwa gleich',down:'fallend'}[direction]:'noch keine Tendenz';
  const arrow=direction?recordTrendArrow(direction):'–';
- const primary=key==='touches'?recordMetric(days,'Tage'):recordMetric(rows.length?format(Math.max(...rows.map(r=>r.value))):'–','Rekord')+recordMetric(format(typical),juggling?'6-Tage-Form':'5-Tage-Form')+recordMetric(days,'Tage')+(juggling?'':recordMetric(arrow,'Trend','Trend: '+description));
+ const trainingTime=()=>recordMetric(jugglingTechniqueDuration(key),'Trainingszeit','','record-training-duration');
+ const primary=key==='touches'?trainingTime():recordMetric(rows.length?format(Math.max(...rows.map(r=>r.value))):'–','Rekord')+recordMetric(format(typical),juggling?'6-Tage-Form':'5-Tage-Form')+(juggling?trainingTime():recordMetric(days,'Tage'))+(juggling?'':recordMetric(arrow,'Trend','Trend: '+description));
  const delta=t=>!t?'–':t.direction==='flat'?recordTrendArrow('flat'):(t.percent===null?(t.difference>0?'+':'−')+format(Math.abs(t.difference)):(t.percent>0?'+':'−')+Math.round(Math.abs(t.percent))+' %');
- return `<span class="record-tiles${!juggling&&key!=='touches'?' record-tiles-four':''}" style="--record-columns:${key==='touches'?1:juggling?3:4}">${primary}</span>${juggling?`<span class="record-tiles record-tiles-extra" style="--record-columns:2">${recordMetric(delta(week),'Wochentrend')}${recordMetric(delta(month),'Monatstrend')}</span>`:''}`;
+ return `<span class="record-tiles${!juggling&&key!=='touches'?' record-tiles-four':juggling?' record-tiles-juggling':''}" style="--record-columns:${key==='touches'?1:juggling?3:4}">${primary}</span>${juggling?`<span class="record-tiles record-tiles-extra" style="--record-columns:2">${recordMetric(delta(week),'Wochentrend')}${recordMetric(delta(month),'Monatstrend')}</span>`:''}`;
 }
 function recordColourTiles(key){
  const rows=(state.colourTraining||[]).filter(r=>r.key===key&&scoreDay(r.date)<=scoreDay(date())&&r.shown>r.interrupted),durations=[...new Set(rows.map(r=>r.duration))].sort((a,b)=>a-b);
