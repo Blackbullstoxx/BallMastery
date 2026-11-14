@@ -1,0 +1,7 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const files=['app.js','training-progress.js','training-preview.js'];for(const f of files)assert(!fs.readFileSync(__dirname+'/../'+f,'utf8').includes('ballTrainingMarkup('),f+' must not render legacy total text');
+const source=fs.readFileSync(__dirname+'/../training-progress.js','utf8'),recovery=source.slice(source.indexOf('function renderRecovery('),source.indexOf('function checkpointTraining('));
+let markup='',added=[];const buttons={};const ctx={Math,run:null,$:s=>s==='#runner'?{classList:{add:c=>added.push(c)},set innerHTML(s){markup=s}}:(buttons[s]??={}),esc:String,ballExerciseBadge:()=>'<span class="badge">Wochenübung ★★</span>',previewTrainingSummary:section=>`<section class="card training-summary">${section} metrics</section>`,trainingPositionText:()=> 'Übung 1 von 2 · Satz 1 von 3',renderRunner:()=>{},resumeRun:()=>{},confirmInline:()=>{},stop:()=>{}};
+vm.createContext(ctx);vm.runInContext(recovery,ctx);
+for(const section of ['ball','juggling','feints']){ctx.run={section,phase:'count',remaining:3,index:0,plan:[{name:'Test',kind:'Wochenübung'}]};ctx.renderRecovery();assert(markup.indexOf('training-summary')<markup.indexOf('Training gespeichert'));assert(!markup.includes('Gesamt:'));assert(markup.includes('id="recover-run"')&&markup.includes('id="discard-run"'));assert(added.includes('summary-runner'));}
+console.log('PASS: recovery summary outside card in every area, recovery controls preserved and no legacy summary renderers in any training view');
