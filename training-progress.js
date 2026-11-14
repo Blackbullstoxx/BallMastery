@@ -127,7 +127,7 @@ function renderRecovery(){
  const d=run.plan[run.index],timed=['count','work','rest'].includes(run.phase),remaining=Math.ceil(run.remaining);
  const time=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');
  const detail=timed?`${run.phase==='count'?'Countdown':run.phase==='rest'?'Pause':'Übungszeit'} · noch ${time}`:run.phase==='review'?'Diese Übung ist bereits geschafft.':'Bereit für diese Übung.';
- $('#runner').innerHTML=`<span class="badge">Training gespeichert</span><h2>${esc(d.name)}</h2>${ballTrainingMarkup(run.section)}${run.section==='ball'?ballExerciseBadge(d):''}<p class="hint">${run.section==='ball'?'':esc(d.kind)+' · '}${trainingPositionText(run)}</p><p>${detail}</p><button class="primary" id="recover-run">Fortsetzen</button><button class="back-button" id="discard-run">Training verwerfen</button><div id="discard-confirm"></div>`;
+ $('#runner').classList?.add('summary-runner');$('#runner').innerHTML=`${previewTrainingSummary(run.section)}<section class="card"><span class="badge">Training gespeichert</span><h2>${esc(d.name)}</h2>${run.section==='ball'?ballExerciseBadge(d):''}<p class="hint">${run.section==='ball'?'':esc(d.kind)+' · '}${trainingPositionText(run)}</p><p>${detail}</p><button class="primary" id="recover-run">Fortsetzen</button><button class="back-button" id="discard-run">Training verwerfen</button><div id="discard-confirm"></div></section>`;
  $('#recover-run').onclick=()=>{run.restored=false;if(timed)void resumeRun();else renderRunner()};
  $('#discard-run').onclick=()=>confirmInline($('#discard-confirm'),'Diesen begonnenen Bereich verwerfen? Bereits absolvierte Übungen und gespeicherte Rekorde bleiben erhalten.',stop);
 }
