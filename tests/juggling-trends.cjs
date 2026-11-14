@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('assert'),fs=require('fs'),vm=require('vm'),path=require('path');const root=path.resolve(__dirname,'..');
-const context={date:()=> '2026-11-07',esc:String,colourCue:()=>'',state:{scores:[],colourScores:[]}};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(root,'record-charts.js'),'utf8'),context);
+const context={date:()=> '2026-11-07',esc:String,colourCue:()=>'',state:{scores:[],colourScores:[]}};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(root,'ball-training-time.js'),'utf8'),context);vm.runInContext(fs.readFileSync(path.join(root,'record-charts.js'),'utf8'),context);
 const rows=values=>values.map((value,i)=>{const date=new Date(Date.UTC(2026,8,1+i)).toISOString().slice(0,10);return {date,day:Date.parse(date+'T00:00:00Z'),value}}),run=(values,size=6)=>context.recordWindowTrend(rows(values),size),fill=(n,v)=>Array(n).fill(v);
 assert.equal(run(fill(11,50)),null);assert.equal(run([...fill(6,50),...fill(6,60)]).direction,'up');assert.equal(run([...fill(6,50),...fill(6,60)]).percent,20);assert.equal(run([...fill(6,50),...fill(6,40)]).direction,'down');assert.equal(run([...fill(6,50),...fill(6,52)]).direction,'flat');assert.equal(run([...fill(6,10),...fill(6,12)]).direction,'flat');assert.equal(run([...fill(6,30),...fill(6,33)]).direction,'up');assert.equal(run([...fill(6,50),...fill(5,50),500]).direction,'flat');
 const even=run([10,20,30,40,50,60,20,30,40,50,60,70]);assert.equal(even.previous,35);assert.equal(even.current,45);

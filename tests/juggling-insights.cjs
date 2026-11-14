@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
 const root=path.resolve(__dirname,'..');
-const context={state:{scores:[],colourScores:[]},date:()=> '2026-11-07',esc:String,colourCue:()=>''};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(root,'record-charts.js'),'utf8'),context);
+const context={state:{scores:[],colourScores:[]},date:()=> '2026-11-07',esc:String,colourCue:()=>''};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(root,'ball-training-time.js'),'utf8'),context);vm.runInContext(fs.readFileSync(path.join(root,'record-charts.js'),'utf8'),context);
 function rows(values,key='toe',start=1){return values.map((value,i)=>({key,value,date:'2026-11-'+String(start+i).padStart(2,'0'),duration:0}))}
 const data=rows([48,55,62,78,70]);data.push({...data[1],value:40},{key:'toe',duration:0,date:'2026-10-08',value:200},{key:'toe',duration:0,date:'2026-10-09',value:79},{key:'toe',duration:0,date:'2026-11-08',value:999},...rows([900],'free'),{...data[0],duration:30,value:900});
 const series=context.recordSeries(data,'toe',0,0,'2026-11-07'),stats=context.recordJugglingStats('toe',series,'2026-11-07');

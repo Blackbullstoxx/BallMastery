@@ -361,3 +361,5 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 @media(max-width:350px){.record-exercise>summary{padding:13px 10px}.record-title-row{gap:9px}.record-exercise-name{font-size:14px}.record-duration{font-size:11px}}
 
 .record-tiles-four{grid-template-columns:1fr 1.2fr .8fr 1fr}
+
+.record-tiles-juggling{grid-template-columns:.9fr 1fr 1.3fr}.record-tile strong.record-training-duration{font-size:clamp(13px,3.7vw,17px)}
