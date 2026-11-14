@@ -1,6 +1,6 @@
 'use strict';
 
-function practiceDayList(key,data=state){return Object.entries(data.practiceCounts?.[key]||{}).filter(([day,n])=>validTrainingDate(day)&&day<=date()&&Number.isInteger(n)&&n>0).map(([day])=>day).sort()}
+function practiceDayList(key,data=state){return Object.entries(data.practiceCounts?.[key]||{}).filter(([day,n])=>validTrainingDate(day)&&day<=date()&&Number.isInteger(n)&&n>0).map(([day])=>day).concat((data.manualTraining||[]).filter(r=>r.key===key&&r.date<=date()).map(r=>r.date)).filter((d,i,a)=>a.indexOf(d)===i).sort()}
 function markPracticeDay(key,day,data=state){
  if(!validTrainingDate(day)||day>date())return;
  if(!data.practiceCounts||typeof data.practiceCounts!=='object'||Array.isArray(data.practiceCounts))data.practiceCounts={};
@@ -10,7 +10,7 @@ function markPracticeDay(key,day,data=state){
 // Juggling days count from a saved daily best or explicit timer completion.
 // Settings and general session dates do not establish a technique-specific day.
 function backfillJugglingDays(data){
- for(const score of data.scores||[])if(['toe','free','touches'].includes(score.key)&&Number.isInteger(score.value)&&score.value>=0&&score.value<=99999)markPracticeDay(score.key,score.date,data);
+ for(const score of data.scores||[])if(!score.manualTrainingId&&['toe','free','touches'].includes(score.key)&&Number.isInteger(score.value)&&score.value>=0&&score.value<=99999)markPracticeDay(score.key,score.date,data);
  const validRow=(row,overview=false)=>!!row&&['toe','free','touches'].includes(row.key)&&row.kind==='Jonglieren'&&row.total===1&&(overview||row.set===1)&&Number.isInteger(row.work)&&row.work>0&&row.work<=7200&&(row.rest===0||overview&&row.rest===undefined);
  for(const [day,sections] of Object.entries(data.completedPlans||{})){
   const rows=sections?.juggling;

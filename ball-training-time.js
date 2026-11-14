@@ -30,7 +30,7 @@ function historicalAreaTraining(section){
  for(const [day,ms] of Object.entries(state.areaTrainingHistory?.[section]||{}))if(ms>0)add(day,ms);
  for(const [day,row] of Object.entries(data?.days||{}))if(row[section]>0)add(day,row[section]);
  for(const key of keys)for(const [day,n] of Object.entries(state.practiceCounts?.[key]||{}))if(Number.isInteger(n)&&n>0)add(day);
- if(section==='juggling')for(const score of state.scores||[])if(keys.includes(score.key)&&Number.isInteger(score.value)&&score.value>=0)add(score.date);
+ if(section==='juggling')for(const score of state.scores||[])if(!score.manualTrainingId&&keys.includes(score.key)&&Number.isInteger(score.value)&&score.value>=0)add(score.date);
  const rowTime=row=>row&&keys.includes(row.key)&&Number.isInteger(row.work)&&row.work>0&&row.work<=7200?row.work*1000:0;
  for(const [day,closed] of Object.entries(state.blockDone||{}))if(Array.isArray(closed)&&closed.includes(section)){
   const rows=state.completedPlans?.[day]?.[section];add(day,Array.isArray(rows)?rows.reduce((n,row)=>n+rowTime(row),0):0);
@@ -41,14 +41,15 @@ function historicalAreaTraining(section){
  const saved=state.activeTraining,r=saved?.version===1?saved.runs?.[section]:null;
  if(r&&r.day===saved.day&&Array.isArray(r.plan)&&Array.isArray(r.completedSets)){let total=0;for(const i of new Set(r.completedSets))if(Number.isInteger(i)&&i>=0&&i<r.plan.length)total+=rowTime(r.plan[i]);if(total)add(r.day,total)}
  const unknownDays=[...days].filter(day=>!times.has(day)).length;
- return {milliseconds:[...times.values()].reduce((n,v)=>n+v,0),days:days.size,since:[...days,data?.since||date()].sort()[0],unknownDays,timedDays:Object.fromEntries(times)};
+ return {milliseconds:[...times.values()].reduce((n,v)=>n+v,0),days:days.size,since:[...days,data?.since||date()].sort()[0],unknownDays,dayDates:[...days],timedDays:Object.fromEntries(times)};
 }
 function validAreaTrainingHistory(value){return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(k=>['juggling','feints'].includes(k))&&Object.values(value).every(days=>days&&typeof days==='object'&&!Array.isArray(days)&&Object.entries(days).every(([day,ms])=>validTrainingDate(day)&&Number.isSafeInteger(ms)&&ms>0&&ms<=90000000))}
 function rememberAreaTrainingTimes(){state.areaTrainingHistory=Object.fromEntries(['juggling','feints'].map(section=>[section,historicalAreaTraining(section).timedDays]))}
 function ballTrainingTotals(section='ball'){
- if(section!=='ball')return historicalAreaTraining(section);
- const data=ballTrainingState(),values=Object.values(data.days);
- return {milliseconds:values.reduce((sum,ms)=>sum+ms,0),days:values.filter(ms=>ms>0).length,since:data.since};
+ const data=section==='ball'?ballTrainingState():null,native=section==='ball'?{milliseconds:Object.values(data.days).reduce((n,v)=>n+v,0),since:data.since,timedDays:data.days}:historicalAreaTraining(section);
+ const nativeDays=section==='ball'?Object.keys(data.days).filter(d=>data.days[d]>0):native.dayDates;
+ const rows=(state.manualTraining||[]).filter(r=>r.area===section&&r.date<=date()),days=new Set([...nativeDays,...rows.map(r=>r.date)].filter(d=>validTrainingDate(d)&&d<=date()));
+ return {...native,milliseconds:native.milliseconds+rows.reduce((n,r)=>n+r.milliseconds,0),days:days.size,since:[native.since,...rows.map(r=>r.date)].sort()[0]};
 }
 function ballTrainingText(section='ball'){
  const totals=ballTrainingTotals(section),seconds=Math.floor(totals.milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);

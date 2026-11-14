@@ -4,7 +4,7 @@ function recordHistoryRows(scores){return scores.slice().sort((a,b)=>b.date.loca
 function recordHistoryMarkup(key,scores){
  if(!scores.length)return '';
  const view=recordHistoryViews.get(key)||{limit:10,open:false},rows=recordHistoryRows(scores),shown=rows.slice(0,view.limit);
- return `<details class="record-history" data-history-key="${esc(key)}" ${view.open?'open':''}><summary>${isReadOnly()?'Verlauf':'Verlauf und Korrekturen'}</summary><div class="record-history-list">${shown.map(row=>`<div class="record-history-row"><time datetime="${esc(row.date)}">${esc(row.date.slice(2).split('-').reverse().join('.'))}</time><span class="record-history-value"><strong>${row.value.toLocaleString('de-DE')}</strong>${row.duration?`<span> · ${row.duration} s</span>`:''}</span>${isReadOnly()?'':`<div class="record-history-actions"><button type="button" data-edit="${esc(row.id)}">Korrigieren</button><button type="button" data-delete="${esc(row.id)}">Löschen</button></div>`}</div>`).join('')}</div>${rows.length>shown.length?`<button type="button" class="record-history-more" data-history-more>Weitere ${Math.min(10,rows.length-shown.length)} anzeigen</button>`:''}</details>`;
+ return `<details class="record-history" data-history-key="${esc(key)}" ${view.open?'open':''}><summary>${isReadOnly()?'Verlauf':'Verlauf und Korrekturen'}</summary><div class="record-history-list">${shown.map(row=>`<div class="record-history-row"><time datetime="${esc(row.date)}">${esc(row.date.slice(2).split('-').reverse().join('.'))}</time><span class="record-history-value"><strong>${row.manualTrainingId?'<small>Nachgetragen · </small>':''}${row.value.toLocaleString('de-DE')}</strong>${row.duration?`<span> · ${row.duration} s</span>`:''}</span>${isReadOnly()?'':`<div class="record-history-actions"><button type="button" data-edit="${esc(row.id)}">Korrigieren</button><button type="button" data-delete="${esc(row.id)}">Löschen</button></div>`}</div>`).join('')}</div>${rows.length>shown.length?`<button type="button" class="record-history-more" data-history-more>Weitere ${Math.min(10,rows.length-shown.length)} anzeigen</button>`:''}</details>`;
 }
 function bindRecordHistory(){
  document.querySelectorAll('[data-history-key]').forEach(host=>{
@@ -17,7 +17,7 @@ function bindRecordHistory(){
   });
   host.querySelectorAll('[data-edit],[data-delete]').forEach(button=>button.addEventListener('click',()=>{
    if(isReadOnly())return;
-   const id=button.dataset.edit||button.dataset.delete,row=state.scores.find(row=>row.id===id);if(!row)return;
+   const id=button.dataset.edit||button.dataset.delete,row=state.scores.find(row=>row.id===id);if(!row)return;if(row.manualTrainingId){manualTrainingUI.open=true;manualTrainingUI.editing=row.manualTrainingId;render();return;}
    const beforeCard=playerCards.snapshot();let changed=false;
    if(button.hasAttribute('data-edit')){
     const value=prompt('Richtiger Wert:',row.value);if(value===null||value.trim()==='')return;

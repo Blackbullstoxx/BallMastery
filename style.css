@@ -345,3 +345,9 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .training-exercise>.exercise-context{margin-bottom:10px}
 
 .card.summary-runner{padding:0;margin:0;background:transparent;border:0;box-shadow:none}
+
+.manual-entry{width:100%;margin-bottom:16px}.manual-tabs{display:flex;gap:6px;margin-bottom:16px}.manual-tabs button{flex:1;min-width:0;padding:12px 6px;font-size:.85rem}.manual-row{padding:16px 0;border-top:1px solid var(--line,#dfe6dc)}.manual-row>strong{display:block;margin-top:8px}.manual-row .two{margin-top:8px}#manual-form label{display:block;margin-bottom:16px}#manual-form [hidden]{display:none}#manual-form>button{width:100%;margin-top:12px}
+
+.manual-tabs button{font-size:.75rem;overflow-wrap:anywhere}
+
+#manual-form input,#manual-form select{display:block;width:100%;margin-top:6px}#manual-form .two,.manual-row .two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
