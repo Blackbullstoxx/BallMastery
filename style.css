@@ -331,3 +331,7 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .training-summary-metrics .training-metric strong{font-size:20px;white-space:nowrap}
 .training-summary-metrics .training-metric>span{font-size:11px}
 @media(max-width:350px){.training-summary-metrics .training-metric strong{font-size:17px}.training-summary-metrics .training-metric>span{font-size:10px}}
+
+.card.ball-runner{padding:0;margin:0;background:transparent;border:0;box-shadow:none}
+.ball-runner .timer-ring{margin-top:8px;margin-bottom:18px}
+.two.runner-pause-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
