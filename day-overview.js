@@ -130,7 +130,41 @@ function refreshDayOverview(){
 }
 
 // Reopen finished areas with only the additional work requested today.
-function reopenExtendedPlans(){['ball','feints','juggling'].forEach(reopenExtendedPlan)}
+function reopenExtendedPlans(){reconcileJugglingPlan();['ball','feints','juggling'].forEach(reopenExtendedPlan)}
+// Settings apply to the unfinished part of today's juggling session. Completed
+// rows remain immutable evidence; timer ledgers already contain elapsed time.
+function reconcileJugglingPlan(){
+ const value=runs.juggling,day=date();
+ if(typeof isReadOnly==='function'&&isReadOnly()||!value||value.day!==day||value.phase==='done'||value.repeatMode)return;
+ const old=value.plan[value.index];if(!old)return;
+ const completed=new Set(value.completedSets||[]),finished=value.plan.filter((row,index)=>completed.has(index)),credited=new Map();
+ for(const row of [...(state.completedPlans?.[day]?.juggling||[]),...finished])credited.set(row.key,(credited.get(row.key)||0)+row.work);
+ const pending=plan('juggling').map(row=>({...row,work:Math.max(0,row.work-(credited.get(row.key)||0))})).filter(row=>row.work>0);
+ const active=pending.findIndex(row=>row.key===old.key),keepCurrent=!completed.has(value.index)&&active>=0;
+ if(keepCurrent&&active>0)pending.unshift(...pending.splice(active,1));
+ const next=[...finished,...pending];
+ if(JSON.stringify(next)===JSON.stringify(value.plan))return;
+ const oldRemaining=Math.max(0,Math.ceil(value.paused?value.remaining:(value.deadline-Date.now())/1000)),elapsed=value.phase==='work'?Math.max(0,old.work-oldRemaining):0,oldIndex=value.index;
+ // Preserve completed-day evidence before indices or work durations change.
+ for(const index of completed)recordOverviewSet(value,index);
+ if(!next.length){delete runs.juggling;if(run===value)run=null;return}
+ value.plan=next;value.completedSets=finished.map((_,index)=>index);value.completedBlocks=[...value.completedSets];delete value.historyIndex;delete value.beforeStop;value.stopping=false;
+ if(keepCurrent){
+  value.index=finished.length;
+  if(value.phase==='work'){
+   value.remaining=Math.max(0,next[value.index].work-elapsed);value.paused=true;
+   if(!value.remaining){
+    next[value.index].work=Math.max(1,elapsed);const previous=run;run=value;try{countCompletedSet(next[value.index])}finally{run=previous}
+    value.phase='review';value.paused=false;
+   }
+  }else if(value.phase==='count'){value.remaining=Math.min(5,Math.max(0,oldRemaining));value.paused=true}
+  else{value.phase='ready';value.remaining=5;value.paused=false}
+ }else if(completed.has(oldIndex)){
+  value.index=value.plan.indexOf(old);value.phase='review';value.remaining=0;value.paused=false;
+ }else if(pending.length){value.index=finished.length;value.phase='ready';value.remaining=5;value.paused=false}
+ else{value.index=finished.length-1;value.phase='review';value.remaining=0;value.paused=false}
+ value.deadline=Date.now()+value.remaining*1000;value.last=value.remaining;
+}
 function reopenExtendedPlan(section){
  const day=date(),saved=state.completedPlans?.[day]?.[section],current=runs[section];
  if(!saved?.length||current&&!state.blockDone?.[day]?.includes(section)&&(current.phase!=='ready'||current.index!==0||current.completedSets?.length))return;
