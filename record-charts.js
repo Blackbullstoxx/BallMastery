@@ -11,7 +11,7 @@ function recordCompactMetrics(key,duration,days,colour=false){
  const trend=juggling?week:info?.trend,typical=rows.length?recordMedian(rows.slice(-(juggling?6:5))):null,format=n=>n===null?'–':Math.round(n).toLocaleString('de-DE');
  const direction=trend?.direction,description=direction?{up:'steigend',flat:'etwa gleich',down:'fallend'}[direction]:'noch keine Tendenz';
  const arrow=direction?recordTrendArrow(direction):'–';
- const primary=key==='touches'?recordMetric(days,'Tage'):recordMetric(rows.length?format(Math.max(...rows.map(r=>r.value))):'–','Rekord')+recordMetric(format(typical),'Aktuelle Form')+recordMetric(days,'Tage')+(juggling?'':recordMetric(arrow,'Trend','Trend: '+description));
+ const primary=key==='touches'?recordMetric(days,'Tage'):recordMetric(rows.length?format(Math.max(...rows.map(r=>r.value))):'–','Rekord')+recordMetric(format(typical),juggling?'6-Tage-Form':'5-Tage-Form')+recordMetric(days,'Tage')+(juggling?'':recordMetric(arrow,'Trend','Trend: '+description));
  const delta=t=>!t?'–':t.direction==='flat'?recordTrendArrow('flat'):(t.percent===null?(t.difference>0?'+':'−')+format(Math.abs(t.difference)):(t.percent>0?'+':'−')+Math.round(Math.abs(t.percent))+' %');
  return `<span class="record-tiles${!juggling&&key!=='touches'?' record-tiles-four':''}" style="--record-columns:${key==='touches'?1:juggling?3:4}">${primary}</span>${juggling?`<span class="record-tiles record-tiles-extra" style="--record-columns:2">${recordMetric(delta(week),'Wochentrend')}${recordMetric(delta(month),'Monatstrend')}</span>`:''}`;
 }
