@@ -38,6 +38,7 @@ const diligenceRules=(()=>{
   const days=new Set();
   for(const entries of Object.values(data.practiceCounts||{}))for(const [d,n] of Object.entries(entries||{}))if(n>0&&validTrainingDate(d)&&d<=today)days.add(d);
   for(const d of [...(data.sessions||[]),...(data.cardTraining?.completedDays||[])])if(validTrainingDate(d)&&d<=today)days.add(d);
+  for(const r of data.manualTraining||[])if(validTrainingDate(r.date)&&r.date<=today)days.add(r.date);
   return days;
  }
  function paused(data,date){return (data.diligence?.pauses||[]).some(p=>p.from<=date&&(p.to===null||date<=p.to))}
@@ -48,7 +49,7 @@ const diligenceRules=(()=>{
   const days=qualifying(data,today),model=data.diligence;
   if(!model)return {points:days.size,rating:earned(days.size),earned:earned(days.size),deduction:0,todayPoints:days.has(today)?1:0,weeks:0,reference:0,recent:0};
   const credits=new Map();let points=0;
-  for(const d of days){const ms=(data.ballTraining?.days?.[d]||0)+(data.cardTraining?.days?.[d]?.feints||0)+(data.cardTraining?.days?.[d]?.juggling||0);const value=d<model.since?1:Math.min(2.5,.5+ms/360000);credits.set(d,value);points+=value}
+  for(const d of days){const ms=(data.ballTraining?.days?.[d]||0)+(data.cardTraining?.days?.[d]?.feints||0)+(data.cardTraining?.days?.[d]?.juggling||0)+(data.manualTraining||[]).filter(r=>r.date===d).reduce((n,r)=>n+r.milliseconds,0);const value=d<model.since?1:Math.min(2.5,.5+ms/360000);credits.set(d,value);points+=value}
   const start=number(model.since),end=number(today),history=[];
   // Historical days seed the personal reference, but never retroactive losses.
   for(let week=8;week>0;week--){let total=0;for(let j=0;j<7;j++)total+=credits.get(day(start-week*7+j))||0;history.push(total)}
@@ -131,7 +132,7 @@ const playerCards=(()=>{
  }
  function snapshot(data=state,list=drills,today=date()){
   const c=config(data),time=data.cardTraining?.days||{};
-  const minutes=key=>Object.entries(time).reduce((sum,[day,row])=>sum+(day<=today&&validTrainingDate(day)?row[key]||0:0),0)/60000;
+  const minutes=key=>((data.manualTraining||[]).filter(r=>r.area===key&&r.date<=today).reduce((n,r)=>n+r.milliseconds,0)+Object.entries(time).reduce((sum,[day,row])=>sum+(day<=today&&validTrainingDate(day)?row[key]||0:0),0))/60000;
   const learned=data.finished?list.length:clamp(Number(data.current)||0,0,list.length);
   const techniques=['toe','free'].filter(k=>c.techniques[k]);
   const performance=techniques.length?techniques.reduce((sum,k)=>sum+bonus(data,k,today),0)/techniques.length:0;

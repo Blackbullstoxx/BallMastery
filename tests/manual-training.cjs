@@ -1,0 +1,16 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');let reading=false;
+const ctx={date:()=> '2026-11-14',isReadOnly:()=>reading,drills:[{id:'048'}],state:{scores:[{id:'native',key:'toe',date:'2026-11-13',duration:0,value:20}],practiceCounts:{toe:{'2026-11-13':1}},ballTraining:{version:1,since:'2026-11-14',days:{'2026-11-13':30000}},cardTraining:{since:'2026-11-14',days:{'2026-11-13':{juggling:60000,feints:0}}}},document:{}};
+vm.createContext(ctx);for(const file of ['ball-training-time.js','training-progress.js','manual-training.js','player-cards.js'])vm.runInContext(fs.readFileSync(__dirname+'/../'+file,'utf8'),ctx);
+const row=(id,area,key,seconds,best=null)=>({id,area,key,seconds,sets:1,milliseconds:seconds*1000,date:'2026-11-13',name:'',best});
+assert(ctx.putManualTraining(row('a','juggling','toe',90,30)));assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,150000);assert.equal(ctx.ballTrainingTotals('juggling').days,1);assert.equal(ctx.practiceDayList('toe').length,1);assert.equal(ctx.state.scores.length,2);
+ctx.rememberAreaTrainingTimes();assert.equal(ctx.state.areaTrainingHistory.juggling['2026-11-13'],60000,'manual time not archived');
+ctx.putManualTraining(row('a','juggling','toe',120,10));assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,180000);assert.equal(Math.max(...ctx.state.scores.map(r=>r.value)),20,'native best survives edit');
+ctx.backfillJugglingDays(ctx.state);ctx.deleteManualTraining('a');assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,60000);assert.equal(ctx.state.scores.length,1);
+ctx.putManualTraining(row('b','ball','048',30,8));ctx.putManualTraining(row('c','ball','048',30));assert.equal(ctx.ballTrainingTotals().milliseconds,90000);assert.equal(ctx.ballTrainingTotals().days,1);assert.equal(ctx.practiceDayList('048').length,1);ctx.deleteManualTraining('b');ctx.deleteManualTraining('c');assert.equal(ctx.practiceDayList('048').length,0);
+ctx.putManualTraining({...row('f','feints','feints',180),date:'2026-11-12'});assert.equal(ctx.ballTrainingTotals('feints').milliseconds,180000);assert.equal(ctx.state.scores.length,1);
+vm.runInContext('playerCards.init();this.cards=playerCards;this.diligence=diligenceRules',ctx);assert.equal(ctx.cards.snapshot().values[2],31);assert(ctx.diligence.qualifying(ctx.state,ctx.date()).has('2026-11-12'));
+const json=JSON.stringify(ctx.state);ctx.state=JSON.parse(json);assert(ctx.validManualTraining(ctx.state.manualTraining));assert.equal(ctx.ballTrainingTotals('feints').milliseconds,180000);ctx.deleteManualTraining('f');assert.equal(ctx.cards.snapshot().values[2],30);assert(!ctx.diligence.qualifying(ctx.state,ctx.date()).has('2026-11-12'));
+reading=true;assert.equal(ctx.putManualTraining(row('d','ball','048',30)),false);assert.equal(ctx.deleteManualTraining('x'),false);reading=false;
+assert(!ctx.validManualTraining([row('bad','feints','feints',30,5)]));assert(!ctx.putManualTraining({...row('future','ball','048',30),date:'2026-11-15'}));assert(!ctx.validManualTraining([row('same','ball','048',30),row('same','ball','048',30)]));
+console.log('PASS manual ledger: additive times, unique days, native best preservation, edit/delete, archive isolation, feints rating, Fleiß dates, JSON roundtrip, readonly and invalid/future input');

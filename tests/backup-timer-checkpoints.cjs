@@ -14,3 +14,5 @@ ctx.state.practiceCounts.toe={'2026-11-11':1};b.changed();assert.equal(timers.si
 timers.clear();b.testBaseline();b.changed(true);assert.equal(timers.size,1,'explicit checkpoints still request a full snapshot');
 timers.clear();readonly=true;b.changed(true);assert.equal(timers.size,0,'read-only cannot schedule uploads');
 console.log('PASS: three minutes of timer ticks cause no upload scheduling; genuine completion and explicit checkpoints remain saveable; read-only stays isolated.');
+
+ctx.state.manualTraining=[{id:'test',date:'2026-11-10',milliseconds:90000}];assert.notEqual(b.comparable(ctx.state),signature,'manual-only changes must trigger backup comparison');
