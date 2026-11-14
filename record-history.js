@@ -13,7 +13,7 @@ function bindRecordHistory(){
   host.addEventListener('toggle',()=>{if(host.isConnected)view.open=host.open});
   host.querySelector('[data-history-more]')?.addEventListener('click',()=>{
    view.limit+=10;view.open=true;
-   host.outerHTML=recordHistoryMarkup(key,state.scores.filter(row=>row.key===key));bindRecordHistory();
+   host.outerHTML=recordHistoryMarkup(key,state.scores.filter(row=>row.key===key&&row.date<=date()&&(!host.closest('[data-record-exercise]')||row.duration===Number(host.closest('[data-record-exercise]').querySelector('.record-chart')?.dataset.chartDuration))));bindRecordHistory();
   });
   host.querySelectorAll('[data-edit],[data-delete]').forEach(button=>button.addEventListener('click',()=>{
    if(isReadOnly())return;
