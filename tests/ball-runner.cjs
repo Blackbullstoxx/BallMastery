@@ -7,3 +7,6 @@ console.log('PASS: per-drill training days, timer/metric/input order, preserved 
 assert(ctx.ballVideoBackMarkup(r,false).includes('class="back-button" id="toggle-video"'),'single video action fills the row');
 html=ctx.feintsRunnerMarkup({...r,section:'feints'},false,true);assert(html.indexOf('training-summary')<html.indexOf('training-exercise'),'feints summary is outside and above exercise card');assert(html.includes('Satz 1 von 1'));assert(html.indexOf('id="resume"')<html.indexOf('id="restart"'));
 console.log('PASS: full-width single video action and separate feints summary');
+for(let level=0;level<4;level++){const badge=ctx.ballExerciseBadge({kind:'Wiederholung · Meister ★★★★',key:'test',level});assert.equal((badge.match(/★/g)||[]).length,level+1);assert(!badge.includes('Meister'));assert(badge.includes('Wiederholung'));}
+assert(ctx.ballExerciseBadge({kind:'Feste Zusatzübung',key:'test',level:1}).includes('Zusatzübung'));
+console.log('PASS: compact green labels with one to four stars and no level names');

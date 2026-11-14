@@ -339,3 +339,7 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .card.feints-runner{padding:0;margin:0;background:transparent;border:0;box-shadow:none}
 .feints-runner .timer-ring{margin-top:8px;margin-bottom:18px}
 #runner .technique-progress{scroll-margin-top:12px}
+
+.ball-exercise-badge{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.ball-level-stars{white-space:nowrap;letter-spacing:1px}
+.training-exercise>.exercise-context{margin-bottom:10px}
