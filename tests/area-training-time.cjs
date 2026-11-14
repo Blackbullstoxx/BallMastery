@@ -21,3 +21,6 @@ assert.equal(ctx.ballTrainingTotals('juggling').since,'2026-11-01');
 console.log('PASS: area-isolated times and days, zero/future exclusion, empty legacy data, seconds, singular, since date and pure display.');
 
 ctx.rememberAreaTrainingTimes();const archived=JSON.stringify(ctx.state.areaTrainingHistory);delete ctx.state.completedPlans;delete ctx.state.blockDone;delete ctx.state.cardTraining.days['2026-11-01'];assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,1680000,'historical timer durations survive daily-plan cleanup');assert(ctx.validAreaTrainingHistory(ctx.state.areaTrainingHistory));assert(!ctx.validAreaTrainingHistory({juggling:{'2026-11-01':-1}}));ctx.state=JSON.parse(JSON.stringify(ctx.state));assert.equal(JSON.stringify(ctx.state.areaTrainingHistory),archived,'backup round trip preserves recovered timers');
+
+for(const [minutes,label] of [[0,'0 min'],[18,'18 min'],[60,'1 h'],[90,'1 h 30 min'],[264,'4 h 24 min'],[1500,'25 h']])assert.equal(ctx.trainingSummaryDuration(minutes*60000),label);
+console.log('PASS: compact minutes and hours at boundaries and large totals');

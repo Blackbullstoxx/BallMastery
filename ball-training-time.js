@@ -60,10 +60,19 @@ function ballTrainingMarkup(section){
  if(!['ball','juggling','feints'].includes(section))return '';
  return `<button type="button" class="ball-training-total" data-ball-total="${section}" title="Erfassung seit ${ballTrainingSince(section)}" aria-label="${esc(ballTrainingText(section))} · Erfassungsbeginn anzeigen">${esc(ballTrainingText(section))}</button>`;
 }
+function trainingSummaryDuration(milliseconds){
+ const seconds=Math.floor(milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
+ return hours?hours+' h'+(minutes%60?' '+minutes%60+' min':''):minutes?minutes+' min':seconds?seconds+' s':'0 min';
+}
+function trainingSummaryMetrics(section){
+ const totals=ballTrainingTotals(section),progress=section==='ball'?ballMasteryProgress(drills,state.current,state.finished):null;
+ const metric=(value,label,attribute='')=>`<span class="training-metric"><strong ${attribute}>${value}</strong><span>${label}</span></span>`;
+ return `<button type="button" class="training-summary-metrics" data-ball-total="${section}" style="--summary-columns:${progress?3:2}" title="Erfassung seit ${ballTrainingSince(section)}" aria-label="${esc(ballTrainingText(section))} · Erfassungsbeginn anzeigen">${metric(trainingSummaryDuration(totals.milliseconds),'Trainingszeit','data-summary-time')}${metric(totals.days,'Trainingstage','data-summary-days')}${progress?metric(Math.round(progress.percent)+' %','Fortschritt'):''}</button>`;
+}
 function refreshBallTimeDisplay(){
  document.querySelectorAll('[data-ball-total]').forEach(button=>{
   const section=button.dataset.ballTotal||'ball',text=ballTrainingText(section);
-  if(button.textContent!==text)button.textContent=text;
+  if(button.classList.contains('training-summary-metrics')){const totals=ballTrainingTotals(section);button.querySelector('[data-summary-time]').textContent=trainingSummaryDuration(totals.milliseconds);button.querySelector('[data-summary-days]').textContent=totals.days;}else if(button.textContent!==text)button.textContent=text;
   button.title='Erfassung seit '+ballTrainingSince(section);button.setAttribute('aria-label',text+' · Erfassungsbeginn anzeigen');
  });
 }

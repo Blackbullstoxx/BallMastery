@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const ctx={state:{scores:[{key:'toe',duration:0,date:'2026-11-12',value:0}],colourScores:[]},date:()=> '2026-11-12',esc:String,sectionNames:{juggling:'Jonglieren'},techNames:{toe:'Zehenjonglieren',free:'Freies Jonglieren',touches:'Gezielte Kontakte'},ballTrainingMarkup:()=>'',timerMarkup:()=>'<div id="timer">5</div>',repeatTarget:n=>n<0?-1:1,canEndRepeat:()=>false};vm.createContext(ctx);
+const ctx={state:{scores:[{key:'toe',duration:0,date:'2026-11-12',value:0}],colourScores:[]},date:()=> '2026-11-12',esc:String,sectionNames:{juggling:'Jonglieren'},techNames:{toe:'Zehenjonglieren',free:'Freies Jonglieren',touches:'Gezielte Kontakte'},ballTrainingMarkup:()=>'',trainingSummaryMetrics:()=>'',timerMarkup:()=>'<div id="timer">5</div>',repeatTarget:n=>n<0?-1:1,canEndRepeat:()=>false};vm.createContext(ctx);
 for(const f of ['record-charts.js','training-preview.js'])vm.runInContext(fs.readFileSync(__dirname+'/../'+f,'utf8'),ctx);
 const plan=[{key:'toe',name:'Zehenjonglieren',set:1,total:1,work:420},{key:'free',name:'Freies Jonglieren',set:1,total:1,work:420},{key:'touches',name:'Gezielte Kontakte',set:1,total:1,work:60,noScore:true}];
 const r={section:'juggling',plan,index:0,completedSets:[0],phase:'review'};
