@@ -1,5 +1,5 @@
 'use strict';
-const recordChartPeriods=new Map();let recordChartObserver=null;
+const recordChartPeriods=new Map(),recordSelectedDurations=new Map();let recordChartObserver=null;
 const scoreDay=date=>/^\d{4}-\d{2}-\d{2}$/.test(date)?Date.parse(date+'T00:00:00Z'):NaN;
 function recordSeries(scores,key,duration,period,today){const end=scoreDay(today),cutoff=period?end-(period-1)*86400000:-Infinity,byDate=new Map();for(const row of scores){const day=scoreDay(row.date);if(row.key!==key||row.duration!==duration||!Number.isFinite(row.value)||row.value<0||!Number.isFinite(day)||day<cutoff||day>end)continue;const previous=byDate.get(row.date);if(!previous||row.value>previous.value)byDate.set(row.date,{date:row.date,value:row.value,day})}return [...byDate.values()].sort((a,b)=>a.day-b.day)}
 // Compact record summaries stay visible in the exercise disclosure heading.

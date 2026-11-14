@@ -27,7 +27,7 @@ ctx.state={current:104,finished:true};assert(ctx.ballMasteryMarkup().includes('1
 const app=fs.readFileSync(path.join(root,'app.js'),'utf8'),index=fs.readFileSync(path.join(root,'index.html'),'utf8'),sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 assert(app.includes("previewTrainingSummary('ball')"));
 assert(app.includes("previewTrainingSummary(section)"));
-assert(index.indexOf('mastery-progress.js?v=109')<index.indexOf('app.js?v=152'));
+assert(index.indexOf('mastery-progress.js?v=109')<index.indexOf('app.js?v=153'));
 assert(sw.includes('mastery-progress.js?v=109'));
 console.log('PASS: all 105 drills, four level boundaries, partial stars, final drill completion, empty list, state purity, progression, rendering and offline asset inclusion');
 
