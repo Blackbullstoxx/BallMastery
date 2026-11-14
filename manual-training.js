@@ -9,7 +9,7 @@ function syncManualScores(){state.scores=state.scores.filter(r=>!r.manualTrainin
 function manualDuration(ms){const seconds=Math.floor(ms/1000),minutes=Math.floor(seconds/60);return (minutes?minutes+' min':'')+(minutes&&seconds%60?' ':'')+(seconds%60?seconds%60+' s':'')||'0 s'}
 const manualTrainingUI={open:false,area:'ball',editing:null};
 function manualTrainingEntryButton(){return isReadOnly()?'':'<button type="button" id="manual-open" class="secondary manual-entry">Training nachtragen</button>'}
-function bindManualTrainingEntry(){document.querySelector('#manual-open')?.addEventListener('click',()=>{manualTrainingUI.open=true;manualTrainingUI.editing=null;render()})}
+function bindManualTrainingEntry(){document.querySelector('#manual-open')?.addEventListener('click',()=>{manualTrainingUI.open=true;manualTrainingUI.editing=null;render();document.querySelector('#manual-back')?.scrollIntoView({block:'start',behavior:'instant'})})}
 function renderManualTraining(){
  const ui=manualTrainingUI;if(isReadOnly()){ui.open=false;renderRecords();return}
  const row=(state.manualTraining||[]).find(r=>r.id===ui.editing),area=row?.area||ui.area,labels={ball:'Ballbeherrschung',juggling:'Jonglieren',feints:'Finten'};ui.area=area;
