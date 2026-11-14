@@ -2,7 +2,31 @@
 const recordChartPeriods=new Map();let recordChartObserver=null;
 const scoreDay=date=>/^\d{4}-\d{2}-\d{2}$/.test(date)?Date.parse(date+'T00:00:00Z'):NaN;
 function recordSeries(scores,key,duration,period,today){const end=scoreDay(today),cutoff=period?end-(period-1)*86400000:-Infinity,byDate=new Map();for(const row of scores){const day=scoreDay(row.date);if(row.key!==key||row.duration!==duration||!Number.isFinite(row.value)||row.value<0||!Number.isFinite(day)||day<cutoff||day>end)continue;const previous=byDate.get(row.date);if(!previous||row.value>previous.value)byDate.set(row.date,{date:row.date,value:row.value,day})}return [...byDate.values()].sort((a,b)=>a.day-b.day)}
-function recordChartMarkup(key,duration,colour=false){const rows=recordSeries(colour?state.colourScores:state.scores,key,duration,0,date()),today=rows.find(r=>r.date===date()),record=rows.length?Math.max(...rows.map(r=>r.value)):0,period=recordChartPeriods.get(JSON.stringify([key,duration,colour]))||0;return `<section class="record-chart" data-chart-key="${esc(key)}" data-chart-duration="${duration}" data-chart-colour="${colour}"><h4 class="chart-duration">${colour?colourCue({colour:true},'Mit Farberkennung')+' ':''}${duration?duration+' Sekunden':'Kontakte am Stück'}</h4><div class="record-metrics"><div><span>Heute</span><strong>${today?.value??'–'}</strong></div><div><span>Rekord</span><strong>${record}</strong></div></div>${!colour&&duration===0&&['toe','free'].includes(key)?recordJugglingTrendMarkup(rows):recordTrendMarkup(rows,duration)}${!colour&&duration===0?recordJugglingMarkup(key,rows):''}<div class="chart-periods" role="group" aria-label="Zeitraum ${duration?duration+' Sekunden':'Kontakte am Stück'}">${[[30,'30 Tage'],[90,'90 Tage'],[0,'Alles']].map(([n,label])=>`<button type="button" data-chart-period="${n}" aria-pressed="${n===period}">${label}</button>`).join('')}</div><div class="chart-drawing"></div><p class="chart-selection" aria-live="polite"></p></section>`}
+// Compact record summaries stay visible in the exercise disclosure heading.
+function recordMetric(value,label,accessible=''){
+ return `<span class="record-tile"${accessible?` aria-label="${esc(accessible)}"`:''}><strong>${value}</strong><span class="record-tile-label">${label}</span></span>`;
+}
+function recordCompactMetrics(key,duration,days,colour=false){
+ const rows=recordSeries(colour?state.colourScores:state.scores,key,duration,0,date()),juggling=!colour&&['toe','free'].includes(key),week=juggling?recordWindowTrend(rows,6):null,month=juggling?recordWindowTrend(rows,24):null,info=!colour&&!juggling&&key!=='touches'?recordBallTrend(key,duration):null;
+ const trend=juggling?week:info?.trend,typical=rows.length?recordMedian(rows.slice(-(juggling?6:5))):null,format=n=>n===null?'–':Math.round(n).toLocaleString('de-DE');
+ const direction=trend?.direction,description=direction?{up:'steigend',flat:'etwa gleich',down:'fallend'}[direction]:'noch keine Tendenz';
+ const arrow=direction?recordTrendArrow(direction):'–';
+ const primary=key==='touches'?recordMetric(days,'Tage'):recordMetric(rows.length?format(Math.max(...rows.map(r=>r.value))):'–','Rekord')+recordMetric(format(typical),'Typisch')+recordMetric(days,'Tage')+recordMetric(arrow,'Trend','Trend: '+description);
+ const delta=t=>!t?'–':t.direction==='flat'?recordTrendArrow('flat'):(t.percent===null?(t.difference>0?'+':'−')+format(Math.abs(t.difference)):(t.percent>0?'+':'−')+Math.round(Math.abs(t.percent))+' %');
+ const stats=juggling?recordJugglingStats(key,rows,date()):null;
+ return `<span class="record-tiles" style="--record-columns:${key==='touches'?1:4}">${primary}</span>${juggling?`<span class="record-tiles record-tiles-extra" style="--record-columns:3">${recordMetric(delta(week),'Woche')}${recordMetric(delta(month),'Monat')}${recordMetric(format(stats.best),'30 Tage','Bestwert der letzten 30 Tage')}</span>`:''}`;
+}
+function recordColourTiles(key){
+ const rows=(state.colourTraining||[]).filter(r=>r.key===key&&scoreDay(r.date)<=scoreDay(date())&&r.shown>r.interrupted),durations=[...new Set(rows.map(r=>r.duration))].sort((a,b)=>a-b);
+ return durations.map(duration=>{const recent=rows.filter(r=>r.duration===duration).sort((a,b)=>scoreDay(a.date)-scoreDay(b.date)||a.finishedAt-b.finishedAt).slice(-5),shown=recent.reduce((n,r)=>n+r.shown-r.interrupted,0),correct=recent.reduce((n,r)=>n+r.correct,0);
+ return `<span class="record-metric-group"><span class="record-mode badge">Farben · ${duration} s</span><span class="record-tiles" style="--record-columns:4">${recordMetric(correct,'Richtig')}${recordMetric(shown,'Gezeigt')}${recordMetric(Math.round(100*correct/shown)+' %','Quote')}${recordMetric(recent.length,'Sätze')}</span></span>`;
+ }).join('');
+}
+function recordChartMarkup(key,duration,colour=false,showLabel=true){
+ const period=recordChartPeriods.get(JSON.stringify([key,duration,colour]))||0;
+ return `<section class="record-chart" data-chart-key="${esc(key)}" data-chart-duration="${duration}" data-chart-colour="${colour}">${showLabel?`<h4 class="chart-duration">${colour?'Farben · ':''}${duration?duration+' s':'Kontakte'}</h4>`:''}<div class="chart-periods" role="group" aria-label="Zeitraum ${duration?duration+' Sekunden':'Kontakte am Stück'}">${[[30,'30 Tage'],[90,'90 Tage'],[0,'Alles']].map(([n,label])=>`<button type="button" data-chart-period="${n}" aria-pressed="${n===period}">${label}</button>`).join('')}</div><div class="chart-drawing"></div><p class="chart-selection" aria-live="polite"></p></section>`;
+}
+
 function stopRecordCharts(){recordChartObserver?.disconnect();recordChartObserver=null}
 function mountRecordCharts(){stopRecordCharts();const panels=[...document.querySelectorAll('.record-chart')];for(const panel of panels){panel.querySelectorAll('[data-chart-period]').forEach(button=>button.onclick=()=>{recordChartPeriods.set(JSON.stringify([panel.dataset.chartKey,Number(panel.dataset.chartDuration),panel.dataset.chartColour==='true']),Number(button.dataset.chartPeriod));delete panel.dataset.selectedDate;panel.querySelectorAll('[data-chart-period]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));drawRecordChart(panel)});drawRecordChart(panel)}if(window.ResizeObserver){recordChartObserver=new ResizeObserver(entries=>entries.forEach(({target})=>{if(target.isConnected&&target.dataset.chartWidth!==String(target.querySelector('.chart-drawing').clientWidth))drawRecordChart(target)}));panels.forEach(p=>recordChartObserver.observe(p))}}
 function drawRecordChart(panel){const key=panel.dataset.chartKey,duration=Number(panel.dataset.chartDuration),colour=panel.dataset.chartColour==='true',scores=colour?state.colourScores:state.scores,period=recordChartPeriods.get(JSON.stringify([key,duration,colour]))||0,rows=recordSeries(scores,key,duration,period,date()),all=recordSeries(scores,key,duration,0,date()),allBest=all.length?Math.max(...all.map(r=>r.value)):0,host=panel.querySelector('.chart-drawing'),detail=panel.querySelector('.chart-selection');const width=Math.max(200,host.clientWidth);panel.dataset.chartWidth=String(host.clientWidth);
@@ -27,16 +51,10 @@ function recordTrendMarkup(rows,duration){
  return `<p class="record-trend" title="Median der letzten fünf eingetragenen Tagesbestwerte im Vergleich zu den fünf davor. Unabhängig vom gewählten Diagrammzeitraum.">Zuletzt meist <strong>${f(current)}</strong> ${duration?'Wiederholungen':'Kontakte'} · zuvor ${f(previous)}<small>Je 5 Tagesbestwerte · Median</small></p>`;
 }
 function recordColourMarkup(key){
- const rows=(state.colourTraining||[]).filter(r=>r.key===key&&scoreDay(r.date)<=scoreDay(date())),durations=[...new Set(rows.map(r=>r.duration))].sort((a,b)=>a-b);
- const scores=(state.colourScores||[]).filter(r=>r.key===key),scoreDurations=[...new Set(scores.map(r=>r.duration))].sort((a,b)=>a-b);
- if(!rows.length&&!scores.length)return '';
- return `<section class="record-colour"><h4 class="chart-duration">${colourCue({colour:true},'Farberkennung')}</h4>${durations.map(duration=>{
-  const all=rows.filter(r=>r.duration===duration&&r.shown>r.interrupted).sort((a,b)=>scoreDay(a.date)-scoreDay(b.date)||a.finishedAt-b.finishedAt),recent=all.slice(-5),prior=all.slice(-10,-5);
-  const total=list=>list.reduce((a,r)=>({shown:a.shown+r.shown-r.interrupted,correct:a.correct+r.correct}),{shown:0,correct:0}),t=total(recent),p=total(prior);
-  if(!recent.length)return `<p class="hint">${duration} Sek. · Noch keine auswertbaren Farben.</p>`;
-  return `<p class="record-colour-result"><strong>${t.correct} von ${t.shown}</strong> richtig erkannt · ${Math.round(100*t.correct/t.shown)} %<small>${duration} Sek. · ${recent.length===1?'letzter Satz':'letzte '+recent.length+' Sätze'}${recent.length===5&&prior.length===5?' · zuvor '+Math.round(100*p.correct/p.shown)+' %':''}</small></p>`;
- }).join('')}${scoreDurations.map(duration=>recordChartMarkup(key,duration,true)).join('')}</section>`;
+ const scores=(state.colourScores||[]).filter(r=>r.key===key&&r.date<=date()),durations=[...new Set(scores.map(r=>r.duration))].sort((a,b)=>a-b);
+ return durations.map(duration=>recordChartMarkup(key,duration,true)).join('');
 }
+
 
 /* Summarise recorded daily maxima; unrecorded days are not failed attempts. */
 function recordJugglingStats(key,rows,today){

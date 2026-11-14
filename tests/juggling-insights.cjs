@@ -11,6 +11,6 @@ const zero=context.recordJugglingStats('toe',context.recordSeries(rows([0,0,0,0,
 const old=context.recordJugglingStats('toe',context.recordSeries([{key:'toe',value:100,duration:0,date:'2026-10-08'}],'toe',0,0,'2026-11-07'),'2026-11-07');assert.equal(old.best,null);
 assert.equal(context.recordJugglingStats('001',series,'2026-11-07'),null);
 context.state.scores=data;context.state.colourScores=data;
-const normal=context.recordChartMarkup('toe',0);assert(normal.includes('30-Tage-Bestwert'));assert(normal.includes('50+'));assert(normal.includes('4 von 5'));assert(!context.recordChartMarkup('toe',0,true).includes('30-Tage-Bestwert'));assert(!context.recordChartMarkup('001',30).includes('30-Tage-Bestwert'));assert(!context.recordChartMarkup('touches',0).includes('30-Tage-Bestwert'));
+const normal=context.recordCompactMetrics('toe',0,7);assert(normal.includes('30 Tage'));assert(normal.includes('<strong>79</strong>'));assert(normal.includes('Trend'));assert(!context.recordChartMarkup('toe',0).includes('record-tile'));assert(!context.recordChartMarkup('toe',0).includes('30-Tage-Bestwert'));
 const high=context.recordJugglingStats('free',context.recordSeries(rows([800,900,1000,1200,1400],'free'),'free',0,0,'2026-11-07'),'2026-11-07');assert.equal(high.level,1000);assert.equal(high.count,3);
 console.log('PASS: 30-day inclusive boundary, future exclusion, daily maxima, missing days, sparse histories, entered zero, separate techniques/modes/durations, adaptive contact levels');
