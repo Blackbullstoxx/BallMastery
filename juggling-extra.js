@@ -8,6 +8,7 @@ function jugglingDoneTimerMarkup(){return '<div class="timer-ring juggling-done-
 function bindJugglingExtra(){
  const toggle=document.querySelector('#juggling-extra-toggle');
  if(toggle)toggle.onclick=()=>{if(isReadOnly())return;run.extraOpen=!run.extraOpen;preserveScroll(()=>renderRunner())};
+ document.querySelector('#juggling-extra-end')?.addEventListener('click',endJugglingExtra);
  const form=document.querySelector('#juggling-extra-options');if(!form)return;
  const input=form.querySelector('input'),buttons=[...form.querySelectorAll('[data-extra-minutes]')];
  const select=()=>{const n=Number(input.value);if(input.validity.valid)run.extraMinutes=n;buttons.forEach(b=>b.setAttribute('aria-pressed',String(n===Number(b.dataset.extraMinutes))))};
@@ -24,4 +25,10 @@ function finishJugglingExtra(){
  if(run?.section!=='juggling'||!run.extraSeconds)return false;
  delete run.extraSeconds;run.phase='review';run.remaining=0;run.paused=false;clearInterval(tick);
  if(typeof reconcileJugglingPlan==='function')reconcileJugglingPlan();renderRunner();return true;
+}
+
+function endJugglingExtra(){
+ if(isReadOnly()||run?.section!=='juggling'||!run.extraSeconds||!['count','work'].includes(run.phase))return;
+ syncBallTime();resetBallClock();silence();
+ if(finishJugglingExtra()&&typeof dropboxBackup!=='undefined')dropboxBackup.changed(true);
 }

@@ -32,12 +32,18 @@ function recordOverviewSet(value,index){
  const block=overviewBlocks(value.section,value.plan).find(b=>b.indices.includes(index));if(!block)return;
  storeOverviewCredits(value.section,block,[value.plan[index].set]);
 }
+function overviewExtraSeconds(value){
+ if(value?.section!=='juggling'||value.day!==date()||!value.extraSeconds||!['count','work'].includes(value.phase))return 0;
+ const remaining=value.paused?value.remaining:Math.max(0,(value.deadline-Date.now())/1000);
+ return Math.max(0,Math.ceil((value.phase==='count'?value.extraSeconds:0)+remaining));
+}
 function overviewSeconds(section,entries,value,blocks){
  const credited=new Map();blocks.forEach(b=>{const sets=overviewCredits(section,b);b.indices.forEach((index,n)=>credited.set(index,sets.includes(n+1)))});
- if(state.blockDone?.[date()]?.includes(section))return 0;
+ const extraSeconds=overviewExtraSeconds(value);
+ if(state.blockDone?.[date()]?.includes(section))return extraSeconds;
  const current=value?.day===date()?value:null;
  const remaining=current&&['count','work','rest'].includes(current.phase)?(current.paused?current.remaining:Math.max(0,(current.deadline-Date.now())/1000)):0;
- let seconds=0;
+ let seconds=extraSeconds;
  entries.forEach((d,index)=>{
   const done=credited.get(index),at=current?.index===index;
   if(!done){
@@ -76,11 +82,12 @@ function dayOverviewData(){
   });
   if(!items.length)continue;
   items.forEach(row=>row.done=row.completed.length>=row.total);
-  sections.push({id:section,name:sectionNames[section],items});seconds+=overviewSeconds(section,entries,current,blocks);
+  const extraSeconds=overviewExtraSeconds(current);
+  sections.push({id:section,name:sectionNames[section],items,...(extraSeconds?{extra:{key:current.plan[current.index].key,seconds:extraSeconds}}:{})});seconds+=overviewSeconds(section,entries,current,blocks);
   if(items.some(row=>row.completed.length)||current&&(current.phase!=='ready'||current.index>0))started=true;
  }
  const items=sections.flatMap(s=>s.items),completed=items.filter(row=>row.done).length;
- return {sections,total:items.length,completed,seconds,started,done:items.length>0&&completed===items.length};
+ return {sections,total:items.length,completed,seconds,started,done:items.length>0&&completed===items.length&&!sections.some(s=>s.extra)};
 }
 function overviewDuration(seconds){return seconds>=60?Math.ceil(seconds/60)+' Min.':Math.ceil(seconds)+' Sek.'}
 function overviewStatus(row){return row.done?'<span class="overview-check" role="img" aria-label="Erledigt">✓</span>':row.completed.length?`<span class="overview-partial">${row.completed.length}/${row.total} Sätze</span>`:''}
@@ -112,6 +119,7 @@ function overviewBody(data){
   }).join('');
   else if(section.id==='juggling')contents=`<ul>${section.items.map(row=>`<li class="overview-juggle"><span class="overview-name">${techNames[row.key]}</span><span class="overview-minutes">${String(row.work/60).replace('.',',')} Min.</span>${overviewStatus(row)}</li>`).join('')}</ul>`;
   else contents=`<ul>${section.items.map(row=>`<li class="overview-drill"><span class="overview-prescription overview-feints">${row.total} × ${row.work} Sek.</span>${overviewRowSide(row)}</li>`).join('')}</ul>`;
+  if(section.extra)contents+=`<ul><li class="overview-juggle"><span class="overview-name">${techNames[section.extra.key]}<span class="overview-prescription">Zusatzzeit</span></span><span class="overview-minutes">noch ${overviewExactDuration(section.extra.seconds)}</span></li></ul>`;
   return `<section class="overview-section"><h3>${section.name}</h3>${contents}</section>`;
  }).join('');
 }

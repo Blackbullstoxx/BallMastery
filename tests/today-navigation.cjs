@@ -21,10 +21,20 @@ assert(nav.areaMarkup().includes('data-today-view="areas" aria-current="page"'))
 const app=fs.readFileSync(__dirname+'/../app.js','utf8');const area=app.slice(app.indexOf('function renderToday('),app.indexOf('function masteredControl('));assert(!area.includes('${dayOverviewMarkup()}'));assert(!area.includes('class="section-choice"'));assert(!area.includes('class="area-title-row"'));
 assert(!app.includes('records-player-card'));
 const control=app.slice(app.indexOf('function masteredControl('),app.indexOf('function masterRunDrill('));assert(control.includes('<h3>Nächste Wochenübung?</h3>'));assert(control.indexOf('<h3>')<control.indexOf('id="run-master"'));
-const index=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8');assert(index.includes('today-navigation.js?v=139')&&sw.includes('today-navigation.js?v=139'));assert(index.indexOf('today-navigation.js')<index.indexOf('app.js?v=157'));
+const index=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8');assert(index.includes('today-navigation.js?v=140')&&sw.includes('today-navigation.js?v=140'));assert(index.indexOf('today-navigation.js')<index.indexOf('app.js?v=157'));
 console.log('PASS: daily status independent of reveal, exact remaining times, discarded/imported/day-isolated credits, tier goals, highest tier, view/scroll memory, unfinished-run priority, pause on leaving and offline module.');
 
 ctx.runs={};ctx.run=null;ctx.state.blockDone={};ctx.state.completedPlans={[day]:{feints:entries}};ctx.state.overviewDay={day,sections:{}};
 ctx.runs.feints={day,section:'feints',plan:entries,index:0,phase:'ready',completedSets:[]};ctx.run=ctx.runs.feints;
 const extended=nav.status('feints');assert.equal(nav.label(extended),'noch ca. 3 Min.');nav.open('areas');nav.render();assert(view.innerHTML.includes('Noch ca. 3 Min.'),'green total must show updated remaining time');assert(view.innerHTML.includes('noch ca. 3 Min.'),'area panel must indicate previous training');
 console.log('PASS: reopened area and green total display remaining time with noch');
+
+const extraPlan=[{key:'toe',kind:'Jonglieren',set:1,total:1,work:420,rest:0}];
+ctx.state.blockDone={};ctx.state.completedPlans={};ctx.state.overviewDay={day,sections:{}};ctx.plan=k=>k==='juggling'?extraPlan:[];ctx.enabledSections=()=>['juggling'];
+ctx.runs={juggling:{day,section:'juggling',plan:extraPlan,index:0,phase:'work',paused:true,remaining:120,extraSeconds:300,completedSets:[0]}};ctx.run=ctx.runs.juggling;
+assert.equal(nav.status('juggling').seconds,120);assert(!nav.status('juggling').done);assert.equal(nav.label(nav.status('juggling')),'noch ca. 2 Min.');nav.open('areas');nav.render();assert(view.innerHTML.includes('Noch ca. 2 Min.'));assert(!view.innerHTML.includes('Heute geschafft'));
+let extraData=ctx.dayOverviewData();assert.equal(extraData.total,1);assert.equal(extraData.completed,1);assert(!extraData.done);assert.equal(extraData.seconds,120);assert(ctx.overviewBody(extraData).includes('Zusatzzeit'));assert(extraData.sections[0].items[0].done,'regular drill stays complete');
+ctx.state.blockDone[day]=['juggling'];ctx.state.completedPlans[day]={juggling:extraPlan};assert.equal(nav.status('juggling').seconds,120,'extra time also appears after area close/repeat');
+ctx.run.phase='count';ctx.run.remaining=3;assert.equal(ctx.overviewExtraSeconds(ctx.run),303,'countdown plus optional work');
+ctx.run.phase='work';ctx.run.remaining=120;delete ctx.run.extraSeconds;assert(nav.status('juggling').done);assert.equal(nav.status('juggling').seconds,0);nav.render();assert(view.innerHTML.includes('Heute geschafft'));
+console.log('PASS: voluntary remaining time updates area, green total and expanded overview without reopening completed drills, including closed-area repeats');
