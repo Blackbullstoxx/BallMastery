@@ -372,12 +372,5 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .record-tiles-four>.record-tile+.record-tile::before,.record-tiles-juggling>.record-tile+.record-tile::before{content:'';position:absolute;left:0;top:3px;width:1px;height:26px;background:#dfe6dc}
 @media(max-width:440px){.juggling-technique .training-metrics-four{margin-left:-12px;margin-right:-12px}.record-tiles-four,.record-tiles-juggling{width:calc(100% + 12px);margin-left:-6px;margin-right:-6px}}
 
-/* Outer phone fields can share the unruled panel edge; inner fields get the space. */
-@media(max-width:440px){
- .training-metrics-four,.record-tiles-four{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,.8fr)}
- .training-metrics-four>.training-metric>span,.training-metrics-four>.training-metric>summary>span{margin-top:6px}
- .training-metrics-four>.training-metric+.training-metric::before{height:100%;background:#dce6da}
- .record-tiles-four>.record-tile+.record-tile::before{height:calc(100% - 6px);background:#dfe6dc}
-}
 
 .two.juggling-review-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin-top:20px;gap:10px}.juggling-review-actions button{min-width:0;font-size:clamp(11px,3.4vw,14px);padding:12px 5px;line-height:1.35}.juggling-extra-options{border-top:1px solid #dfe6dc;margin-top:18px;padding-top:16px}.juggling-extra-options h4{font-size:17px;margin:0 0 12px}.juggling-extra-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}.juggling-extra-presets button{padding:10px 4px;background:#fff;border:1px solid #bdcdbb;font-size:14px}.juggling-extra-presets [aria-pressed=true]{background:#d9eabd;border-color:#205c3b}.juggling-extra-options label{display:block;margin-bottom:7px;font-size:14px}.juggling-extra-duration{display:flex;align-items:center;gap:12px;margin-bottom:14px}.juggling-extra-duration input{width:110px;max-width:55%;margin:0;background:#fff}.juggling-extra-duration span{color:#57705f}.juggling-extra-options>.primary{width:100%;margin:0}.juggling-extra-options>.hint{text-align:center;margin:9px 0 0;font-size:12px}
