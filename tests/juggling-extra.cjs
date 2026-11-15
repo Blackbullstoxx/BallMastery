@@ -1,0 +1,21 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const app=fs.readFileSync(__dirname+'/../app.js','utf8'),day='2026-11-15';let calls=0,sets=0,readonly=false,now=10000;
+const ctx={state:{juggleMinutes:{toe:7,free:7},blockDone:{}},date:()=>day,Date:class extends Date{static now(){return now}},esc:String,isReadOnly:()=>readonly,levels:[],drills:[],techNames:{toe:'Zehenjonglieren',free:'Freies Jonglieren'},restoreColourResults:()=>({}),run:null,runs:{},activeSection:'juggling',tick:1,renderRunner:()=>{},clearInterval:()=>{},countdown:async()=>{calls++;ctx.run.phase='count';ctx.run.remaining=5},syncScreenAwake:()=>{},syncBallTime:()=>{},checkTrainingDay:()=>false,refreshTimerRing:()=>{},save:()=>{},refreshDayOverview:()=>{},beep:()=>{},$:()=>null,countCompletedSet:()=>sets++,colourPerception:{finishSet:()=>{}},begin:(phase,seconds)=>{ctx.run.phase=phase;ctx.run.remaining=seconds;ctx.run.deadline=now+seconds*1000}};
+vm.createContext(ctx);for(const file of ['training-progress.js','juggling-extra.js'])vm.runInContext(fs.readFileSync(__dirname+'/../'+file,'utf8'),ctx);
+vm.runInContext(app.slice(app.indexOf('function update('),app.indexOf('\nfunction sameNext(')),ctx);vm.runInContext(app.slice(app.indexOf('function timerFraction('),app.indexOf('\nfunction timerLabel(')),ctx);
+const row=key=>({key,kind:'Jonglieren',set:1,total:1,work:420,rest:0});
+(async()=>{
+ctx.run={day,section:'juggling',plan:[row('toe'),row('free')],index:0,phase:'review',remaining:0,completedSets:[0],completedBlocks:[0]};ctx.runs.juggling=ctx.run;
+const plan=JSON.stringify(ctx.run.plan),settings=JSON.stringify(ctx.state.juggleMinutes),completed=JSON.stringify(ctx.run.completedSets);
+const html=ctx.jugglingExtraMarkup({...ctx.run,extraOpen:true},false);for(const n of [3,5,7])assert(html.includes('data-extra-minutes="'+n+'"'));assert(html.includes('Eigene Dauer'));assert(ctx.jugglingExtraMarkup(ctx.run,true).includes('Jonglieren abschließen'));
+await ctx.startJugglingExtra(3);assert.equal(ctx.run.extraSeconds,180);assert.equal(ctx.run.phase,'count');assert.equal(calls,1);await ctx.startJugglingExtra(5);assert.equal(calls,1,'no duplicate start while countdown runs');
+ctx.run.deadline=now;ctx.run.last=1;ctx.update();assert.equal(ctx.run.remaining,180);assert.equal(ctx.run.phase,'work');ctx.run.paused=true;ctx.run.remaining=90;assert.equal(ctx.timerFraction(ctx.run),.5);
+const saved=JSON.parse(JSON.stringify(ctx.trainingSnapshot()));assert.equal(saved.runs.juggling.extraSeconds,180);const restored=ctx.restoreSavedRun(saved.runs.juggling,'juggling');assert(restored.paused);assert.equal(restored.extraSeconds,180);assert.equal(restored.remaining,90);assert.equal(restored.plan[0].work,420);
+for(const bad of [0,-1,7201,1.5])assert.equal(ctx.restoreSavedRun({...saved.runs.juggling,extraSeconds:bad},'juggling'),null);assert.equal(ctx.restoreSavedRun({...saved.runs.juggling,completedSets:[]},'juggling'),null);
+ctx.run.paused=false;ctx.run.deadline=now;ctx.run.last=1;ctx.update();assert.equal(ctx.run.phase,'review');assert.equal(ctx.run.extraSeconds,undefined);assert.equal(sets,0,'extra time must not complete original set a second time');assert.equal(JSON.stringify(ctx.run.completedSets),completed);assert.equal(JSON.stringify(ctx.run.plan),plan);assert.equal(JSON.stringify(ctx.state.juggleMinutes),settings);
+await ctx.startJugglingExtra(7);assert.equal(ctx.run.extraSeconds,420);ctx.run.phase='review';delete ctx.run.extraSeconds;
+await ctx.startJugglingExtra(1.5);assert.equal(ctx.run.extraSeconds,90,'custom fractional minutes');ctx.run.phase='review';delete ctx.run.extraSeconds;
+for(const minutes of [0,.2,121,NaN])await ctx.startJugglingExtra(minutes);assert.equal(ctx.run.extraSeconds,undefined);readonly=true;await ctx.startJugglingExtra(3);assert.equal(ctx.run.extraSeconds,undefined);
+console.log('PASS optional juggling time: 3/5/7/custom UI, countdown/work/restart duration, timer fraction, repeated extension, paused restore, invalid checkpoints, no duplicate completion and unchanged plan/settings');
+})().catch(error=>{console.error(error);process.exitCode=1});
