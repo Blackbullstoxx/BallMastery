@@ -6,13 +6,14 @@ function recordSeries(scores,key,duration,period,today){const end=scoreDay(today
 function recordMetric(value,label,accessible='',valueClass=''){
  return `<span class="record-tile"${accessible?` aria-label="${esc(accessible)}"`:''}><strong${valueClass?` class="${esc(valueClass)}"`:''}>${value}</strong><span class="record-tile-label">${label}</span></span>`;
 }
+function recordCurrentLevel(rows){return rows.length?recordMedian(rows.slice(-5)):null}
 function recordCompactMetrics(key,duration,days,colour=false){
  const rows=recordSeries(colour?state.colourScores:state.scores,key,duration,0,date()),juggling=!colour&&['toe','free'].includes(key),week=juggling?recordWindowTrend(rows,6):null,month=juggling?recordWindowTrend(rows,24):null,info=!colour&&!juggling&&key!=='touches'?recordBallTrend(key,duration):null;
- const trend=juggling?week:info?.trend,typical=rows.length?recordMedian(rows.slice(-(juggling?6:5))):null,format=n=>n===null?'–':Math.round(n).toLocaleString('de-DE');
+ const trend=juggling?week:info?.trend,typical=recordCurrentLevel(rows),format=n=>n===null?'–':Math.round(n).toLocaleString('de-DE');
  const direction=trend?.direction,description=direction?{up:'steigend',flat:'etwa gleich',down:'fallend'}[direction]:'noch keine Tendenz';
  const arrow=direction?recordTrendArrow(direction):'–';
  const trainingTime=()=>recordMetric(jugglingTechniqueDuration(key),'Trainingszeit','','record-training-duration');
- const primary=key==='touches'?trainingTime():recordMetric(rows.length?format(Math.max(...rows.map(r=>r.value))):'–','Rekord')+recordMetric(format(typical),juggling?'6-Tage-Form':'5-Tage-Form')+(juggling?trainingTime():recordMetric(days,'Tage'))+(juggling?'':recordMetric(arrow,'Trend','Trend: '+description));
+ const primary=key==='touches'?trainingTime():recordMetric(rows.length?format(Math.max(...rows.map(r=>r.value))):'–','Rekord')+recordMetric(format(typical),'Aktuelles Level')+(juggling?trainingTime():recordMetric(days,'Tage'))+(juggling?'':recordMetric(arrow,'Trend','Trend: '+description));
  const delta=t=>!t?'–':t.direction==='flat'?recordTrendArrow('flat'):(t.percent===null?(t.difference>0?'+':'−')+format(Math.abs(t.difference)):(t.percent>0?'+':'−')+Math.round(Math.abs(t.percent))+' %');
  return `<span class="record-tiles${!juggling&&key!=='touches'?' record-tiles-four':juggling?' record-tiles-juggling':''}" style="--record-columns:${key==='touches'?1:juggling?3:4}">${primary}</span>${juggling?`<span class="record-tiles record-tiles-extra" style="--record-columns:2">${recordMetric(delta(week),'Wochentrend')}${recordMetric(delta(month),'Monatstrend')}</span>`:''}`;
 }

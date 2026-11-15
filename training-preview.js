@@ -1,8 +1,8 @@
 'use strict';
 // Presentation-only summaries of existing records; never save derived metrics.
 function previewScoreStats(key,duration){
- const rows=recordSeries(state.scores||[],key,duration,0,date()),recent=rows.slice(-7);
- return {rows,today:rows.find(row=>row.date===date())?.value??null,record:rows.length?Math.max(...rows.map(row=>row.value)):null,average:recent.length?recent.reduce((sum,row)=>sum+row.value,0)/recent.length:null,count:recent.length};
+ const rows=recordSeries(state.scores||[],key,duration,0,date()),recent=rows.slice(-5);
+ return {rows,today:rows.find(row=>row.date===date())?.value??null,record:rows.length?Math.max(...rows.map(row=>row.value)):null,level:recordCurrentLevel(rows),count:recent.length};
 }
 function previewMetric(value,label,description=''){
  return `<div class="training-metric"${description?` title="${esc(description)}" aria-label="${esc(label+': '+description)}"`:''}><strong${String(value??'').length>5?' class="training-metric-long"':''}>${value??'–'}</strong><span>${label}</span></div>`;
@@ -31,8 +31,8 @@ function previewBallExercise(d){
  return `<div class="exercise-context">${ballExerciseBadge(d)}</div><h3>${esc(d.name)}</h3><p class="training-prescription"><span>${d.total} × ${d.work} s</span>${trainingModeCue(d)}<span aria-hidden="true">·</span><span>${d.rest} s Pause</span></p>${video(d)}<div class="training-metrics">${previewMetric(days,days===1?'Tag':'Tage')}${previewMetric(stats.record,'Rekord')}${previewTrend(d.key,d.work,stats.rows)}</div>`;
 }
 function previewJugglingTechnique(d,options={}){
- const stats=previewScoreStats(d.key,0),average=stats.average===null?null:stats.average.toLocaleString('de-DE',{maximumFractionDigits:0,useGrouping:false});
- return `<section class="card training-exercise juggling-technique" aria-label="${esc(d.name)}"><div class="technique-heading"><h3>${esc(d.name)}</h3>${options.status?`<span class="technique-status">${esc(options.status)}</span>`:''}</div><p class="training-prescription">${options.subtitle||`${(d.work/60).toLocaleString('de-DE',{maximumFractionDigits:2})} Min.`}</p>${options.timer||''}${d.noScore?'':`<div class="training-metrics training-metrics-four">${previewMetric(stats.today,'Heute')}${previewMetric(average,'Ø letzte 7',`Durchschnitt der Tagesbestwerte der letzten sieben erfassten Trainingstage dieser Technik; bisher ${stats.count} ${stats.count===1?'Eintrag':'Einträge'}. Trainingsfreie Tage zählen nicht als null.`)}${previewMetric(stats.record,'Rekord')}${previewTrend(d.key,0,stats.rows)}</div><p class="technique-input-label">Kontakte am Stück</p>${previewScoreInput(d.key,0)}`}</section>`;
+ const stats=previewScoreStats(d.key,0),level=stats.level===null?null:stats.level.toLocaleString('de-DE',{maximumFractionDigits:0,useGrouping:false});
+ return `<section class="card training-exercise juggling-technique" aria-label="${esc(d.name)}"><div class="technique-heading"><h3>${esc(d.name)}</h3>${options.status?`<span class="technique-status">${esc(options.status)}</span>`:''}</div><p class="training-prescription">${options.subtitle||`${(d.work/60).toLocaleString('de-DE',{maximumFractionDigits:2})} Min.`}</p>${options.timer||''}${d.noScore?'':`<div class="training-metrics training-metrics-four">${previewMetric(stats.today,'Heute')}${previewMetric(level,'Aktuelles Level',`Median der Tagesbestwerte der letzten fünf erfassten Trainingstage dieser Technik; bisher ${stats.count} ${stats.count===1?'Eintrag':'Einträge'}. Trainingsfreie Tage zählen nicht als null.`)}${previewMetric(stats.record,'Rekord')}${previewTrend(d.key,0,stats.rows)}</div><p class="technique-input-label">Kontakte am Stück</p>${previewScoreInput(d.key,0)}`}</section>`;
 }
 function trainingPreview(section,entries){
  const start=`<button class="primary" id="start" ${entries.length?'':'disabled'}>Los geht’s</button>`;
