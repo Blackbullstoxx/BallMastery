@@ -53,7 +53,7 @@ function jugglingRunnerMarkup(value,back,last){
  const card=previewJugglingTechnique(d,{status,subtitle:value.extraSeconds?`Zusatzzeit · ${(value.extraSeconds/60).toLocaleString('de-DE')} Min.`:'',timer:timing?timerMarkup():review?jugglingDoneTimerMarkup():'',afterInput:review?jugglingExtraMarkup(value,last):''});
  const action=ready?'<button class="primary" id="ready">Los geht’s</button>':review?'':value.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
  const repeat=value.repeatMode?`<div class="two repeat-navigation"><button id="repeat-prev" ${repeatTarget(-1)<0?'disabled':''}>Zurück</button><button id="repeat-next" ${repeatTarget(1)<0?'disabled':''}>Vor</button></div>`:'';
- return `${previewTrainingSummary('juggling')}${jugglingProgressMarkup(value)}${card}<div class="technique-actions">${action}${repeat}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}${back&&!value.repeatMode?'<button class="back-button" id="previous-drill">Zurück</button>':''}</div>`;
+ return `${previewTrainingSummary('juggling')}${jugglingProgressMarkup(value)}${card}<div class="technique-actions">${action}${value.extraSeconds&&timing?'<button class="back-button" id="juggling-extra-end">Zusatzzeit beenden</button>':''}${repeat}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}${back&&!value.repeatMode?'<button class="back-button" id="previous-drill">Zurück</button>':''}</div>`;
 }
 function jugglingHistoryMarkup(value,index,hasPrevious){
  const d=value.plan[index];
