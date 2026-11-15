@@ -5,7 +5,7 @@ for(const f of ['record-charts.js','training-preview.js'])vm.runInContext(fs.rea
 const plan=[{key:'toe',name:'Zehenjonglieren',set:1,total:1,work:420},{key:'free',name:'Freies Jonglieren',set:1,total:1,work:420},{key:'touches',name:'Gezielte Kontakte',set:1,total:1,work:60,noScore:true}];
 const r={section:'juggling',plan,index:0,completedSets:[0],phase:'review'};
 for(const phase of ['ready','count','work','review']){
- r.phase=phase;const before=JSON.stringify(r),h=ctx.jugglingRunnerMarkup(r,false,false);assert.equal(JSON.stringify(r),before);assert.equal((h.match(/data-score=/g)||[]).length,1);assert(h.includes('>0</strong><span>Heute'));assert(h.includes('Ø letzte 7'));assert(h.includes('Rekord'));assert(!h.includes('Heute:'));assert(!h.includes('Als Nächstes:'));assert(!h.includes('Satz 1 von 1'));
+ r.phase=phase;const before=JSON.stringify(r),h=ctx.jugglingRunnerMarkup(r,false,false);assert.equal(JSON.stringify(r),before);assert.equal((h.match(/data-score=/g)||[]).length,1);assert(h.includes('>0</strong><span>Heute'));assert(h.includes('Aktuelles Level'));assert(h.includes('Rekord'));assert(!h.includes('Heute:'));assert(!h.includes('Als Nächstes:'));assert(!h.includes('Satz 1 von 1'));
  if(phase==='ready'){assert(h.includes('id="ready"'));assert(!h.includes('id="timer"'))}
  if(phase==='count'||phase==='work'){assert(h.includes('id="pause"'));assert(h.includes('id="timer"'))}
  if(phase==='review'){assert(h.includes('Geschafft ✓'));assert(h.indexOf('data-score=')<h.indexOf('id="next-drill"'));assert(!h.includes('id="timer"'))}
