@@ -5,9 +5,9 @@ const row=(set,total=2)=>({key:'feints',kind:'Finten · frei wählen',set,total,
 const entries=[row(1),row(2)];let pauses=0,renders=0;
 const ctx={Date,Map,Set,Math,Object,JSON,Number,String,tab:'today',activeSection:'feints',run:null,runs:{},drills:[],levels:[],techNames:{toe:'Zehenjonglieren'},sectionNames:{ball:'Ballbeherrschung',juggling:'Jonglieren',feints:'Finten'},date:()=>day,state:{groups:{feints:true},blockDone:{},completedPlans:{},overviewDay:{day,sections:{}}},enabledSections:()=>['feints'],plan:k=>k==='feints'?entries:[],esc:String,trainingModeCue:()=>'',window:{scrollY:170,requestAnimationFrame:f=>f(),scrollTo:v=>scrolls.push(v)},document:{querySelectorAll:()=>[],querySelector:()=>null},$:()=>view,render:()=>renders++,pauseRun:()=>{ctx.run.paused=true;pauses++},chooseSection:k=>{ctx.activeSection=k;ctx.run=ctx.runs[k]||null},playerCards:{snapshot:()=>({values:[50,30,30,50],visible:[true,true,true,true],total:42,tier:0}),mount:()=>{}}};
 vm.createContext(ctx);const cardsSource=fs.readFileSync(__dirname+'/../player-cards.js','utf8');vm.runInContext(cardsSource.slice(cardsSource.indexOf('const playerCardMaterials='),cardsSource.indexOf('// Pure rating rules')),ctx);vm.runInContext(fs.readFileSync(__dirname+'/../day-overview.js','utf8'),ctx);vm.runInContext(fs.readFileSync(__dirname+'/../today-navigation.js','utf8')+';this.nav=todayNavigation;',ctx);
-ctx.playerCards.collectionSnapshot=ctx.playerCards.snapshot;const nav=ctx.nav;assert.equal(nav.screen(),'areas');assert.equal(nav.label(nav.status('feints')),'ca. 3 Min.');
+ctx.playerCards.collectionSnapshot=ctx.playerCards.snapshot;const nav=ctx.nav;assert.equal(nav.screen(),'areas');assert.equal(nav.label(nav.status('feints')),'ca. 2:05 Min.');
 ctx.runs.feints={day,section:'feints',plan:entries,index:1,phase:'ready',completedSets:[0]};ctx.run=ctx.runs.feints;
-assert.equal(nav.label(nav.status('feints')),'noch ca. 1 Min.');
+assert.equal(nav.label(nav.status('feints')),'noch ca. 1:00 Min.');
 ctx.run.phase='review';ctx.run.completedSets=[0,1];assert.equal(nav.label(nav.status('feints')),'Geschafft ✓');assert(!ctx.state.blockDone[day],'UI completion must not award or reveal');
 ctx.run=null;ctx.runs={};assert(nav.status('feints').done,'completed ledger survives discarding run');
 ctx.state.overviewDay={day:'2026-11-10',sections:{}};assert(!nav.status('feints').done,'previous-day credits cannot complete today');
@@ -26,15 +26,25 @@ console.log('PASS: daily status independent of reveal, exact remaining times, di
 
 ctx.runs={};ctx.run=null;ctx.state.blockDone={};ctx.state.completedPlans={[day]:{feints:entries}};ctx.state.overviewDay={day,sections:{}};
 ctx.runs.feints={day,section:'feints',plan:entries,index:0,phase:'ready',completedSets:[]};ctx.run=ctx.runs.feints;
-const extended=nav.status('feints');assert.equal(nav.label(extended),'noch ca. 3 Min.');nav.open('areas');nav.render();assert(view.innerHTML.includes('Noch ca. 3 Min.'),'green total must show updated remaining time');assert(view.innerHTML.includes('noch ca. 3 Min.'),'area panel must indicate previous training');
+const extended=nav.status('feints');assert.equal(nav.label(extended),'noch ca. 2:05 Min.');nav.open('areas');nav.render();assert(view.innerHTML.includes('Noch ca. 2:05 Min.'),'green total must show updated remaining time');assert(view.innerHTML.includes('noch ca. 2:05 Min.'),'area panel must indicate previous training');
 console.log('PASS: reopened area and green total display remaining time with noch');
 
 const extraPlan=[{key:'toe',kind:'Jonglieren',set:1,total:1,work:420,rest:0}];
 ctx.state.blockDone={};ctx.state.completedPlans={};ctx.state.overviewDay={day,sections:{}};ctx.plan=k=>k==='juggling'?extraPlan:[];ctx.enabledSections=()=>['juggling'];
 ctx.runs={juggling:{day,section:'juggling',plan:extraPlan,index:0,phase:'work',paused:true,remaining:120,extraSeconds:300,completedSets:[0]}};ctx.run=ctx.runs.juggling;
-assert.equal(nav.status('juggling').seconds,120);assert(!nav.status('juggling').done);assert.equal(nav.label(nav.status('juggling')),'noch ca. 2 Min.');nav.open('areas');nav.render();assert(view.innerHTML.includes('Noch ca. 2 Min.'));assert(!view.innerHTML.includes('Heute geschafft'));
+assert.equal(nav.status('juggling').seconds,120);assert(!nav.status('juggling').done);assert.equal(nav.label(nav.status('juggling')),'noch ca. 2:00 Min.');nav.open('areas');nav.render();assert(view.innerHTML.includes('Noch ca. 2:00 Min.'));assert(!view.innerHTML.includes('Heute geschafft'));
 let extraData=ctx.dayOverviewData();assert.equal(extraData.total,1);assert.equal(extraData.completed,1);assert(!extraData.done);assert.equal(extraData.seconds,120);assert(ctx.overviewBody(extraData).includes('Zusatzzeit'));assert(extraData.sections[0].items[0].done,'regular drill stays complete');
 ctx.state.blockDone[day]=['juggling'];ctx.state.completedPlans[day]={juggling:extraPlan};assert.equal(nav.status('juggling').seconds,120,'extra time also appears after area close/repeat');
 ctx.run.phase='count';ctx.run.remaining=3;assert.equal(ctx.overviewExtraSeconds(ctx.run),303,'countdown plus optional work');
 ctx.run.phase='work';ctx.run.remaining=120;delete ctx.run.extraSeconds;assert(nav.status('juggling').done);assert.equal(nav.status('juggling').seconds,0);nav.render();assert(view.innerHTML.includes('Heute geschafft'));
 console.log('PASS: voluntary remaining time updates area, green total and expanded overview without reopening completed drills, including closed-area repeats');
+
+for(const [seconds,label] of [[0,'0 Sek.'],[35,'35 Sek.'],[59.1,'1:00 Min.'],[60,'1:00 Min.'],[65,'1:05 Min.'],[125,'2:05 Min.'],[225,'3:45 Min.'],[3600,'60:00 Min.']])assert.equal(ctx.overviewDuration(seconds),label);
+ctx.run=null;ctx.runs={};ctx.state.blockDone={};ctx.state.completedPlans={};ctx.state.overviewDay={day,sections:{}};
+ctx.drills=[{id:'048',level:0}];ctx.levels=['Anfänger'];ctx.techNames={toe:'Zehenjonglieren'};
+ctx.enabledSections=()=>['ball','juggling','feints'];
+ctx.plan=section=>section==='ball'?[{key:'048',kind:'Wochenübung',set:1,total:1,work:60,rest:60}]:section==='juggling'?[{key:'toe',kind:'Jonglieren',set:1,total:1,work:30,rest:0}]:[{key:'feints',kind:'Finten · frei wählen',set:1,total:1,work:30,rest:30}];
+nav.restore();nav.render();
+for(const text of ['ca. 3:45 Min.','ca. 2:05 Min.','ca. 35 Sek.','ca. 1:05 Min.'])assert(view.innerHTML.includes(text),'exact area and total duration '+text);
+assert.equal(ctx.dayOverviewData().seconds,225);assert.equal(ctx.overviewTimeLabel(ctx.dayOverviewData()),'ca. 3:45 Min.');
+console.log('PASS: displayed area durations sum exactly to the total; seconds, minute rollover and full minutes remain unambiguous');

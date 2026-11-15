@@ -89,7 +89,7 @@ function dayOverviewData(){
  const items=sections.flatMap(s=>s.items),completed=items.filter(row=>row.done).length;
  return {sections,total:items.length,completed,seconds,started,done:items.length>0&&completed===items.length&&!sections.some(s=>s.extra)};
 }
-function overviewDuration(seconds){return seconds>=60?Math.ceil(seconds/60)+' Min.':Math.ceil(seconds)+' Sek.'}
+function overviewDuration(seconds){const n=Math.max(0,Math.ceil(seconds));return n>=60?Math.floor(n/60)+':'+String(n%60).padStart(2,'0')+' Min.':n+' Sek.'}
 function overviewStatus(row){return row.done?'<span class="overview-check" role="img" aria-label="Erledigt">✓</span>':row.completed.length?`<span class="overview-partial">${row.completed.length}/${row.total} Sätze</span>`:''}
 function overviewExactDuration(seconds){
  const n=Math.max(0,Math.round(seconds));
