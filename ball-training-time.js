@@ -52,7 +52,7 @@ function ballTrainingTotals(section='ball'){
  return {...native,milliseconds:native.milliseconds+rows.reduce((n,r)=>n+r.milliseconds,0),days:days.size,since:[native.since,...rows.map(r=>r.date)].sort()[0]};
 }
 function ballTrainingText(section='ball'){
- const totals=ballTrainingTotals(section),seconds=Math.floor(totals.milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
+ const totals=ballTrainingTotals(section),seconds=Math.round(totals.milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
  const duration=hours?`${hours} Std. ${minutes%60} Min.`:minutes?`${minutes} Min.`:seconds?`${seconds} Sek.`:'0 Min.';
  return `Gesamt: ${totals.unknownDays?'mind. ':'schon '}${duration} / ${totals.days} ${totals.days===1?'Trainingstag':'Trainingstage'}`;
 }
@@ -62,7 +62,7 @@ function ballTrainingMarkup(section){
  return `<button type="button" class="ball-training-total" data-ball-total="${section}" title="Erfassung seit ${ballTrainingSince(section)}" aria-label="${esc(ballTrainingText(section))} · Erfassungsbeginn anzeigen">${esc(ballTrainingText(section))}</button>`;
 }
 function trainingSummaryDuration(milliseconds){
- const seconds=Math.floor(milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
+ const seconds=Math.round(milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
  return hours?hours+' h'+(minutes%60?' '+minutes%60+' min':''):minutes?minutes+' min':seconds?seconds+' s':'0 min';
 }
 function trainingSummaryMetrics(section){

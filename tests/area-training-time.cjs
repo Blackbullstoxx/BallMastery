@@ -24,3 +24,5 @@ ctx.rememberAreaTrainingTimes();const archived=JSON.stringify(ctx.state.areaTrai
 
 for(const [minutes,label] of [[0,'0 min'],[18,'18 min'],[60,'1 h'],[90,'1 h 30 min'],[264,'4 h 24 min'],[1500,'25 h']])assert.equal(ctx.trainingSummaryDuration(minutes*60000),label);
 console.log('PASS: compact minutes and hours at boundaries and large totals');
+
+assert.equal(ctx.trainingSummaryDuration(720000-20),'12 min','subsecond timer overhead does not hide a completed minute');
