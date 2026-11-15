@@ -1,6 +1,6 @@
 /* Cache only the versioned app shell; never cache videos, credentials or backups. */
 'use strict';
-const RELEASE="2026.11.15.9";
+const RELEASE="2026.11.15.10";
 const BASE=new URL(self.registration.scope);
 const PREFIX='ballmastery-shell-'+encodeURIComponent(BASE.pathname)+'-';
 const CACHE=PREFIX+RELEASE;
