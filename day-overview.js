@@ -90,6 +90,7 @@ function dayOverviewData(){
  return {sections,total:items.length,completed,seconds,started,done:items.length>0&&completed===items.length&&!sections.some(s=>s.extra)};
 }
 function overviewDuration(seconds){const n=Math.max(0,Math.ceil(seconds));return n>=60?Math.floor(n/60)+':'+String(n%60).padStart(2,'0')+' Min.':n+' Sek.'}
+function overviewRoundedDuration(seconds){return Math.max(0,Math.ceil(seconds/60))+' Min.'}
 function overviewStatus(row){return row.done?'<span class="overview-check" role="img" aria-label="Erledigt">✓</span>':row.completed.length?`<span class="overview-partial">${row.completed.length}/${row.total} Sätze</span>`:''}
 function overviewExactDuration(seconds){
  const n=Math.max(0,Math.round(seconds));
@@ -123,7 +124,7 @@ function overviewBody(data){
   return `<section class="overview-section"><h3>${section.name}</h3>${contents}</section>`;
  }).join('');
 }
-function overviewTimeLabel(data){return data.done?'':(data.started?'Noch ca. ':'ca. ')+overviewDuration(data.seconds)}
+function overviewTimeLabel(data){return data.done?'':(data.started?'Noch ca. ':'ca. ')+overviewRoundedDuration(data.seconds)}
 function overviewProgressLabel(data){return data.started||data.done?`${data.completed} von ${data.total} ${data.total===1?'Übung':'Übungen'} geschafft`:''}
 function dayOverviewMarkup(){
  const data=dayOverviewData();if(!data.total)return '';
