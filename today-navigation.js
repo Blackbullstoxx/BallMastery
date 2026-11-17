@@ -15,6 +15,7 @@ const todayNavigation=(()=>{
  }
  function sections(){const available=enabledSections();return ['ball','juggling','feints'].filter(k=>available.includes(k)||state.blockDone?.[date()]?.includes(k)&&state.completedPlans?.[date()]?.[k]?.length)}
  function status(section){
+  if(section==='juggling'&&typeof individualJugglingDailyStatus==='function'&&(runs.juggling?.individual||individualJugglingHasCredits()))return individualJugglingDailyStatus();
   const current=runs[section]?.day===date()?runs[section]:null;
   const closed=!!state.blockDone?.[date()]?.includes(section);
   const entries=closed&&state.completedPlans?.[date()]?.[section]||current?.plan||plan(section);

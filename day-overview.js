@@ -38,6 +38,7 @@ function overviewExtraSeconds(value){
  return Math.max(0,Math.ceil((value.phase==='count'?value.extraSeconds:0)+remaining));
 }
 function overviewSeconds(section,entries,value,blocks){
+ if(section==='juggling'&&typeof individualJugglingDailyStatus==='function'&&(value?.individual||individualJugglingHasCredits()))return individualJugglingDailyStatus().seconds;
  const credited=new Map();blocks.forEach(b=>{const sets=overviewCredits(section,b);b.indices.forEach((index,n)=>credited.set(index,sets.includes(n+1)))});
  const extraSeconds=overviewExtraSeconds(value);
  if(state.blockDone?.[date()]?.includes(section))return extraSeconds;
@@ -144,7 +145,7 @@ function reopenExtendedPlans(){reconcileJugglingPlan();['ball','feints','jugglin
 // rows remain immutable evidence; timer ledgers already contain elapsed time.
 function reconcileJugglingPlan(){
  const value=runs.juggling,day=date();
- if(typeof isReadOnly==='function'&&isReadOnly()||!value||value.day!==day||value.phase==='done'||value.repeatMode||value.extraSeconds)return;
+ if(typeof isReadOnly==='function'&&isReadOnly()||!value||value.day!==day||value.phase==='done'||value.repeatMode||value.extraSeconds||value.individual)return;
  const old=value.plan[value.index];if(!old)return;
  const completed=new Set(value.completedSets||[]),finished=value.plan.filter((row,index)=>completed.has(index)),credited=new Map();
  for(const row of [...(state.completedPlans?.[day]?.juggling||[]),...finished])credited.set(row.key,(credited.get(row.key)||0)+row.work);
