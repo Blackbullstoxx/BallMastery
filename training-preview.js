@@ -17,7 +17,7 @@ function previewScoreInput(key,duration){
  return `<form class="scoreform preview-scoreform" data-score="${esc(key)}" data-duration="${duration}" data-colour-score="false"><input type="number" min="0" max="99999" required aria-label="${esc(techNames[key])}: Kontakte" placeholder="Kontakte"><button>Eintragen</button></form>`;
 }
 function previewTrainingSummary(section){
- return `<section class="card training-summary" aria-label="Bisheriges Training ${sectionNames[section]}">${trainingSummaryMetrics(section)}</section>`;
+ return `<section class="card training-summary" aria-label="Bisheriges Training ${sectionNames[section]}">${trainingSummaryMetrics(section)}</section>${section==='juggling'&&typeof individualJugglingMarkup==='function'?individualJugglingMarkup():''}`;
 }
 function ballExerciseBadge(d){
  const drill=typeof drills!=='undefined'?drills.find(row=>row.id===d.key):null;
