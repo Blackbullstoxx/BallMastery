@@ -48,8 +48,15 @@ function rememberAreaTrainingTimes(){state.areaTrainingHistory=Object.fromEntrie
 function ballTrainingTotals(section='ball'){
  const data=section==='ball'?ballTrainingState():null,native=section==='ball'?{milliseconds:Object.values(data.days).reduce((n,v)=>n+v,0),since:data.since,timedDays:data.days}:historicalAreaTraining(section);
  const nativeDays=section==='ball'?Object.keys(data.days).filter(d=>data.days[d]>0):native.dayDates;
- const rows=(state.manualTraining||[]).filter(r=>r.area===section&&r.date<=date()),days=new Set([...nativeDays,...rows.map(r=>r.date)].filter(d=>validTrainingDate(d)&&d<=date()));
- return {...native,milliseconds:native.milliseconds+rows.reduce((n,r)=>n+r.milliseconds,0),days:days.size,since:[native.since,...rows.map(r=>r.date)].sort()[0]};
+ const rows=(state.manualTraining||[]).filter(r=>r.area===section&&r.date<=date()),evidence=[];
+ if(section==='ball'&&typeof drills!=='undefined'){
+  const keys=new Set(drills.map(row=>row.id));
+  for(const [key,dates] of Object.entries(state.practiceCounts||{}))if(keys.has(key))for(const [day,n] of Object.entries(dates||{}))if(Number.isInteger(n)&&n>0)evidence.push(day);
+  if(typeof validPracticeScore==='function')for(const score of [...(state.scores||[]),...(state.colourScores||[])])if(keys.has(score.key)&&validPracticeScore(score))evidence.push(score.date);
+ }
+ const days=new Set([...nativeDays,...evidence,...rows.map(r=>r.date)].filter(d=>validTrainingDate(d)&&d<=date()));
+ const unknownDays=section==='ball'?[...days].filter(day=>!(data.days[day]>0)&&!rows.some(row=>row.date===day)).length:native.unknownDays;
+ return {...native,unknownDays,milliseconds:native.milliseconds+rows.reduce((n,r)=>n+r.milliseconds,0),days:days.size,since:[native.since,...days].sort()[0]};
 }
 function ballTrainingText(section='ball'){
  const totals=ballTrainingTotals(section),seconds=Math.round(totals.milliseconds/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
@@ -77,7 +84,7 @@ function refreshBallTimeDisplay(){
   button.title='Erfassung seit '+ballTrainingSince(section);button.setAttribute('aria-label',text+' · Erfassungsbeginn anzeigen');
  });
 }
-function showBallTrainingStart(event){const button=event.target.closest('[data-ball-total]');if(!button)return;const section=button.dataset.ballTotal||'ball',totals=ballTrainingTotals(section);toast('Erfassung seit '+ballTrainingSince(section)+(totals.unknownDays?' · Für '+totals.unknownDays+' ältere Trainingstage ist keine Dauer gespeichert.':''))}
+function showBallTrainingStart(event){const button=event.target.closest('[data-ball-total]');if(!button)return;const section=button.dataset.ballTotal||'ball',totals=ballTrainingTotals(section);toast('Erfassung seit '+ballTrainingSince(section)+(totals.unknownDays?' · Für '+totals.unknownDays+' Trainingstage ist keine Dauer gespeichert.':''))}
 
 // Technique times are measured by the active clock. Older completed timers are
 // lower bounds only; never infer a duration from today's settings or a score.
