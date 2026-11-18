@@ -267,3 +267,5 @@
 #fvo-card-preview .fp-front[data-card-tier="1"]{--card-ink:#493427}
 #fvo-card-preview .fp-front[data-card-tier="4"],#fvo-card-preview .fp-front[data-card-tier="5"]{--card-ink:#303a42}
 #fvo-card-preview .fp-front[data-card-tier="6"],#fvo-card-preview .fp-front[data-card-tier="8"]{--card-ink:#40301c}
+
+#fvo-card-preview .fp-ratings .ball-progress-dots{right:auto;left:calc(50% + .49em)}
