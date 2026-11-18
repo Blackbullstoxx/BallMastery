@@ -1,6 +1,8 @@
 'use strict';
 
-function practiceDayList(key,data=state){return Object.entries(data.practiceCounts?.[key]||{}).filter(([day,n])=>validTrainingDate(day)&&day<=date()&&Number.isInteger(n)&&n>0).map(([day])=>day).concat((data.manualTraining||[]).filter(r=>r.key===key&&r.date<=date()).map(r=>r.date)).filter((d,i,a)=>a.indexOf(d)===i).sort()}
+function validPracticeScore(row){return !!row&&!row.manualTrainingId&&validTrainingDate(row.date)&&row.date<=date()&&Number.isInteger(row.value)&&row.value>=0&&row.value<=99999&&Number.isFinite(row.duration)&&row.duration>=0}
+function practiceDayList(key,data=state){return Object.entries(data.practiceCounts?.[key]||{}).filter(([day,n])=>validTrainingDate(day)&&day<=date()&&Number.isInteger(n)&&n>0).map(([day])=>day).concat([...(data.scores||[]),...(data.colourScores||[])].filter(row=>row.key===key&&validPracticeScore(row)).map(row=>row.date),(data.manualTraining||[]).filter(r=>r.key===key&&r.date<=date()).map(r=>r.date)).filter((d,i,a)=>a.indexOf(d)===i).sort()}
+
 function markPracticeDay(key,day,data=state){
  if(!validTrainingDate(day)||day>date())return;
  if(!data.practiceCounts||typeof data.practiceCounts!=='object'||Array.isArray(data.practiceCounts))data.practiceCounts={};
