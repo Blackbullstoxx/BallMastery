@@ -54,3 +54,27 @@ assert(cards.valid(JSON.parse(JSON.stringify(state))));
 state.finished=true;
 assert.deepEqual(result(),[99,0]);
 console.log('PASS: weekly day credit, eligibility, cap, switching, independent reveals and backup compatibility.');
+
+// Rollout: three historical dates, one already credited, plus dates from
+// other phases and after rollout. A subsequent training day follows the live rule.
+today='2026-11-19';
+ctx.state={
+ current:36,groups:{ball:true},
+ weeklyLearning:{key:'36',since:'2026-11-14',entries:[{date:'2026-11-16',value:20,duration:30,scoreId:'s1'}],trainingDays:['2026-11-17']},
+ practiceCounts:{'35':{'2026-11-14':1},'36':{'2026-11-13':1,'2026-11-16':1,'2026-11-17':1,'2026-11-18':1,'2026-11-19':1}}
+};
+assert.equal(cards.snapshot().ballDots,0);
+assert(ctx.backfillWeeklyRatingDays());
+assert.equal(JSON.stringify(ctx.state.weeklyLearning.trainingDays),'["2026-11-16","2026-11-17","2026-11-18"]');
+assert.equal(cards.snapshot().values[0],54);
+assert.equal(cards.snapshot().ballDots,1);
+assert(!ctx.backfillWeeklyRatingDays());
+ctx.creditWeeklyRatingDay({section:'ball',day:today,plan:[{key:'36',kind:'Wochenübung'}],completedSets:[0]});
+assert.equal(ctx.state.weeklyLearning.trainingDays.length,4);
+readOnly=true;
+ctx.state={current:36,groups:{ball:true},practiceCounts:{'36':{'2026-11-17':1}}};
+assert(!ctx.backfillWeeklyRatingDays());
+readOnly=false;
+assert(ctx.backfillWeeklyRatingDays());
+assert.equal(ctx.state.weeklyLearning.since,'2026-11-17');
+console.log('PASS: initial backfill is scoped to a profile and the current weekly phase, without duplicate or post-rollout credit.');

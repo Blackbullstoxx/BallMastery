@@ -12,6 +12,31 @@ function ensureWeeklyLearning(){
  const key=drills[state.current]?.id;if(!key)return;
  if(!validWeeklyLearning(state.weeklyLearning)||state.weeklyLearning?.key!==key)state.weeklyLearning={key,since:date(),entries:[]};
 }
+// The initial BALL rollout did not record these credits. Count the
+// current drill's saved practice dates once per profile.
+function backfillWeeklyRatingDays(){
+ if(isReadOnly()||state.weeklyRatingBackfilled||!drills.length)return false;
+ const key=drills[state.current]?.id;
+ if(!key||state.finished)return false;
+ const phase=state.weeklyLearning?.key===key?state.weeklyLearning:null;
+ const cutOff='2026-11-18';
+ const savedDays=[
+  ...Object.entries(state.practiceCounts?.[key]||{}).filter(([,n])=>Number.isInteger(n)&&n>0).map(([day])=>day),
+  ...(phase?.entries||[]).map(row=>row.date),
+  ...Object.entries(state.completedPlans||{}).filter(([day,areas])=>
+   state.blockDone?.[day]?.includes('ball')&&areas?.ball?.some(row=>row.key===key&&row.kind==='Wochenübung')
+  ).map(([day])=>day)
+ ];
+ const history=savedDays.filter(day=>
+  validTrainingDate(day)&&day<=date()&&day<=cutOff&&(!phase||day>=phase.since)
+ );
+ const days=[...new Set([...(phase?.trainingDays||[]),...history])].sort().slice(0,6);
+ if(days.length){
+  state.weeklyLearning={...(phase||{key,since:days[0],entries:[]}),trainingDays:days};
+ }
+ state.weeklyRatingBackfilled=true;
+ return true;
+}
 function creditWeeklyRatingDay(training){
  if(training.section!=='ball'||training.day!==date()||state.finished||isReadOnly())return;
  const key=drills[state.current]?.id;
