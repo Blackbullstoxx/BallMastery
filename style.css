@@ -380,3 +380,21 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .ball-finish-action{margin-top:22px}
 .weekly-mastery-panel .weekly-switch-row h3{margin:0}
 .ball-runner>.technique-actions:empty{display:none}
+
+.training-areas .area-rating{width:60px;min-width:60px;box-sizing:border-box}
+.ball-progress-value{display:inline-block;position:relative;padding-right:.39em}
+.ball-progress-dots{
+ position:absolute;right:0;top:50%;transform:translateY(-50%);
+ display:flex;flex-direction:column;justify-content:space-between;
+ height:.69em;width:.2em;color:inherit;pointer-events:none;
+}
+.ball-progress-dots>i{
+ display:block;width:.2em;height:.2em;border-radius:50%;
+ border:1px solid currentColor;box-sizing:border-box;
+}
+.ball-progress-dots>.filled{background-color:currentColor}
+.ball-progress-dots>.new-dot{animation:ball-dot-reveal 1.1s ease-out}
+@keyframes ball-dot-reveal{
+ 0%,30%{color:#008b46;box-shadow:0 0 .13em currentColor}
+ 100%{color:inherit;box-shadow:none}
+}

@@ -26,7 +26,13 @@ const todayNavigation=(()=>{
   return {section,done,started,seconds:done?0:overviewSeconds(section,entries,current,blocks)};
  }
  function label(value){return value.done?'Geschafft ✓':(value.started?'noch ca. ':'ca. ')+overviewDuration(value.seconds)}
- function rating(section){const i={ball:0,juggling:1,feints:2}[section],s=playerCards.snapshot();return s.visible[i]?`<span class="area-rating" aria-label="${sectionNames[section]} Rating ${s.values[i]}"><small>${['BALL','JONG','FINT'][i]}</small><strong>${s.values[i]}</strong></span>`:''}
+ function rating(section){
+  const i={ball:0,juggling:1,feints:2}[section],s=playerCards.snapshot();
+  if(!s.visible[i])return '';
+  const showDots=i===0&&s.values[i]<99&&typeof ballProgressDots==='function';
+  const progress=showDots?` · ${s.ballDots} von 3 Fortschrittspunkten`:'';
+  return `<span class="area-rating" aria-label="${sectionNames[section]} Rating ${s.values[i]}${progress}"><small>${['BALL','JONG','FINT'][i]}</small><strong${showDots?' class="ball-progress-value"':''}>${s.values[i]}${showDots?ballProgressDots(s.ballDots):''}</strong></span>`;
+ }
  function icon(section){
   const ball='<circle cx="24" cy="24" r="19"/><path d="m24 15 8 6-3 10H19l-3-10 8-6Zm0-10v10M6 17l10 4m3 10-7 9m17-9 7 9m-4-19 10-4"/>';
   const shoe='<path d="m6 29 5-10 7 7 8 1 7 5 10 4v7H5l1-14Zm0 14v3m10-3v3m12-3v3m11-3v3M23 28l-3 5m9-3-3 5"/><circle cx="30" cy="12" r="8"/><path d="m30 8 4 3-2 4h-4l-2-4 4-3Z"/>';

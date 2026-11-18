@@ -109,6 +109,12 @@ function playerCardTier(total){return Math.max(0,playerCardMaterials.findLastInd
 function playerCardSnapshotMaterial(snapshot){return snapshot?{...snapshot,tier:playerCardTier(snapshot.total)}:snapshot}
 
 // Pure rating rules and device-local card state. No network or audio.
+function ballProgressDots(count){
+ return '<i class="ball-progress-dots" aria-hidden="true">'+[3,2,1].map(n=>
+  '<i class="'+(n<=count?'filled':'')+'"></i>'
+ ).join('')+'</i>';
+}
+
 const playerCards=(()=>{
  const areas=['ball','juggling','feints'],weights=[.4,.25,.15,.2];
  const names=['BALL','JONG','FINT','FLEISS'];
@@ -136,28 +142,37 @@ const playerCards=(()=>{
   const learned=data.finished?list.length:clamp(Number(data.current)||0,0,list.length);
   const techniques=['toe','free'].filter(k=>c.techniques[k]);
   const performance=techniques.length?techniques.reduce((sum,k)=>sum+bonus(data,k,today),0)/techniques.length:0;
-  const rawBall=list.length?30+69*learned/list.length:30;
-  const values=[learned===list.length&&list.length?99:Math.min(98,Math.round(rawBall)),Math.min(99,Math.floor(curve(minutes('juggling'),juggleCurve)+performance+1e-9)),Math.floor(curve(minutes('feints'),feintCurve)+1e-9),diligenceRules.report(data,today).rating];
+  const phase=data.weeklyLearning;
+  const trainedDays=!data.finished&&phase?.key===list[learned]?.id
+   ?Math.min(6,(phase?.trainingDays||[]).filter(day=>day<=today).length):0;
+  const rawBall=list.length?30+69*(learned+trainedDays/8)/list.length:30;
+  const ball=learned===list.length&&list.length?99:Math.min(98,Math.round(rawBall));
+  const ballDots=ball===99?0:Math.max(0,Math.min(3,Math.floor((rawBall-ball+.5)*4+1e-9)));
+  const values=[ball,Math.min(99,Math.floor(curve(minutes('juggling'),juggleCurve)+performance+1e-9)),Math.floor(curve(minutes('feints'),feintCurve)+1e-9),diligenceRules.report(data,today).rating];
   const visible=[!!c.areas.ball,!!c.areas.juggling,!!c.areas.feints,true];
   const sum=weights.reduce((n,w,i)=>n+(visible[i]?w:0),0);
   let total=Math.round(values.reduce((n,v,i)=>n+(visible[i]?v*weights[i]:0),0)/sum);
   if(total===99&&!values.every((n,i)=>!visible[i]||n===99))total=98;
-  return {values,total,tier:playerCardTier(total),visible};
+  return {values,total,tier:playerCardTier(total),visible,ballDots};
  }
  // Commit ratings only at explicit area completion. The daily baseline and
  // committed active times travel with backups; unfinished repeats cannot leak in.
- function totalFor(values,visible){const weight=weights.reduce((n,w,i)=>n+(visible[i]?w:0),0);let total=Math.round(values.reduce((n,v,i)=>n+(visible[i]?v*weights[i]:0),0)/weight);if(total===99&&!values.every((v,i)=>!visible[i]||v===99))total=98;return {values,total,tier:playerCardTier(total),visible}}
+ function totalFor(values,visible,ballDots=0){const weight=weights.reduce((n,w,i)=>n+(visible[i]?w:0),0);let total=Math.round(values.reduce((n,v,i)=>n+(visible[i]?v*weights[i]:0),0)/weight);if(total===99&&!values.every((v,i)=>!visible[i]||v===99))total=98;return {values,total,tier:playerCardTier(total),visible,ballDots}}
  function activeTimes(){return {ball:state.ballTraining?.days?.[date()]||0,juggling:state.cardTraining?.days?.[date()]?.juggling||0,feints:state.cardTraining?.days?.[date()]?.feints||0}}
  function dailyState(){
   const c=config();if(c.dailyRatings?.day===date())return {...c.dailyRatings,from:playerCardSnapshotMaterial(c.dailyRatings.from),to:playerCardSnapshotMaterial(c.dailyRatings.to)};
   const current=snapshot(),yesterday=diligenceRules.day(diligenceRules.number(date())-1),previous=snapshot(state,drills,yesterday);
   const reveals=[c.reveal,...Object.values(c.sectionReveals||{})].filter(r=>r?.day===date());
-  // Ball progress has no historical daily counter; old reveals preserve its baseline.
-  previous.values[0]=Math.min(current.values[0],...reveals.map(r=>r.from.values[0]));
-  const from=totalFor(previous.values,current.visible),values=[...from.values],done=state.blockDone?.[date()]||[],times=activeTimes();
+  // Keep the last awarded BALL value across midnight so an exercise switch
+  // stays pending until the next Ballbeherrschung completion.
+  const baseline=reveals.find(r=>r.section==='ball')?.from||c.dailyRatings?.to||c.lastShown;
+  previous.values[0]=baseline?.values[0]??current.values[0];
+  const from=totalFor(previous.values,current.visible,baseline?.ballDots??(baseline?0:current.ballDots));
+  const values=[...from.values],done=state.blockDone?.[date()]||[],times=activeTimes();
   areas.forEach((area,i)=>{if(done.includes(area))values[i]=current.values[i];else times[area]=0});
-  const daily={day:date(),from,to:totalFor(values,current.visible),times};
-  daily.to.values[3]=committedDiligence(daily,done);daily.to=totalFor(daily.to.values,current.visible);
+  const ballDots=done.includes('ball')?current.ballDots:from.ballDots;
+  const daily={day:date(),from,to:totalFor(values,current.visible,ballDots),times};
+  daily.to.values[3]=committedDiligence(daily,done);daily.to=totalFor(daily.to.values,current.visible,ballDots);
   return daily;
  }
  function committedDiligence(daily,done){
@@ -190,7 +205,7 @@ const playerCards=(()=>{
   if(isReadOnly())return;init();
   const c=state.playerCard,daily=c.dailyRatings,raw=snapshot(),from=daily.to,values=[...from.values],index=areas.indexOf(section);
   daily.times[section]=activeTimes()[section];values[index]=raw.values[index];values[3]=committedDiligence(daily,[...new Set([...(state.blockDone?.[date()]||[]),section])]);
-  const to=totalFor(values,raw.visible);daily.to=to;
+  const to=totalFor(values,raw.visible,section==='ball'?raw.ballDots:from.ballDots);daily.to=to;
   c.reveal={day:date(),section,from,to,seen:false};c.lastShown=to;c.sectionReveals[section]=JSON.parse(JSON.stringify(c.reveal));
  }
  function destroy(){if(dispose)dispose();dispose=null}
@@ -235,11 +250,11 @@ const playerCards=(()=>{
  function collection(){const panel=document.querySelector('#my-player-card');if(!panel)return;const daily=dailyState();mount(panel.querySelector('[data-player-card]'),{from:daily.from,to:daily.to,displayChanges:true})}
  function correction(before){
   if(isReadOnly())return;init();const to=snapshot();state.playerCard.lastShown=to;state.playerCard.dailyRatings.to=to;save();
-  if(to.values.every((v,i)=>v===before.values[i])&&to.total===before.total)return;
+  if(to.values.every((v,i)=>v===before.values[i])&&to.total===before.total&&to.ballDots===(before.ballDots??0))return;
   const dialog=document.createElement('dialog');dialog.className='player-card-dialog';dialog.innerHTML='<div data-player-card></div><button type="button">Schließen</button>';document.body.append(dialog);
   const close=()=>{destroy();dialog.close();dialog.remove()};dialog.querySelector('button').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close()});dialog.showModal();mount(dialog.querySelector('[data-player-card]'),{from:before,to,animate:true,correction:true});
  }
- function validSnapshot(s){return !!s&&Array.isArray(s.values)&&s.values.length===4&&s.values.every(n=>Number.isInteger(n)&&n>=30&&n<=99)&&Number.isInteger(s.total)&&s.total>=30&&s.total<=99&&Number.isInteger(s.tier)&&s.tier>=0&&s.tier<playerCardMaterials.length&&Array.isArray(s.visible)&&s.visible.length===4&&s.visible.every(n=>typeof n==='boolean')}
+ function validSnapshot(s){return !!s&&(s.ballDots===undefined||Number.isInteger(s.ballDots)&&s.ballDots>=0&&s.ballDots<=3)&&Array.isArray(s.values)&&s.values.length===4&&s.values.every(n=>Number.isInteger(n)&&n>=30&&n<=99)&&Number.isInteger(s.total)&&s.total>=30&&s.total<=99&&Number.isInteger(s.tier)&&s.tier>=0&&s.tier<playerCardMaterials.length&&Array.isArray(s.visible)&&s.visible.length===4&&s.visible.every(n=>typeof n==='boolean')}
  function valid(data){
   const c=data.playerCard,t=data.cardTraining;
   if(c!==undefined&&(!c||c.version!==1||!c.areas||!areas.every(k=>typeof c.areas[k]==='boolean')||!c.techniques||!['toe','free'].every(k=>typeof c.techniques[k]==='boolean')||typeof c.portrait!=='string'||c.portrait.length>1000000||c.portrait&&!/^data:image\/(png|webp);base64,[A-Za-z0-9+/=]+$/.test(c.portrait)||!c.layout||!['scale','x','y'].every(k=>Number.isFinite(c.layout[k]))||c.layout.scale<80||c.layout.scale>150||Math.abs(c.layout.x)>20||Math.abs(c.layout.y)>10||c.lastShown&&!validSnapshot(c.lastShown)||c.reveal&&(!validTrainingDate(c.reveal.day)||!areas.includes(c.reveal.section)||typeof c.reveal.seen!=='boolean'||!validSnapshot(c.reveal.from)||!validSnapshot(c.reveal.to))))return false;

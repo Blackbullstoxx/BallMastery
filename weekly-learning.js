@@ -1,13 +1,30 @@
 'use strict';
 function validWeeklyLearning(value){
  if(value===null)return true;
- return !!value&&typeof value.key==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value.since)&&Number.isFinite(scoreDay(value.since))&&Array.isArray(value.entries)&&value.entries.every(row=>row&&typeof row.scoreId==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(row.date)&&Number.isFinite(scoreDay(row.date))&&row.date>=value.since&&Number.isInteger(row.duration)&&row.duration>0&&row.duration<=600&&Number.isInteger(row.value)&&row.value>=0&&row.value<=99999);
+ return !!value&&typeof value.key==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value.since)&&Number.isFinite(scoreDay(value.since))&&(value.trainingDays===undefined||(
+  Array.isArray(value.trainingDays)&&value.trainingDays.length<=6&&
+  value.trainingDays.every((day,i)=>validTrainingDate(day)&&day>=value.since&&(!i||day>value.trainingDays[i-1]))
+ ))&&Array.isArray(value.entries)&&value.entries.every(row=>row&&typeof row.scoreId==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(row.date)&&Number.isFinite(scoreDay(row.date))&&row.date>=value.since&&Number.isInteger(row.duration)&&row.duration>0&&row.duration<=600&&Number.isInteger(row.value)&&row.value>=0&&row.value<=99999);
 }
 function normalizeWeeklyLearning(value){return validWeeklyLearning(value)?value:null}
 function ensureWeeklyLearning(){
  if(isReadOnly()||!drills.length||state.finished)return;
  const key=drills[state.current]?.id;if(!key)return;
  if(!validWeeklyLearning(state.weeklyLearning)||state.weeklyLearning?.key!==key)state.weeklyLearning={key,since:date(),entries:[]};
+}
+function creditWeeklyRatingDay(training){
+ if(training.section!=='ball'||training.day!==date()||state.finished||isReadOnly())return;
+ const key=drills[state.current]?.id;
+ const completed=new Set(training.completedSets||[]);
+ const weeklySets=training.plan.flatMap((item,i)=>item.kind==='Wochenübung'&&item.key===key?[i]:[]);
+ if(!weeklySets.length||!weeklySets.every(i=>completed.has(i)))return;
+ ensureWeeklyLearning();
+ const phase=state.weeklyLearning;
+ const days=phase.trainingDays||(phase.trainingDays=[]);
+ if(days.length<6&&!days.includes(training.day)&&training.day>=phase.since){
+  days.push(training.day);
+  days.sort();
+ }
 }
 function weeklyLearningContext(key){
  const item=run?.plan?.[Number.isInteger(run.historyIndex)?run.historyIndex:run.index];
