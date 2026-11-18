@@ -18,6 +18,7 @@ const result = () => [cards.snapshot().values[0],cards.snapshot().ballDots];
 const credit = (key='26', completedSets=[0,1], kind='Wochenübung') => ctx.creditWeeklyRatingDay({
  section:'ball', day:today, plan:[{key,kind},{key,kind}], completedSets
 });
+assert.equal(cards.snapshot({current:0,groups:{ball:true}}).ballDots,0);
 cards.init();
 credit('26',[0]);
 credit('25');

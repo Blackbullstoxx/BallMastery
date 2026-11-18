@@ -147,7 +147,8 @@ const playerCards=(()=>{
    ?Math.min(6,(phase?.trainingDays||[]).filter(day=>day<=today).length):0;
   const rawBall=list.length?30+69*(learned+trainedDays/8)/list.length:30;
   const ball=learned===list.length&&list.length?99:Math.min(98,Math.round(rawBall));
-  const ballDots=ball===99?0:Math.max(0,Math.min(3,Math.floor((rawBall-ball+.5)*4+1e-9)));
+  const progress=ball===30?(rawBall-30)/.5:rawBall-ball+.5;
+  const ballDots=ball===99?0:Math.max(0,Math.min(3,Math.floor(progress*4+1e-9)));
   const values=[ball,Math.min(99,Math.floor(curve(minutes('juggling'),juggleCurve)+performance+1e-9)),Math.floor(curve(minutes('feints'),feintCurve)+1e-9),diligenceRules.report(data,today).rating];
   const visible=[!!c.areas.ball,!!c.areas.juggling,!!c.areas.feints,true];
   const sum=weights.reduce((n,w,i)=>n+(visible[i]?w:0),0);
