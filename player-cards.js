@@ -109,10 +109,39 @@ function playerCardTier(total){return Math.max(0,playerCardMaterials.findLastInd
 function playerCardSnapshotMaterial(snapshot){return snapshot?{...snapshot,tier:playerCardTier(snapshot.total)}:snapshot}
 
 // Pure rating rules and device-local card state. No network or audio.
-function ballProgressDots(count){
- return '<i class="ball-progress-dots" aria-hidden="true">'+[3,2,1].map(n=>
-  '<i class="'+(n<=count?'filled':'')+'"></i>'
+function ballProgressStars(count){
+ return '<i class="ball-progress-stars" aria-hidden="true">'+[3,2,1].map(n=>
+  '<svg class="'+(n<=count?'filled':'')+'" viewBox="0 0 20 20" focusable="false"><path d="M10 0 13.1 6.2 20 7.4 15 12.4 16.2 20 10 16.4 3.8 20 5 12.4 0 7.4 6.9 6.2Z"/></svg>'
  ).join('')+'</i>';
+}
+
+let ballStarMetrics;
+function alignBallStars(stack){
+ if(!stack?.offsetParent)return;
+ const digits=stack.parentElement.querySelector('.fp-num')||stack.parentElement;
+ let baseline=digits.querySelector('.ball-star-baseline');
+ if(!baseline){
+  baseline=document.createElement('i');
+  baseline.className='ball-star-baseline';
+  baseline.setAttribute('aria-hidden','true');
+  digits.prepend(baseline);
+ }
+ ballStarMetrics??=document.createElement('canvas').getContext('2d');
+ if(!ballStarMetrics)return;
+ const style=getComputedStyle(digits);
+ ballStarMetrics.font=[style.fontStyle,style.fontWeight,style.fontSize,style.fontFamily].join(' ');
+ const {actualBoundingBoxAscent:ascent,actualBoundingBoxDescent:descent}=
+  ballStarMetrics.measureText(digits.textContent.trim());
+ if(!Number.isFinite(ascent+descent)||ascent<=0)return;
+ const offset=baseline.getBoundingClientRect().top-stack.offsetParent.getBoundingClientRect().top;
+ stack.style.setProperty('--star-top',(offset-ascent)+'px');
+ stack.style.setProperty('--star-span',(ascent+descent)+'px');
+ stack.style.setProperty('--star-offset','none');
+}
+if(typeof window!=='undefined'){
+ const alignVisibleBallStars=()=>document.querySelectorAll('.ball-progress-stars').forEach(alignBallStars);
+ window.addEventListener?.('resize',alignVisibleBallStars);
+ if(typeof document!=='undefined')document.fonts?.addEventListener?.('loadingdone',alignVisibleBallStars);
 }
 
 const playerCards=(()=>{
