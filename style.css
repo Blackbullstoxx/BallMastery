@@ -404,18 +404,3 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .training-areas .ball-progress-stars svg:first-child{top:-.125px}
 .training-areas .ball-progress-stars svg:nth-child(2){top:calc(50% - var(--training-star-size) / 2)}
 .training-areas .ball-progress-stars svg:last-child{bottom:-.125px}
-@media (prefers-reduced-motion:no-preference){
- .ball-progress-stars .new-star.flash{animation:ball-star-flash .65s ease-out both}
- .ball-progress-stars .new-star.pulse{animation:ball-star-pulse .95s ease-out both}
-}
-@keyframes ball-star-flash{
- 0%{opacity:.55}
- 12%{opacity:1;color:#008b46;filter:drop-shadow(0 0 2px #008b46)}
- 100%{opacity:1;color:inherit;filter:none}
-}
-@keyframes ball-star-pulse{
- 0%{opacity:.55}
- 35%{opacity:1;color:#008b46;filter:drop-shadow(0 0 3px #008b46)}
- 70%{opacity:1;color:#008b46;filter:drop-shadow(0 0 1px #008b46)}
- 100%{opacity:1;color:inherit;filter:none}
-}

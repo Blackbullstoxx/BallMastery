@@ -269,3 +269,10 @@
 #fvo-card-preview .fp-front[data-card-tier="6"],#fvo-card-preview .fp-front[data-card-tier="8"]{--card-ink:#40301c}
 
 #fvo-card-preview .fp-ratings .ball-progress-stars{right:auto;left:calc(50% + .49em)}
+
+#fvo-card-preview{position:relative;isolation:isolate}
+#fvo-card-preview .fp-award-star{
+ position:absolute;z-index:4;left:0;top:0;width:64px;height:64px;
+ overflow:visible;pointer-events:none;filter:drop-shadow(0 2px 5px #5533168c);
+}
+#fvo-card-preview .fp-award-star path{fill:#fff0b0;stroke:#8e511e;stroke-width:.55}
