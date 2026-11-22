@@ -7,7 +7,8 @@ vm.createContext(ctx);vm.runInContext(src+';this.backup=dropboxBackup;',ctx);con
 const original=JSON.stringify(ctx.state),signature=b.comparable(ctx.state);
 for(let second=1;second<=180;second++){
  ctx.state.activeTraining={day:'2026-11-11',runs:{juggling:{remaining:180-second}}};ctx.state.cardTraining.days['2026-11-11']={juggling:second*1000,feints:0};ctx.state.areaTrainingHistory.juggling['2026-11-11']=second*1000;
- b.changed();assert.equal(timers.size,0,'a running timer must not schedule cloud backups');
+ ctx.state.jugglingIndividualCredits={'2026-11-11':{toe:second*1000}};
+ b.changed();assert.equal(timers.size,0,'ongoing individual juggling credit must not schedule cloud backups');
 }
 assert.equal(b.comparable(ctx.state),signature);assert.notEqual(JSON.stringify(ctx.state),original,'full backup retains actual elapsed time');
 ctx.state.practiceCounts.toe={'2026-11-11':1};b.changed();assert.equal(timers.size,1,'completed training evidence schedules a backup');

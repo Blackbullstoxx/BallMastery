@@ -20,6 +20,9 @@ const dropboxBackup=(()=>{
   // Display-only recovered timer totals change continuously with active clocks.
   // They are still included in the full payload at genuine backup checkpoints.
   delete copy.areaTrainingHistory;
+  // Individual juggling credit also advances with the active clock. Pause and
+  // completion still request a full backup, including the credit ledger.
+  delete copy.jugglingIndividualCredits;
   if(copy.cardTraining)copy.cardTraining={version:copy.cardTraining.version,since:copy.cardTraining.since,completedDays:copy.cardTraining.completedDays};
   if(copy.ballTraining)copy.ballTraining={version:copy.ballTraining.version,since:copy.ballTraining.since};
   const overview=copy.overviewDay;
