@@ -39,8 +39,8 @@ ctx.state.cardTraining.completedDays=Array.from({length:20},(_,i)=>'2026-10-'+St
 const snap=cards.snapshot();assert.deepEqual(Array.from(snap.visible),[true,false,false,true]);assert.equal(snap.total,Math.round((snap.values[0]*2+55)/3));
 ctx.state.groups.toe=true;assert.equal(cards.snapshot().visible[1],false,'weekly plan does not change card membership');
 const view=fs.readFileSync(root+'/player-card-view.js','utf8'),sw=fs.readFileSync(root+'/sw.js','utf8'),index=fs.readFileSync(root+'/index.html','utf8');
-assert(!view.includes('AudioContext'));assert(!view.includes('portraits='));assert(view.includes('options.relevant[i]'));assert(view.includes('duration+300'));
-for(const file of ['player-cards.js?v=135','player-card-view.js?v=131','player-cards.css?v=136'])assert(index.includes(file)&&sw.includes(file));
+assert(!view.includes('AudioContext'));assert(!view.includes('portraits='));assert(view.includes('options.relevant[i]'));assert(view.includes('if(--pending===0)at(300'));
+for(const file of ['player-cards.js?v=135','player-card-view.js?v=132','player-cards.css?v=137'])assert(index.includes(file)&&sw.includes(file));
 for(const file of fs.readdirSync(root+'/cards'))assert(sw.includes('cards/'+file));
 // Detached intermediate renders cannot consume the one-time reveal.
 ctx.state=fresh();cards.init();cards.completed('ball');
