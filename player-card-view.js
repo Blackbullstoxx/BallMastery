@@ -18,6 +18,9 @@ function mountPlayerCard(host,options){
  function anim(el,keyframes,duration,delay=0){const a=el.animate(keyframes,{duration,delay,easing:'cubic-bezier(.33,0,.2,1)',fill:'forwards'});animations.push(a);return a;}
  function side(which){back.hidden=which!=='back';front.hidden=which!=='front';turn.style.transform='none';}
  function material(t){front.dataset.cardMaterial=t===8?'football-god':'';front.dataset.cardTier=String(t);q('.fp-back img').src=backs[t];q('.fp-front img').src=fronts[t];q('.fp-frame-overlay').src=fronts[t];back.style.maskImage='url('+backs[t]+')';front.style.maskImage='url('+fronts[t]+')';q('.fp-back-light').style.maskImage='url('+backs[t]+')';q('.fp-mist-clip').style.maskImage='url('+backs[t]+'),url('+backs[t]+')';q('.fp-stage').style.setProperty('--metal',metals[t]);title.querySelector('strong').textContent=names[t];q('.fp-back img').alt=names[t]+' – Kartenrückseite';}
+ function labelBallStars(rating,snapshot){
+   rating.setAttribute('aria-label',`BALL ${snapshot.values[0]} · ${snapshot.ballDots??0} von 3 Fortschrittspunkten`);
+ }
  function showBallStars(snapshot){
    const el=ratings[0],number=el.querySelector('.fp-num');
    el.querySelector('.ball-progress-stars')?.remove();
@@ -27,7 +30,7 @@ function mountPlayerCard(host,options){
    const dots=snapshot.ballDots??0;
    number.classList.add('ball-progress-value');
    el.insertAdjacentHTML('beforeend',ballProgressStars(dots));
-   el.setAttribute('aria-label',`BALL ${snapshot.values[0]} · ${dots} von 3 Fortschrittspunkten`);
+   labelBallStars(el,snapshot);
    const stack=el.querySelector('.ball-progress-stars');
    alignBallStars(stack);
    return stack;
@@ -35,7 +38,7 @@ function mountPlayerCard(host,options){
  function flyBallStar(stack,earned,last){
    const star=stack.children[3-earned],bounds=star.getBoundingClientRect();
    const frame=root.getBoundingClientRect(),card=q('.fp-perspective').getBoundingClientRect();
-   const scale=frame.width/root.offsetWidth,size=64;
+   const scale=frame.width/parseFloat(getComputedStyle(root).width),size=64;
    const startX=(card.left+card.width/2-frame.left)/scale-size/2;
    const startY=(card.top+card.height*.43-frame.top)/scale-size/2;
    const endX=(bounds.left+bounds.width/2-frame.left)/scale-size/2;
@@ -43,6 +46,7 @@ function mountPlayerCard(host,options){
    const pose=(x,y,zoom,angle=0)=>`translate(${x}px,${y}px) scale(${zoom}) rotate(${angle}deg)`;
    const floating=star.cloneNode(true);
    floating.setAttribute('class','fp-award-star');
+   floating.setAttribute('aria-hidden','true');
    root.append(floating);
    const flight=floating.animate([
      {transform:pose(startX,startY+10,.3,-18),opacity:0},
@@ -50,16 +54,16 @@ function mountPlayerCard(host,options){
      {transform:pose(startX,startY,1),opacity:1,offset:.29},
      {transform:pose(startX,startY,1),opacity:1,offset:.61,easing:'cubic-bezier(.42,0,.33,1)'},
      {transform:pose(endX+11,endY-22,.48,-8),opacity:1,offset:.84},
-     {transform:pose(endX,endY,bounds.width/(scale*size)),opacity:1}
+     {transform:`translate(${endX}px,${endY}px) scale(${bounds.width/(scale*size)},${bounds.height/(scale*size)})`,opacity:1,filter:'none'}
    ],{duration:1450,fill:'both'});
    animations.push(flight);
    const token=serial;
    flight.onfinish=()=>{
      if(token!==serial)return;
+     star.classList.add('filled');
+     labelBallStars(ratings[0],{...options.to,ballDots:earned});
      flight.cancel();floating.remove();
-     const filled=showBallStars({...options.to,ballDots:earned});
-     anim(filled.children[3-earned],[{transform:'scale(1.42)'},{transform:'scale(1)'}],230);
-     if(earned<last)at(230,()=>flyBallStar(filled,earned+1,last));
+     if(earned<last)at(230,()=>flyBallStar(stack,earned+1,last));
      else at(230,()=>options.onComplete?.());
    };
  }
