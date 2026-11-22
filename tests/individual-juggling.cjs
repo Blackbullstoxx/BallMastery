@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 let now=Date.parse('2026-11-17T12:00:00Z'),day='2026-11-17',readonly=false,renders=0;
-const ctx={Date:class extends Date{static now(){return now}},date:()=>day,state:{scores:[],practiceCounts:{},current:0,finished:false,groups:{toe:true,free:true},juggleMinutes:{toe:10,free:10},blockDone:{},completedPlans:{}},drills:[],levels:[],techNames:{toe:'Zehenjonglieren',free:'Freies Jonglieren',touches:'Gezielte Kontakte'},sectionNames:{juggling:'Jonglieren'},isReadOnly:()=>readonly,document:{hidden:false},tab:'today',run:null,runs:{},activeSection:'juggling',tick:1,window:{requestAnimationFrame:()=>{}},scrollTimerIntoView:()=>{},clearInterval:()=>{},silence:()=>{},render:()=>renders++,renderRunner:()=>renders++,restoreColourResults:()=>({}),esc:String};
+const ctx={Date:class extends Date{static now(){return now}},date:()=>day,state:{scores:[],practiceCounts:{},current:0,finished:false,groups:{toe:true,free:true},juggleMinutes:{toe:10,free:10},blockDone:{},completedPlans:{}},drills:[],levels:[],techNames:{toe:'Zehenjonglieren',free:'Freies Jonglieren',touches:'Gezielte Kontakte'},sectionNames:{juggling:'Jonglieren'},isReadOnly:()=>readonly,document:{hidden:false},tab:'today',run:null,runs:{},activeSection:'juggling',progressReady:false,tick:1,window:{requestAnimationFrame:()=>{}},scrollTimerIntoView:()=>{},clearInterval:()=>{},silence:()=>{},render:()=>renders++,renderRunner:()=>renders++,restoreColourResults:()=>({}),esc:String};
 vm.createContext(ctx);for(const file of ['ball-training-time.js','training-progress.js','player-cards.js','day-overview.js','individual-juggling.js'])vm.runInContext(fs.readFileSync(__dirname+'/../'+file,'utf8'),ctx);
 vm.runInContext('this.cards=playerCards',ctx);ctx.cards.init();
 const app=fs.readFileSync(__dirname+'/../app.js','utf8');vm.runInContext(app.slice(app.indexOf('function plan('),app.indexOf('\n\n',app.indexOf('function plan('))),ctx);ctx.isScheduled=()=>true;
@@ -28,6 +28,23 @@ const advance=seconds=>{now+=seconds*1000;ctx.cards.sync()};
 
  ctx.resetBallClock();ctx.run=null;ctx.runs={};ctx.state={scores:[],practiceCounts:{},current:0,finished:false,groups:{toe:true,free:false},juggleMinutes:{toe:.5,free:10},blockDone:{},completedPlans:{}};ctx.cards.init();
  await ctx.startIndividualJuggling('toe',1);work();advance(60);ctx.endIndividualJuggling();ctx.returnFromIndividualJuggling();assert(ctx.individualJugglingDailyStatus().done,'individual work can fulfill the entire day');assert.equal(ctx.individualJugglingRepeatPlan()[0].work,30,'repeat preserves prescribed duration');assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,60000,'surplus stays active time without duplicating goal credit');ctx.state.juggleMinutes.toe=2;assert.equal(ctx.individualJugglingPending()[0].work,60,'later goal increases retain individual credit');
+ // Continue from a serialised backup of the paused run and both time ledgers.
+ ctx.resetBallClock();ctx.run=null;ctx.runs={};
+ ctx.state={scores:[],practiceCounts:{},current:0,finished:false,groups:{free:true},juggleMinutes:{free:10},blockDone:{},completedPlans:{}};
+ ctx.cards.init();
+ await ctx.startIndividualJuggling('free',10);
+ work();advance(240);ctx.pauseRun();
+ const checkpoint=JSON.stringify({...ctx.state,activeTraining:ctx.trainingSnapshot()});
+ ctx.resetBallClock();ctx.state=JSON.parse(checkpoint);ctx.restoreTraining();
+ assert(ctx.run.paused);assert.equal(ctx.run.remaining,360);
+ advance(60);
+ assert.equal(ctx.individualJugglingCredit('free'),240000,'restoring or waiting does not earn time');
+ assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,240000);
+ ctx.run.paused=false;ctx.run.deadline=now+ctx.run.remaining*1000;ctx.cards.sync();
+ advance(360);ctx.endIndividualJuggling();ctx.endIndividualJuggling();ctx.returnFromIndividualJuggling();
+ assert.equal(ctx.individualJugglingCredit('free'),600000,'only newly elapsed time is added after restoring');
+ assert.equal(ctx.ballTrainingTotals('juggling').milliseconds,600000,'the full session is counted only once');
+ assert.equal(ctx.plan('juggling').length,0,'the same minutes also fulfil the goal only once');
  console.log('PASS individual juggling: selected technique/duration, exact measured credit, partial finish, no double-counting, surplus isolation, pause, checkpoint restore, suspended regular session, idempotency, unchanged settings, read-only and day isolation');
 })().catch(e=>{console.error(e);process.exitCode=1});
 // A drill establishes a day after its first completed set, not only after its full block.
