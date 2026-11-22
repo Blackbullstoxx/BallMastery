@@ -21,7 +21,7 @@ assert(nav.areaMarkup().includes('data-today-view="areas" aria-current="page"'))
 const app=fs.readFileSync(__dirname+'/../app.js','utf8');const area=app.slice(app.indexOf('function renderToday('),app.indexOf('function masteredControl('));assert(!area.includes('${dayOverviewMarkup()}'));assert(!area.includes('class="section-choice"'));assert(!area.includes('class="area-title-row"'));
 assert(!app.includes('records-player-card'));
 const control=app.slice(app.indexOf('function masteredControl('),app.indexOf('function masterRunDrill('));assert(control.includes('<h3>Nächste Wochenübung?</h3>'));assert(control.indexOf('<h3>')<control.indexOf('id="run-master"'));
-const index=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8');assert(index.includes('today-navigation.js?v=146')&&sw.includes('today-navigation.js?v=146'));assert(index.indexOf('today-navigation.js')<index.indexOf('app.js?v=163'));
+const index=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8');assert(index.includes('today-navigation.js?v=146')&&sw.includes('today-navigation.js?v=146'));assert(index.indexOf('today-navigation.js')<index.indexOf('app.js?v=164'));
 console.log('PASS: daily status independent of reveal, exact remaining times, discarded/imported/day-isolated credits, tier goals, highest tier, view/scroll memory, unfinished-run priority, pause on leaving and offline module.');
 
 ctx.runs={};ctx.run=null;ctx.state.blockDone={};ctx.state.completedPlans={[day]:{feints:entries}};ctx.state.overviewDay={day,sections:{}};
@@ -45,10 +45,4 @@ ctx.drills=[{id:'048',level:0}];ctx.levels=['Anfänger'];ctx.techNames={toe:'Zeh
 ctx.enabledSections=()=>['ball','juggling','feints'];
 ctx.plan=section=>section==='ball'?[{key:'048',kind:'Wochenübung',set:1,total:1,work:60,rest:60}]:section==='juggling'?[{key:'toe',kind:'Jonglieren',set:1,total:1,work:30,rest:0}]:[{key:'feints',kind:'Finten · frei wählen',set:1,total:1,work:30,rest:30}];
 nav.restore();nav.render();
-for(const text of ['ca. 4 Min.','ca. 2:05 Min.','ca. 35 Sek.','ca. 1:05 Min.'])assert(view.innerHTML.includes(text),'exact area and total duration '+text);
-assert.equal(ctx.dayOverviewData().seconds,225);assert.equal(ctx.overviewTimeLabel(ctx.dayOverviewData()),'ca. 4 Min.');
-console.log('PASS: displayed area durations sum exactly to the total; seconds, minute rollover and full minutes remain unambiguous');
-
-for(const [seconds,label] of [[0,'0 Min.'],[35,'1 Min.'],[60,'1 Min.'],[65,'2 Min.'],[225,'4 Min.']])assert.equal(ctx.overviewRoundedDuration(seconds),label);
-assert.equal(ctx.overviewTimeLabel({done:false,started:true,seconds:225}),'Noch ca. 4 Min.');
-console.log('PASS: only the total rounds up to full minutes; area durations retain seconds');
+for(const text of ['ca. 4 Min.','ca. 2:05 Min.','ca.

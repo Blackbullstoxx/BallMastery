@@ -17,3 +17,42 @@ timers.clear();readonly=true;b.changed(true);assert.equal(timers.size,0,'read-on
 console.log('PASS: three minutes of timer ticks cause no upload scheduling; genuine completion and explicit checkpoints remain saveable; read-only stays isolated.');
 
 ctx.state.manualTraining=[{id:'test',date:'2026-11-10',milliseconds:90000}];assert.notEqual(b.comparable(ctx.state),signature,'manual-only changes must trigger backup comparison');
+
+// Exercise the timer and actual local write path with a controlled clock.
+{
+ const app=fs.readFileSync(__dirname+'/../app.js','utf8');
+ const progress=fs.readFileSync(__dirname+'/../training-progress.js','utf8');
+ const writes=[];
+ let now=100000,overviewUpdates=0;
+ const local={
+  Date:{now:()=>now},state:{},progressReady:true,
+  run:{section:'juggling',phase:'work',paused:false,remaining:180,last:180,deadline:now+180000},
+  isReadOnly:()=>false,ensureWeeklyLearning(){},syncBallTime(){},rememberAreaTrainingTimes(){},
+  refreshBallTimeDisplay(){},trainingSnapshot:()=>({remaining:local.run.remaining,paused:local.run.paused}),
+  localStorage:{setItem(_key,value){writes.push(JSON.parse(value).activeTraining)}},
+  syncScreenAwake(){},checkTrainingDay:()=>false,refreshTimerRing(){},
+  refreshDayOverview(){overviewUpdates++},colourPerception:{stop(){}},silence(){},$:()=>null
+ };
+ vm.createContext(local);
+ vm.runInContext(app.slice(app.indexOf('function save('),app.indexOf('function best(')),local);
+ vm.runInContext(app.slice(app.indexOf('function update('),app.indexOf('async function resumeRun(')),local);
+ vm.runInContext(progress.slice(progress.indexOf('function checkpointTraining(')),local);
+ local.renderRunner=()=>local.save();
+ local.save();
+ for(let second=1;second<=65;second++){now+=1000;local.update()}
+ assert.deepEqual(writes.map(row=>row.remaining),[180,150,120]);
+ assert.equal(overviewUpdates,65,'the overview still refreshes every second');
+ local.save();
+ for(let second=1;second<=29;second++){now+=1000;local.update()}
+ assert.deepEqual(writes.map(row=>row.remaining),[180,150,120,115],'an immediate save resets the 30-second interval');
+ now+=1000;local.update();
+ assert.equal(writes.at(-1).remaining,85);
+ now+=4000;
+ local.checkpointTraining();
+ assert(local.run.paused);
+ assert.deepEqual(writes.at(-1),{remaining:81,paused:true},'leaving the app saves the current paused stand immediately');
+ const priorWrites=writes.length;
+ now+=60000;local.update();
+ assert.equal(writes.length,priorWrites,'a paused timer has no periodic writes');
+ console.log('PASS: local timer checkpoints are 30 seconds apart, actions save immediately, and page exit saves the current paused timer.');
+}
