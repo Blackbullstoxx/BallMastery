@@ -76,14 +76,16 @@ function exerciseTarget(value,direction){
  if(starts.length<2)return -1;
  const row=value.plan[value.historyIndex??value.index],start=(value.historyIndex??value.index)-row.set+1;
  const position=starts.indexOf(start);
- const target=(position+direction+starts.length)%starts.length;
- const end=starts[target+1]??value.plan.length;
- for(let i=starts[target];i<end;i++)if(!trainingSetDone(value,i)||value.checkpoints?.[i]?.extraSeconds)return i;
- return end-1;
+ for(let target=position+direction;target>=0&&target<starts.length;target+=direction){
+  const end=starts[target+1]??value.plan.length;
+  for(let i=starts[target];i<end;i++){
+   if(!trainingSetDone(value,i)||value.checkpoints?.[i]?.extraSeconds)return i;
+  }
+ }
+ return -1;
 }
 function nextOpenTrainingSet(value){
- for(let offset=1;offset<value.plan.length;offset++){
-  const index=(value.index+offset)%value.plan.length;
+ for(let index=value.index+1;index<value.plan.length;index++){
   if(!trainingSetDone(value,index))return index;
  }
  return -1;
@@ -188,7 +190,7 @@ function renderRecovery(){
  const d=run.plan[run.index],timed=['count','work','rest'].includes(run.phase),remaining=Math.ceil(run.remaining);
  const time=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');
  const detail=timed?`${run.phase==='count'?'Countdown':run.phase==='rest'?'Pause':run.extraSeconds?'Zusatzzeit':'Übungszeit'} · noch ${time}`:run.phase==='review'?'Diese Übung ist bereits geschafft.':'Bereit für diese Übung.';
- $('#runner').classList?.add('summary-runner');$('#runner').innerHTML=`${previewTrainingSummary(run.section)}<section class="card"><span class="badge">Training gespeichert</span><h2>${esc(d.name)}</h2>${run.section==='ball'?ballExerciseBadge(d):''}<p class="hint">${run.section==='ball'?'':esc(d.kind)+' · '}${trainingPositionText(run)}</p><p>${detail}</p><button class="primary" id="recover-run">Fortsetzen</button><button class="back-button" id="discard-run">Training verwerfen</button><div id="discard-confirm"></div>${trainingNavigationMarkup(run.plan)}</section>`;
+ $('#runner').classList?.add('summary-runner');$('#runner').innerHTML=`${previewTrainingSummary(run.section)}<section class="card"><span class="badge">Training gespeichert</span><h2>${esc(d.name)}</h2>${run.section==='ball'?ballExerciseBadge(d):''}<p class="hint">${run.section==='ball'?'':esc(d.kind)+' · '}${trainingPositionText(run)}</p><p>${detail}</p><button class="primary" id="recover-run">Fortsetzen</button><button class="back-button" id="discard-run">Training verwerfen</button><div id="discard-confirm"></div>${trainingNavigationMarkup(run)}</section>`;
  $('#recover-run').onclick=()=>{run.restored=false;if(timed)void resumeRun();else{renderRunner();scrollTimerIntoView(true)}};
  $('#discard-run').onclick=()=>confirmInline($('#discard-confirm'),'Diesen begonnenen Bereich verwerfen? Bereits absolvierte Übungen und gespeicherte Rekorde bleiben erhalten.',stop);
 }
