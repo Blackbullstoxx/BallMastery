@@ -78,3 +78,27 @@ readOnly=false;
 assert(ctx.backfillWeeklyRatingDays());
 assert.equal(ctx.state.weeklyLearning.since,'2026-11-17');
 console.log('PASS: initial backfill is scoped to a profile and the current weekly phase, without duplicate or post-rollout credit.');
+
+// The active weekly drill can change without discarding its recorded days.
+today='2026-11-23';
+const previousDays=['2026-11-18','2026-11-19','2026-11-20','2026-11-22'];
+ctx.state={current:26,sets:2,groups:{ball:true},weeklyLearning:{key:'26',since:previousDays[0],entries:[],trainingDays:[...previousDays]}};
+ctx.state.current=27;ctx.ensureWeeklyLearning();
+ctx.state.current=26;ctx.ensureWeeklyLearning();
+assert.deepEqual([...ctx.state.weeklyLearning.trainingDays],previousDays);
+credit();credit();
+assert.deepEqual([...ctx.state.weeklyLearning.trainingDays],[...previousDays,today]);
+
+// Simulate the old reset and recover a saved phase into the newer session.
+const backup={weeklyLearning:{key:'26',since:previousDays[0],entries:[],trainingDays:previousDays},practiceCounts:{26:{'2026-11-21':1}}};
+ctx.state={current:26,sets:2,groups:{ball:true},weeklyLearning:{key:'26',since:today,entries:[],trainingDays:[today]},scores:[{key:'26',date:today,value:20}]};
+cards.init();
+assert(ctx.recoverWeeklyRatingDays(backup));
+cards.repairWeeklyRating();
+assert.deepEqual([...ctx.state.weeklyLearning.trainingDays],[...previousDays,today]);
+assert.equal(cards.collectionSnapshot().values[0],cards.snapshot().values[0]);
+assert.equal(cards.collectionSnapshot().ballDots,cards.snapshot().ballDots);
+assert.equal(ctx.state.scores.length,1);
+assert(!ctx.recoverWeeklyRatingDays(backup),'the same backup adds no duplicate days');
+assert(ctx.validWeeklyRatingProgress(ctx.state.weeklyRatingProgress));
+console.log('PASS: switching back retains weekly credit; older backup recovers rating without overwriting current scores or counting attempted sets.');

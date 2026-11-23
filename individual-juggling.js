@@ -14,7 +14,11 @@ function individualJugglingPending(){
  const value=scheduledJugglingRun(),completed=new Set(value?.completedSets||[]),credits=new Map();
  for(const row of state.completedPlans?.[date()]?.juggling||[])credits.set(row.key,(credits.get(row.key)||0)+row.work);
  if(value&&value.phase!=='done'&&!value.repeatMode){
-  value.plan.forEach((row,i)=>{if(completed.has(i))credits.set(row.key,(credits.get(row.key)||0)+row.work)});
+  value.plan.forEach((row,i)=>{
+   const checkpoint=value.checkpoints?.[i];
+   const seconds=completed.has(i)?row.work:checkpoint?.phase==='work'?Math.max(0,row.work-checkpoint.remaining):0;
+   if(seconds)credits.set(row.key,(credits.get(row.key)||0)+seconds);
+  });
   if(value.phase==='work'&&!completed.has(value.index)&&!value.extraSeconds){const row=value.plan[value.index],remaining=value.paused?value.remaining:Math.max(0,(value.deadline-Date.now())/1000);credits.set(row.key,(credits.get(row.key)||0)+Math.max(0,row.work-remaining))}
  }
  return plan('juggling').map(row=>({...row,work:Math.max(0,row.work-(credits.get(row.key)||0))})).filter(row=>row.work>.001);
@@ -23,7 +27,11 @@ function individualJugglingRepeatPlan(){return Object.entries(techNames).filter(
 function individualJugglingDailyStatus(){
  const entries=individualJugglingPending(),current=runs.juggling,individual=current?.individual?current:null;
  const regular=scheduledJugglingRun();
- const countdownFor=row=>regular?.plan[regular.index]?.key===row.key&&!regular.extraSeconds&&!(regular.completedSets||[]).includes(regular.index)?regular.phase==='work'?0:regular.phase==='count'?(regular.paused?regular.remaining:Math.max(0,(regular.deadline-Date.now())/1000)):5:5;
+ const countdownFor=row=>{
+  const index=regular?.plan.findIndex(item=>item.key===row.key),checkpoint=regular?.checkpoints?.[index];
+  if(checkpoint)return checkpoint.phase==='work'?0:checkpoint.phase==='count'?checkpoint.remaining:5;
+  return regular?.plan[regular.index]?.key===row.key&&!regular.extraSeconds&&!(regular.completedSets||[]).includes(regular.index)?regular.phase==='work'?0:regular.phase==='count'?(regular.paused?regular.remaining:Math.max(0,(regular.deadline-Date.now())/1000)):5:5;
+ };
  let seconds=entries.reduce((sum,row)=>sum+row.work+countdownFor(row),0);
  if(regular?.extraSeconds)seconds+=overviewExtraSeconds(regular);
  if(individual&&['count','work'].includes(individual.phase)){

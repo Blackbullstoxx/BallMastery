@@ -46,18 +46,20 @@ function overviewSeconds(section,entries,value,blocks){
  const remaining=current&&['count','work','rest'].includes(current.phase)?(current.paused?current.remaining:Math.max(0,(current.deadline-Date.now())/1000)):0;
  let seconds=extraSeconds;
  entries.forEach((d,index)=>{
-  const done=credited.get(index),at=current?.index===index;
+  if(current?.skippedSets?.includes(index))return;
+  const done=credited.get(index),at=current?.index===index,checkpoint=current?.checkpoints?.[index];
   if(!done){
-   seconds+=at&&current.phase==='work'?remaining:d.work;
+   seconds+=at&&current.phase==='work'?remaining:checkpoint?.phase==='work'?checkpoint.remaining:d.work;
    const needsCountdown=index===0||entries[index-1].key!==d.key||entries[index-1].rest===0;
    if(at&&current.phase==='count')seconds+=remaining;
+   else if(checkpoint?.phase==='count')seconds+=checkpoint.remaining;
    else if(needsCountdown){
-    if(!current||index>current.index||at&&current.phase==='ready')seconds+=5;
+    if((!current||!at||current.phase==='ready')&&checkpoint?.phase!=='work')seconds+=5;
    }
   }
   // Planned time includes a pause after every set, including the last one.
   if(at&&current.phase==='rest')seconds+=remaining;
-  else if(!done&&(!current||index>=current.index))seconds+=d.rest;
+  else if(!done)seconds+=d.rest;
  });
  return Math.max(0,Math.ceil(seconds));
 }
@@ -82,7 +84,11 @@ function dayOverviewData(){
    return section==='juggling'?Object.hasOwn(techNames,row.key)&&row.kind==='Jonglieren':row.key==='feints'&&row.kind==='Finten · frei wählen';
   });
   if(!items.length)continue;
-  items.forEach(row=>row.done=row.completed.length>=row.total);
+  items.forEach(row=>{
+   const block=blocks.find(block=>block.id===row.id);
+   row.mastered=entries===current?.plan&&!!block?.indices.some(index=>current?.skippedSets?.includes(index));
+   row.done=row.mastered||row.completed.length>=row.total;
+  });
   const extraSeconds=overviewExtraSeconds(current);
   sections.push({id:section,name:sectionNames[section],items,...(extraSeconds?{extra:{key:current.plan[current.index].key,seconds:extraSeconds}}:{})});seconds+=overviewSeconds(section,entries,current,blocks);
   if(items.some(row=>row.completed.length)||current&&(current.phase!=='ready'||current.index>0))started=true;
@@ -92,7 +98,7 @@ function dayOverviewData(){
 }
 function overviewDuration(seconds){const n=Math.max(0,Math.ceil(seconds));return n>=60?Math.floor(n/60)+':'+String(n%60).padStart(2,'0')+' Min.':n+' Sek.'}
 function overviewRoundedDuration(seconds){return Math.max(0,Math.ceil(seconds/60))+' Min.'}
-function overviewStatus(row){return row.done?'<span class="overview-check" role="img" aria-label="Erledigt">✓</span>':row.completed.length?`<span class="overview-partial">${row.completed.length}/${row.total} Sätze</span>`:''}
+function overviewStatus(row){return row.mastered?'<span class="overview-partial">Gemeistert</span>':row.done?'<span class="overview-check" role="img" aria-label="Erledigt">✓</span>':row.completed.length?`<span class="overview-partial">${row.completed.length}/${row.total} Sätze</span>`:''}
 function overviewExactDuration(seconds){
  const n=Math.max(0,Math.round(seconds));
  if(n<60)return n+' Sek.';
@@ -158,6 +164,16 @@ function reconcileJugglingPlan(){
  // Preserve completed-day evidence before indices or work durations change.
  for(const index of completed)recordOverviewSet(value,index);
  if(!next.length){delete runs.juggling;if(run===value)run=null;return}
+ if(value.checkpoints){
+  const checkpoints={};
+  for(const [index,checkpoint] of Object.entries(value.checkpoints)){
+   const oldRow=value.plan[index],newIndex=next.findIndex(row=>row.key===oldRow.key);
+   if(newIndex<0)continue;
+   const remaining=checkpoint.phase==='work'&&!checkpoint.extraSeconds?Math.max(0,next[newIndex].work-(oldRow.work-checkpoint.remaining)):checkpoint.remaining;
+   checkpoints[newIndex]={...checkpoint,remaining};
+  }
+  value.checkpoints=checkpoints;
+ }
  value.plan=next;value.completedSets=finished.map((_,index)=>index);value.completedBlocks=[...value.completedSets];delete value.historyIndex;delete value.beforeStop;value.stopping=false;
  if(keepCurrent){
   value.index=finished.length;
@@ -185,8 +201,9 @@ function reopenExtendedPlan(section,extendRunningBall=false){
  const signature=d=>JSON.stringify([d.kind,d.key,...(append||section==='juggling'?[]:[d.work])]);
  const completed=new Map();planned.forEach(d=>completed.set(signature(d),(completed.get(signature(d))||0)+(section==='juggling'?d.work:1)));
  let desired=plan(section);
+ if(done&&current?.optionalWeekly)desired=desired.filter(row=>row.kind!=='Wochenübung'||row.key!==current.optionalWeekly);
  if(append){
-  const weekly=planned.find(d=>d.kind==='Wochenübung');
+  const weekly=planned.find(d=>d.kind==='Wochenübung'&&d.key===current.optionalWeekly)||planned.find(d=>d.kind==='Wochenübung');
   if(weekly)desired=desired.filter(d=>d.kind!=='Wochenübung'||d.key===weekly.key);
  }
  // Completed reviews have already rotated out of selection(). Keep today's
@@ -221,7 +238,7 @@ function preserveDiscardedWork(value){
  const indices=new Set(value.completedSets||[]),rows=[];
  overviewBlocks(value.section,value.plan).forEach(block=>{
   const done=block.indices.filter(i=>indices.has(i)).map(i=>value.plan[i]);
-  done.forEach((d,i)=>rows.push({...d,set:i+1,total:done.length}));
+  done.forEach((d,i)=>rows.push({...d,set:i+1,total:done.length,...(done.length<block.total?{partialBlock:true}:{})}));
  });
  if(!rows.length)return;
  state.completedPlans??={};state.completedPlans[date()]??={};

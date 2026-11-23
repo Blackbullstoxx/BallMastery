@@ -7,10 +7,46 @@ function validWeeklyLearning(value){
  ))&&Array.isArray(value.entries)&&value.entries.every(row=>row&&typeof row.scoreId==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(row.date)&&Number.isFinite(scoreDay(row.date))&&row.date>=value.since&&Number.isInteger(row.duration)&&row.duration>0&&row.duration<=600&&Number.isInteger(row.value)&&row.value>=0&&row.value<=99999);
 }
 function normalizeWeeklyLearning(value){return validWeeklyLearning(value)?value:null}
+function validWeeklyRatingProgress(value){
+ return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.entries(value).every(([key,days])=>
+  drills.some(drill=>drill.id===key)&&Array.isArray(days)&&days.length<=6&&days.every((day,i)=>validTrainingDate(day)&&(!i||days[i-1]<day)));
+}
+function recordWeeklyRatingDays(key,days){
+ const progress=(state.weeklyRatingProgress??={});
+ const saved=progress[key]||[];
+ const merged=[...new Set([...saved,...days])].filter(day=>validTrainingDate(day)&&day<=date()).sort().slice(0,6);
+ if(merged.length)progress[key]=merged;
+ return merged;
+}
 function ensureWeeklyLearning(){
  if(isReadOnly()||!drills.length||state.finished)return;
  const key=drills[state.current]?.id;if(!key)return;
- if(!validWeeklyLearning(state.weeklyLearning)||state.weeklyLearning?.key!==key)state.weeklyLearning={key,since:date(),entries:[]};
+ const previous=state.weeklyLearning;
+ if(validWeeklyLearning(previous)&&previous?.key===key)return;
+ if(previous?.trainingDays?.length&&validWeeklyLearning(previous)&&drills.some(row=>row.id===previous.key))recordWeeklyRatingDays(previous.key,previous.trainingDays);
+ const trainingDays=state.weeklyRatingProgress?.[key]||[];
+ state.weeklyLearning={key,since:trainingDays[0]||date(),entries:[],...(trainingDays.length?{trainingDays:[...trainingDays]}:{})};
+}
+function recoverWeeklyRatingDays(data=state){
+ if(isReadOnly()||state.finished||!drills.length)return false;
+ const key=drills[state.current].id;
+ const before=state.weeklyLearning?.key===key?state.weeklyLearning.trainingDays||[]:[];
+ ensureWeeklyLearning();
+ const phase=state.weeklyLearning;
+ const proven=[...(data.weeklyRatingProgress?.[key]||[])];
+ if(data.weeklyLearning?.key===key&&validWeeklyLearning(data.weeklyLearning))proven.push(...(data.weeklyLearning.trainingDays||[]));
+ // Saved practice counts and best scores prove an exercise was attempted,
+ // but do not prove all its scheduled sets were completed.
+ for(const [day,areas] of Object.entries(data.completedPlans||{})){
+  if(!validTrainingDate(day)||!data.blockDone?.[day]?.includes('ball')||!Array.isArray(areas?.ball))continue;
+  const weekly=areas.ball.filter(row=>row?.kind==='Wochenübung'&&row.key===key);
+  if(weekly.length>=data.sets&&weekly.some((row,i)=>row.set===1&&row.total===data.sets&&weekly.slice(i,i+row.total).length===row.total&&weekly.slice(i,i+row.total).every((set,n)=>set.set===n+1&&set.total===row.total&&!set.partialBlock)))proven.push(day);
+ }
+ const overview=data.overviewDay;
+ if((overview?.day<date()||data.blockDone?.[overview?.day]?.includes('ball'))&&Object.values(overview.sections?.ball||{}).some(row=>row?.kind==='Wochenübung'&&row.key===key&&Number.isInteger(row.total)&&row.total>0&&row.total<=20&&Array.isArray(row.completed)&&Array.from({length:row.total},(_,i)=>i+1).every(i=>row.completed?.includes(i))))proven.push(overview.day);
+ const days=recordWeeklyRatingDays(key,[...before,...proven]);
+ if(days.length){phase.trainingDays=days;if(days[0]<phase.since)phase.since=days[0]}
+ return days.some(day=>!before.includes(day));
 }
 // The initial BALL rollout did not record these credits. Count the
 // current drill's saved practice dates once per profile.
@@ -49,6 +85,7 @@ function creditWeeklyRatingDay(training){
  if(days.length<6&&!days.includes(training.day)&&training.day>=phase.since){
   days.push(training.day);
   days.sort();
+  recordWeeklyRatingDays(key,days);
  }
 }
 function weeklyLearningContext(key){

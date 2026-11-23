@@ -231,6 +231,14 @@ const playerCards=(()=>{
   if(!trainingPaused()&&run&&['feints','juggling'].includes(run.section)&&run.phase==='work'&&!run.paused&&!document.hidden&&tab==='today'&&run.day===date()&&run.deadline>now){const midnight=new Date(run.day+'T00:00:00');midnight.setDate(midnight.getDate()+1);clock={from:now,until:Math.min(run.deadline,midnight.getTime()),day:run.day,section:run.section,key:run.plan?.[run.index]?.key,individual:!!run.individual}}
  }
  function completedSet(){if(isReadOnly()||trainingPaused())return;init();if(!state.cardTraining.completedDays.includes(run.day))state.cardTraining.completedDays.push(run.day)}
+ function repairWeeklyRating(){
+  if(isReadOnly())return;
+  init();
+  const earned=snapshot(),c=config(),daily=c.dailyRatings;
+  const repair=previous=>totalFor([earned.values[0],...previous.values.slice(1)],previous.visible,earned.ballDots);
+  daily.to=repair(daily.to);c.lastShown=repair(c.lastShown);
+  for(const reveal of [c.reveal,c.sectionReveals?.ball])if(reveal?.section==='ball'&&reveal.day===date())reveal.to=repair(reveal.to);
+ }
  function completed(section){
   if(isReadOnly())return;init();
   const c=state.playerCard,daily=c.dailyRatings,raw=snapshot(),from=daily.to,values=[...from.values],index=areas.indexOf(section);
@@ -348,6 +356,6 @@ const playerCards=(()=>{
    if(changed)confirmInline(panel.querySelector('#card-settings-confirm'),'Kartenbereiche ändern? Die Gesamtbewertung wird mit den gewählten Bereichen neu berechnet.',apply);else apply();
   };
  }
- return {curve,bonus,snapshot,config,init,sync,resetClock:()=>clock=null,completedSet,completed,mount,completion,replay,destroy,wantsCompletion,leaveCompletion,collectionSnapshot,collectionMarkup,collection,correction,valid,settingsMarkup,bindSettings,trainingPaused,pauseMarkup,bindPause,pauseBanner,bindPauseBanner};
+ return {curve,bonus,snapshot,config,init,sync,resetClock:()=>clock=null,completedSet,completed,mount,completion,replay,destroy,wantsCompletion,leaveCompletion,collectionSnapshot,repairWeeklyRating,collectionMarkup,collection,correction,valid,settingsMarkup,bindSettings,trainingPaused,pauseMarkup,bindPause,pauseBanner,bindPauseBanner};
 })();
 
