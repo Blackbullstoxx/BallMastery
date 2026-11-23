@@ -16,7 +16,7 @@ video{aspect-ratio:16/9;object-fit:contain}
 
 .back-button{margin-top:12px;width:100%}
 
-.two.repeat-navigation{margin-top:12px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.repeat-navigation{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:10px;margin-top:12px}
 
 .record-level{font-size:17px;color:#57705f;margin:24px 0 12px}.record-drill{font-size:18px;margin:0 0 12px}
 

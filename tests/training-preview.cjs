@@ -2,6 +2,8 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const ctx={state:{scores:[],colourScores:[]},date:()=> '2026-11-12',esc:String};vm.createContext(ctx);
 for(const file of ['record-charts.js','training-preview.js'])vm.runInContext(fs.readFileSync(__dirname+'/../'+file,'utf8'),ctx);
+const progress=fs.readFileSync(__dirname+'/../training-progress.js','utf8');
+vm.runInContext(progress.slice(progress.indexOf('function trainingSetDone('),progress.indexOf('function canFinishTraining(')),ctx);
 assert.equal(ctx.previewScoreStats('toe',0).today,null);assert.equal(ctx.previewScoreStats('toe',0).level,null);
 const values=[999,10,20,30,40,50,60,0];ctx.state.scores=values.map((value,i)=>({key:'toe',duration:0,date:`2026-11-${String(1+i).padStart(2,'0')}`,value}));
 ctx.state.scores.push({key:'toe',duration:0,date:'2026-11-08',value:0},{key:'toe',duration:0,date:'2026-11-13',value:1000},{key:'toe',duration:30,date:'2026-11-12',value:3000},{key:'free',duration:0,date:'2026-11-12',value:4000});
