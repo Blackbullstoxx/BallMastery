@@ -140,7 +140,7 @@ function refreshDayOverview(){
 }
 
 // Reopen finished areas with only the additional work requested today.
-function reopenExtendedPlans(){reconcileJugglingPlan();['ball','feints','juggling'].forEach(reopenExtendedPlan)}
+function reopenExtendedPlans(){reconcileJugglingPlan();['ball','feints','juggling'].forEach(section=>reopenExtendedPlan(section,section==='ball'))}
 // Settings apply to the unfinished part of today's juggling session. Completed
 // rows remain immutable evidence; timer ledgers already contain elapsed time.
 function reconcileJugglingPlan(){
@@ -175,16 +175,24 @@ function reconcileJugglingPlan(){
  else{value.index=finished.length-1;value.phase='review';value.remaining=0;value.paused=false}
  value.deadline=Date.now()+value.remaining*1000;value.last=value.remaining;
 }
-function reopenExtendedPlan(section){
- const day=date(),saved=state.completedPlans?.[day]?.[section],current=runs[section];
- if(!saved?.length||current&&!state.blockDone?.[day]?.includes(section)&&(current.phase!=='ready'||current.index!==0||current.completedSets?.length))return;
- const signature=d=>JSON.stringify([d.kind,d.key,...(section==='juggling'?[]:[d.work])]);
- const completed=new Map();saved.forEach(d=>completed.set(signature(d),(completed.get(signature(d))||0)+(section==='juggling'?d.work:1)));
+function reopenExtendedPlan(section,extendRunningBall=false){
+ const day=date(),saved=state.completedPlans?.[day]?.[section]||[],current=runs[section];
+ const done=state.blockDone?.[day]?.includes(section);
+ const append=extendRunningBall&&current?.day===day&&!done&&current.phase!=='done'&&!current.repeatMode;
+ if(!append&&(!saved.length||current&&!done&&(current.phase!=='ready'||current.index!==0||current.completedSets?.length)))return;
+ const planned=append?[...saved,...current.plan]:saved;
+ // During a run, settings can add work without changing existing set durations.
+ const signature=d=>JSON.stringify([d.kind,d.key,...(append||section==='juggling'?[]:[d.work])]);
+ const completed=new Map();planned.forEach(d=>completed.set(signature(d),(completed.get(signature(d))||0)+(section==='juggling'?d.work:1)));
  let desired=plan(section);
+ if(append){
+  const weekly=planned.find(d=>d.kind==='Wochenübung');
+  if(weekly)desired=desired.filter(d=>d.kind!=='Wochenübung'||d.key===weekly.key);
+ }
  // Completed reviews have already rotated out of selection(). Keep today's
  // exercises first, filling additional review slots from the current queue.
  if(section==='ball')levels.forEach((level,i)=>{
-  const kind='Wiederholung · '+level,old=[...new Map(saved.filter(d=>d.kind===kind).map(d=>[d.key,d])).values()];
+  const kind='Wiederholung · '+level,old=[...new Map(planned.filter(d=>d.kind===kind).map(d=>[d.key,d])).values()];
   const fresh=desired.filter(d=>d.kind===kind&&d.set===1);
   desired=desired.filter(d=>d.kind!==kind);
   if(!state.groups.ball||!isScheduled('review'))return;
@@ -200,6 +208,7 @@ function reopenExtendedPlan(section){
   extra.forEach((row,i)=>pending.push({...row,set:i+1,total:extra.length}));
  });
  if(!pending.length)return;
+ if(append){current.plan.push(...pending);return}
  overviewBlocks(section,saved).forEach(b=>storeOverviewCredits(section,b,Array.from({length:b.total},(_,i)=>i+1)));
  state.blockDone??={};state.blockDone[day]=(state.blockDone[day]||[]).filter(k=>k!==section);
  const next={repeatMode:false,completedBlocks:[],completedSets:[],day,section,plan:pending,index:0,phase:'ready',paused:false,remaining:5,rotations:levels.map(()=>0)};
