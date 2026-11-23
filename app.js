@@ -161,9 +161,6 @@ function masterRunDrill(){
  run.optionalWeekly=drill.id;
  selectTrainingSet(next);
 }
-function completedExercises(){const current=run.plan[run.index],start=run.index-(current.set-1);return (run.completedBlocks||[]).filter(i=>i<start)}
-function showPrevious(){const indices=completedExercises();if(!indices.length)return;if(!['ready','review','done'].includes(run.phase)&&!run.paused)pauseRun();run.historyIndex=indices[indices.length-1];silence();renderRunner()}
-function renderHistory(){$('#runner').classList?.remove('ball-runner','feints-runner');$('#runner').classList?.toggle('summary-runner',run.section!=='juggling');const last=run.plan[run.historyIndex],block=run.plan.slice(run.historyIndex-last.total+1,run.historyIndex+1),d=block.find(row=>!row.colour&&!row.noScore)||last,colourRow=block.find(row=>row.colour),previous=(run.completedBlocks||[]).filter(i=>i<run.historyIndex);$('#runner').classList?.toggle('juggling-runner',run.section==='juggling');$('#runner').innerHTML=run.section==='juggling'?jugglingHistoryMarkup(run,run.historyIndex,previous.length>0):`${previewTrainingSummary(run.section)}<section class="card"><span class="badge">Abgeschlossen ✓</span><h2>${esc(d.name)}</h2>${run.section==='ball'?ballExerciseBadge(d):`<small>${esc(d.kind)}</small>`}${drills.some(x=>x.id===d.key)?practiceHint(d.key):''}${run.section==='ball'?video(d):''}${d.noScore?'':`<div class="divider">${d.juggling?'<small>Kontakte am Stück</small>':''}${scoreForm(d.key,d.juggling?0:d.work,!!d.colour)}${colourRow&&!d.colour?scoreForm(colourRow.key,colourRow.work,true):''}</div>`}<div class="two">${previous.length?'<button id="history-back">Zurück</button>':''}<button class="primary" id="history-current">Zum aktuellen Training</button></div></section>`;bindScores();$('#history-back')?.addEventListener('click',()=>{run.historyIndex=previous[previous.length-1];renderRunner()});$('#history-current').onclick=()=>{delete run.historyIndex;renderRunner();scrollTimerIntoView(true)}}
 function canPreviewNext(){
  const d=run?.plan[run.index];
  return !!d&&run.phase==='rest'&&d.set===d.total&&nextOpenTrainingSet(run)>=0;
@@ -185,17 +182,17 @@ function jumpExercise(direction){
 function moveTrainingSet(target){
  if(target===run.index)return;
  syncBallTime();resetBallClock();colourPerception.stop(true);
- if(['count','work'].includes(run.phase)||run.phase==='rest'&&sameNext()){
+ if(!run.extraSeconds&&(['count','work'].includes(run.phase)||run.phase==='rest'&&sameNext())){
   const remaining=Math.max(0,run.paused?run.remaining:(run.deadline-Date.now())/1000);
   const row=run.plan[run.index];
-  if(run.section==='juggling'&&run.phase==='work'&&remaining<(run.extraSeconds||row.work))markPracticeDay(row.key,run.day);
-  (run.checkpoints??={})[run.index]={phase:run.phase,remaining,...(run.extraSeconds?{extraSeconds:run.extraSeconds}:{})};
+  if(run.section==='juggling'&&run.phase==='work'&&remaining<row.work)markPracticeDay(row.key,run.day);
+  (run.checkpoints??={})[run.index]={phase:run.phase,remaining};
  }
  selectTrainingSet(target);
 }
 function selectTrainingSet(target){
  clearInterval(tick);silence();
- for(const key of ['historyIndex','extraOpen','extraMinutes','extraSeconds','showVideo','beforeStop'])delete run[key];
+ for(const key of ['extraOpen','extraMinutes','extraSeconds','showVideo','beforeStop'])delete run[key];
  run.navigationVersion=(run.navigationVersion||0)+1;
  run.index=target;run.masterConfirm=false;run.restored=false;run.stopping=false;
  const checkpoint=run.checkpoints?.[target];
@@ -208,7 +205,7 @@ function selectTrainingSet(target){
 }
 const rewardShown=new Set();
 function canEndRepeat(){return !!run&&run.repeatMode&&run.day===date()&&!!state.blockDone?.[date()]?.includes(run.section)&&rewardShown.has(date()+':'+run.section)}
-function endRepeat(){if(isReadOnly())return;if(!canEndRepeat())return;syncBallTime();resetBallClock();silence();document.querySelectorAll('video').forEach(v=>v.pause());delete run.historyIndex;run.restored=false;run.paused=false;complete();render()}
+function endRepeat(){if(isReadOnly())return;if(!canEndRepeat())return;syncBallTime();resetBallClock();silence();document.querySelectorAll('video').forEach(v=>v.pause());run.restored=false;run.paused=false;complete();render()}
 const rewardIcons={ball:'⚽',feints:'⚡',juggling:'🏆'};
 function animateReward(host){
  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||!host.animate)return;
@@ -228,12 +225,11 @@ function renderCompletion(section){
 function trainingPositionText(value){
  const current=value.plan[value.index],sets=`Satz ${current.set} von ${current.total}`;
  if(value.section==='feints')return sets;
- const starts=value.plan.map((d,i)=>d.set===1?i:-1).filter(i=>i>=0);
- return `Übung ${starts.filter(i=>i<=value.index).length} von ${starts.length} · ${sets}`;
+ return `${openExercisePosition(value)} · ${sets}`;
 }
 function trainingProgress(value){return new Set(value.completedSets||[]).size}
 
-function renderRunner(){colourPerception.sync();save();refreshDayOverview();void syncScreenAwake();if(!$('#runner')||!run)return;if(run.phase==='done'){renderCompletion(run.section||activeSection);return}$('#runner').classList?.remove('juggling-runner','ball-runner','feints-runner','summary-runner');if(run.restored){renderRecovery();bindExerciseNavigation(jumpExercise);return}if(Number.isInteger(run.historyIndex)){renderHistory();return}const d=run.plan[run.index],back=completedExercises().length>0,previewNext=canPreviewNext(),last=canFinishTraining(run)&&run.plan.every((_,i)=>trainingSetDone(run,i));$('#runner').classList?.toggle('juggling-runner',run.section==='juggling');$('#runner').classList?.toggle('ball-runner',run.section==='ball');$('#runner').classList?.toggle('feints-runner',run.section==='feints');$('#runner').innerHTML=run.individual?individualJugglingRunnerMarkup(run):run.section==='juggling'?jugglingRunnerMarkup(run,back,last):run.section==='ball'?ballRunnerMarkup(run,back,last):feintsRunnerMarkup(run,back,last);colourPerception.sync();bindScores();bindJugglingExtra();if(typeof bindIndividualJuggling==='function')bindIndividualJuggling();$('#end-repeat')?.addEventListener('click',endRepeat);bindExerciseNavigation(jumpExercise);$('#previous-drill')?.addEventListener('click',showPrevious);$('#toggle-video')?.addEventListener('click',()=>{run.showVideo=!run.showVideo;renderRunner()});$('#next-drill')?.addEventListener('click',advancePreview);$('#finish-area')?.addEventListener('click',finishArea);$('#run-master')?.addEventListener('click',()=>preserveScroll(()=>{run.masterConfirm=true;renderRunner()}));$('#confirm-master')?.addEventListener('click',masterRunDrill);$('#cancel-master')?.addEventListener('click',()=>preserveScroll(()=>{run.masterConfirm=false;renderRunner()}));$('#ready')?.addEventListener('click',countdown);$('#pause')?.addEventListener('click',pauseRun);$('#resume')?.addEventListener('click',resumeRun);$('#restart')?.addEventListener('click',countdown);$('#close')?.addEventListener('click',start)}
+function renderRunner(){colourPerception.sync();save();refreshDayOverview();void syncScreenAwake();if(!$('#runner')||!run)return;if(run.phase==='done'){renderCompletion(run.section||activeSection);return}$('#runner').classList?.remove('juggling-runner','ball-runner','feints-runner','summary-runner');if(run.restored){renderRecovery();bindExerciseNavigation(jumpExercise);return}const last=canFinishTraining(run)&&run.plan.every((_,i)=>trainingSetDone(run,i));$('#runner').classList?.toggle('juggling-runner',run.section==='juggling');$('#runner').classList?.toggle('ball-runner',run.section==='ball');$('#runner').classList?.toggle('feints-runner',run.section==='feints');$('#runner').innerHTML=run.individual?individualJugglingRunnerMarkup(run):run.section==='juggling'?jugglingRunnerMarkup(run,last):run.section==='ball'?ballRunnerMarkup(run,last):feintsRunnerMarkup(run,last);colourPerception.sync();bindScores();bindJugglingExtra();if(typeof bindIndividualJuggling==='function')bindIndividualJuggling();$('#end-repeat')?.addEventListener('click',endRepeat);bindExerciseNavigation(jumpExercise);$('#toggle-video')?.addEventListener('click',()=>{run.showVideo=!run.showVideo;renderRunner()});$('#next-drill')?.addEventListener('click',advancePreview);$('#finish-area')?.addEventListener('click',finishArea);$('#run-master')?.addEventListener('click',()=>preserveScroll(()=>{run.masterConfirm=true;renderRunner()}));$('#confirm-master')?.addEventListener('click',masterRunDrill);$('#cancel-master')?.addEventListener('click',()=>preserveScroll(()=>{run.masterConfirm=false;renderRunner()}));$('#ready')?.addEventListener('click',countdown);$('#pause')?.addEventListener('click',pauseRun);$('#resume')?.addEventListener('click',resumeRun);$('#restart')?.addEventListener('click',countdown);$('#close')?.addEventListener('click',start)}
 function finishArea(){
  if(isReadOnly()||!canFinishTraining(run)||run.finishPending)return;
  const expected=run;expected.finishPending=true;const button=$('#finish-area');if(button){button.disabled=true;button.textContent='Karte wird vorbereitet …'}
