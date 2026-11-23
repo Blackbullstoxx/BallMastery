@@ -37,7 +37,7 @@ function previewJugglingTechnique(d,options={}){
 function trainingNavigationMarkup(value){
  const back=exerciseTarget(value,-1)>=0,forward=exerciseTarget(value,1)>=0;
  if(!back&&!forward)return '';
- return `<div class="repeat-navigation" role="group" aria-label="Übung wechseln">${back?'<button type="button" id="exercise-prev">Vorherige Übung</button>':''}${forward?'<button type="button" id="exercise-next">Nächste Übung</button>':''}</div>`;
+ return `<div class="repeat-navigation" role="group" aria-label="Übung wechseln">${back?'<button type="button" id="exercise-prev"><span aria-hidden="true">←</span> Zurück</button>':''}${forward?'<button type="button" id="exercise-next">Vor <span aria-hidden="true">→</span></button>':''}</div>`;
 }
 function trainingPreview(section,entries){
  const start=`<button class="primary" id="start" ${entries.length?'':'disabled'}>Los geht’s</button>`;
