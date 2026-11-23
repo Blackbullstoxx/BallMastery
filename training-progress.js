@@ -71,18 +71,29 @@ function trainingSetDone(value,index){
 function exerciseStarts(value){
  return value.plan.flatMap((row,index)=>row.set===1?[index]:[]);
 }
-function exerciseTarget(value,direction){
- const starts=exerciseStarts(value);
- if(starts.length<2)return -1;
- const row=value.plan[value.historyIndex??value.index],start=(value.historyIndex??value.index)-row.set+1;
- const position=starts.indexOf(start);
- for(let target=position+direction;target>=0&&target<starts.length;target+=direction){
-  const end=starts[target+1]??value.plan.length;
-  for(let i=starts[target];i<end;i++){
-   if(!trainingSetDone(value,i)||value.checkpoints?.[i]?.extraSeconds)return i;
+function openTrainingExercises(value){
+ const starts=exerciseStarts(value),open=[];
+ starts.forEach((start,position)=>{
+  const end=starts[position+1]??value.plan.length;
+  for(let index=start;index<end;index++){
+   if(trainingSetDone(value,index))continue;
+   open.push({start,index});
+   break;
   }
- }
- return -1;
+ });
+ return open;
+}
+function exerciseTarget(value,direction){
+ const row=value.plan[value.index];
+ if(!row)return -1;
+ const current=value.index-row.set+1,open=openTrainingExercises(value);
+ const target=direction<0?open.findLast(exercise=>exercise.start<current):open.find(exercise=>exercise.start>current);
+ return target?.index??-1;
+}
+function openExercisePosition(value){
+ const current=value.index-value.plan[value.index].set+1,open=openTrainingExercises(value);
+ const position=open.findIndex(exercise=>exercise.start===current);
+ return position<0?'Übung abgeschlossen':`Übung ${position+1} von ${open.length}`;
 }
 function nextOpenTrainingSet(value){
  for(let index=value.index+1;index<value.plan.length;index++){

@@ -49,3 +49,13 @@ assert.deepEqual([...ctx.run.completedSets],[1]);
 assert.equal(ctx.exerciseTarget({...ctx.run,completedSets:[0,1]},-1),-1,'no free navigation if all other exercises are complete');
 assert(ctx.canFinishTraining(ctx.run),'partially trained juggling can be closed');
 console.log('PASS: directional exercise selection and exact remaining time across a backup and return.');
+
+// Number the remaining exercises, even when the first planned exercise is done.
+const remaining={plan:ctx.run.plan,index:1,completedSets:[0]};
+assert.equal(ctx.openExercisePosition(remaining),'Übung 1 von 2');
+assert.equal(ctx.exerciseTarget(remaining,-1),-1);
+assert.equal(ctx.exerciseTarget(remaining,1),2);
+remaining.index=2;
+assert.equal(ctx.openExercisePosition(remaining),'Übung 2 von 2');
+assert.equal(ctx.exerciseTarget(remaining,-1),1);
+assert.equal(ctx.exerciseTarget(remaining,1),-1);
