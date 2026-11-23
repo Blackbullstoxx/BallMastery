@@ -20,3 +20,27 @@ ctx.reopenExtendedPlan('ball');assert(ctx.runs.ball.plan.every(d=>d.key==='002')
 ctx.preserveDiscardedWork(ctx.runs.ball);delete ctx.runs.ball;ctx.run=null;ctx.reopenExtendedPlan('ball');assert(ctx.runs.ball.plan.every(d=>d.key==='002'),'discard must not reintroduce weekly exercise');assert.equal(ctx.runs.ball.plan.length,2);
 ctx.runs.ball.completedSets=[0];ctx.preserveDiscardedWork(ctx.runs.ball);delete ctx.runs.ball;ctx.run=null;ctx.reopenExtendedPlan('ball');assert.equal(ctx.runs.ball.plan.length,1,'completed extension set remains completed');assert.equal(ctx.runs.ball.plan[0].key,'002');
 console.log('PASS: discarded review extension excludes completed weekly exercise and preserves completed added sets');
+
+// Settings can extend an unfinished plan even when the area has no archived completion.
+ctx.state.completedPlans={};ctx.state.blockDone={};ctx.state.overviewDay=null;
+const activeWeekly={day,section:'ball',plan:[...weekly],index:1,phase:'review',completedSets:[0,1],completedBlocks:[1],colourResults:{1:{shown:4,correct:4,interrupted:0}}};
+ctx.runs={ball:activeWeekly};ctx.run=activeWeekly;
+ctx.state.reviews=[{count:1,sets:2}];ctx.plan=()=>[...weekly,...review];
+ctx.reopenExtendedPlans();
+assert.strictEqual(ctx.run,activeWeekly);
+assert.deepEqual(ctx.run.plan.map(d=>d.key),['001','001','002','002']);
+assert.deepEqual(ctx.run.completedSets,[0,1]);assert.deepEqual(ctx.run.completedBlocks,[1]);
+assert.equal(ctx.run.phase,'review');assert.equal(ctx.run.index,1);
+assert.equal(ctx.run.colourResults[1].correct,4);
+ctx.reopenExtendedPlans();assert.equal(ctx.run.plan.length,4,'saving again does not append duplicates');
+// A completed review rotates out of the current selection. An unchanged count
+// must not add the next drill from the queue.
+ctx.run.index=3;ctx.run.completedSets.push(2,3);ctx.run.completedBlocks.push(3);
+const nextReview=review.map(row=>({...row,key:'003'}));
+ctx.plan=()=>[...weekly,...nextReview];
+ctx.reopenExtendedPlans();assert.equal(ctx.run.plan.length,4);
+ctx.state.reviews[0].count=2;
+ctx.plan=()=>[...weekly,...nextReview,...review.map(row=>({...row,key:'004'}))];
+ctx.reopenExtendedPlans();
+assert.deepEqual([...ctx.run.plan.map(d=>d.key)],['001','001','002','002','003','003']);
+console.log('PASS: a live weekly exercise keeps its progress when settings add reviews; queue rotation and repeated saves do not add duplicates');
