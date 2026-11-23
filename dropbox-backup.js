@@ -131,9 +131,16 @@ const dropboxBackup=(()=>{
   pendingPreview=await readEnvelope(path);
   const selected=pendingPreview,s=selected.data,ms=Object.values(s.ballTraining?.days||{}).reduce((n,x)=>n+x,0),days=Object.values(s.ballTraining?.days||{}).filter(x=>x>0).length;
   const host=$d('#dropbox-result');
-  host.innerHTML=`<div class="divider"><h4>Sicherung prüfen</h4><p>${escape(selected.profileName||s.name||'Training')} · ${escape(new Date(selected.savedAt).toLocaleString('de-DE'))}</p><p class="hint">${s.scores.length} Bestwerteinträge · ${s.sessions.length} abgeschlossene Trainingstage<br>Ballbeherrschung: ${Math.floor(ms/60000)} Min. · ${days} Trainingstage</p><div class="dropbox-load-modes"><button type="button" id="dropbox-view">Nur ansehen</button><p class="hint">Schreibgeschützt ansehen. Dein eigener Gerätestand und dein Sicherungsordner bleiben erhalten.</p><button type="button" id="dropbox-restore">Wiederherstellen und fortsetzen</button><p class="hint">Ersetzt den Gerätestand und sichert künftig im Ordner dieser Sicherung weiter. Der bisherige Gerätestand wird vorher separat gesichert.</p></div><div id="dropbox-restore-confirm"></div><button type="button" id="dropbox-cancel">Abbrechen</button></div>`;
+  host.innerHTML=`<div class="divider"><h4>Sicherung prüfen</h4><p>${escape(selected.profileName||s.name||'Training')} · ${escape(new Date(selected.savedAt).toLocaleString('de-DE'))}</p><p class="hint">${s.scores.length} Bestwerteinträge · ${s.sessions.length} abgeschlossene Trainingstage<br>Ballbeherrschung: ${Math.floor(ms/60000)} Min. · ${days} Trainingstage</p><div class="dropbox-load-modes"><button type="button" id="dropbox-view">Nur ansehen</button><p class="hint">Schreibgeschützt ansehen. Dein eigener Gerätestand und dein Sicherungsordner bleiben erhalten.</p>${selected.profile===meta.profile?`<button type="button" id="dropbox-weekly-days">Wochenübungstage übernehmen</button><p class="hint">Ergänzt belegte Tage der aktuellen Wochenübung aus diesem Stand.</p>`:''}<button type="button" id="dropbox-restore">Wiederherstellen und fortsetzen</button><p class="hint">Ersetzt den Gerätestand und sichert künftig im Ordner dieser Sicherung weiter. Der bisherige Gerätestand wird vorher separat gesichert.</p></div><div id="dropbox-restore-confirm"></div><button type="button" id="dropbox-cancel">Abbrechen</button></div>`;
   $d('#dropbox-cancel').onclick=()=>{pendingPreview=null;host.innerHTML=''};
   $d('#dropbox-view').onclick=()=>safe(viewSelected);
+  const weekly=$d('#dropbox-weekly-days');
+  if(weekly)weekly.onclick=()=>safe(()=>{
+   if(reading()||pendingPreview!==selected||selected.profile!==meta.profile)return;
+   if(!recoverWeeklyRatingDays(s)){toast('Keine zusätzlichen Wochenübungstage in dieser Sicherung.');return}
+   playerCards.repairWeeklyRating();save();
+   toast('Wochenübungstage übernommen und BALL-Rating neu berechnet.');
+  });
   $d('#dropbox-restore').onclick=()=>confirmInline($d('#dropbox-restore-confirm'),'Diesen Stand wiederherstellen und künftig im Sicherungsordner von „'+escape(selected.profileName||s.name||'Training')+'“ weitersichern?',()=>safe(restore));
  }
  function viewSelected(){

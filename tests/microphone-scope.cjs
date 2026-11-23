@@ -10,12 +10,13 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
  ctx.run={section:'ball',index:0,plan:[{key:'001'},{key:'001',colour:true}]};reading=true;await cp.prepare();reading=false;ctx.document.hidden=true;await cp.prepare();ctx.document.hidden=false;ctx.tab='records';await cp.prepare();ctx.tab='today';assert.equal(constructed,0);
  assert(await cp.prepare());assert.equal(starts,1,'mixed plans request permission at the initial explicit start, before the speed set');ctx.run.index=1;assert(await cp.prepare());assert.equal(starts,1,'preparation is reused when the colour set is reached');cp.stop(true);
  // Exercise the real countdown/update state machine with the actual colour controller.
+ vm.runInContext(fs.readFileSync(__dirname+'/../training-progress.js','utf8'),ctx);
  const app=fs.readFileSync(__dirname+'/../app.js','utf8');
  Object.assign(ctx,{$:()=>null,colourPerception:cp,playerCards:{trainingPaused:()=>false},refreshColourPlan:()=>{},prepareTimerAudio:async()=>true,ensureAudio:async()=>{},wakeRetries:0,wakeRetryAt:0,wakeWarning:false,silence:()=>{},beep:()=>{},tick:null,scrollTimerIntoView:()=>{},syncScreenAwake:()=>{},syncBallTime:()=>{},checkTrainingDay:()=>false,refreshTimerRing:()=>{},save:()=>{},refreshDayOverview:()=>{},countCompletedSet:()=>{}});
  ctx.renderRunner=()=>cp.sync();
  vm.runInContext(app.slice(app.indexOf('async function countdown('),app.indexOf('function timerText(')),ctx);
  vm.runInContext(app.slice(app.indexOf('function begin('),app.indexOf('function pauseRun(')),ctx);
- ctx.run={section:'ball',index:0,phase:'ready',paused:false,plan:[{key:'001',work:5,rest:5},{key:'001',work:5,rest:5,colour:true}]};
+ ctx.run={section:'ball',index:0,phase:'ready',paused:false,plan:[{key:'001',set:1,work:5,rest:5},{key:'001',set:2,work:5,rest:5,colour:true}]};
  await ctx.countdown();assert.equal(starts,2,'one preparation at Los geht’s');assert.equal(ctx.run.phase,'count');
  const expire=()=>{now=ctx.run.deadline;ctx.run.last=0;ctx.update()};
  expire();assert.equal(ctx.run.phase,'work');assert.equal(starts,2,'speed work does not start an active recognizer');
