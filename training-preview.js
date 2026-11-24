@@ -37,8 +37,9 @@ function previewJugglingTechnique(d,options={}){
  const stats=previewScoreStats(d.key,0),level=stats.level===null?null:stats.level.toLocaleString('de-DE',{maximumFractionDigits:0,useGrouping:false});
  return `<section class="card training-exercise juggling-technique" aria-label="${esc(d.name)}"><div class="technique-heading"><h3>${esc(d.name)}</h3>${options.status?`<span class="technique-status">${esc(options.status)}</span>`:''}</div><p class="training-prescription">${options.subtitle||`${(d.work/60).toLocaleString('de-DE',{maximumFractionDigits:2})} Min.`}</p>${options.timer||''}${d.noScore?'':`<div class="training-metrics training-metrics-four">${previewMetric(stats.today,'Heute')}${previewMetric(level,'Form',`Median der Tagesbestwerte der letzten fünf erfassten Trainingstage dieser Technik; bisher ${stats.count} ${stats.count===1?'Eintrag':'Einträge'}. Trainingsfreie Tage zählen nicht als null.`)}${previewMetric(stats.record,'Rekord')}${previewTrend(d.key,0,stats.rows)}</div><p class="technique-input-label">Kontakte am Stück</p>${previewScoreInput(d.key,0)}`}${options.afterInput||''}</section>`;
 }
-function trainingNavigationMarkup(value){
- const back=exerciseTarget(value,-1)>=0,forward=exerciseTarget(value,1)>=0;
+function trainingNavigationMarkup(value,primaryTarget=-1){
+ const back=exerciseTarget(value,-1)>=0;
+ const forwardTarget=exerciseTarget(value,1),forward=forwardTarget>=0&&forwardTarget!==primaryTarget;
  if(!back&&!forward)return '';
  return `<div class="repeat-navigation" role="group" aria-label="Übung wechseln">${back?'<button type="button" id="exercise-prev"><span aria-hidden="true">←</span> Zurück</button>':''}${forward?'<button type="button" id="exercise-next">Vor <span aria-hidden="true">→</span></button>':''}</div>`;
 }
@@ -67,10 +68,10 @@ function jugglingRunnerMarkup(value,last){
  const finish=!last&&canFinishTraining(value)?'<button type="button" class="back-button" id="finish-area">Jonglieren abschließen</button>':'';
  return `${previewTrainingSummary('juggling')}${jugglingProgressMarkup(value)}${card}<div class="technique-actions">${action}${exerciseRepeatMarkup(value)}${value.extraSeconds?'<button class="back-button" id="juggling-extra-end">Zusatzzeit beenden</button>':''}${navigation}${finish}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>`;
 }
-function exerciseRepeatMarkup(value,buttonClass="primary"){
+function exerciseRepeatMarkup(value,buttonClass="primary",label="Übung erneut starten"){
  if(value.exerciseRepeat)return '<button class="back-button" id="repeat-return">Zum Tagesplan</button>';
  if(value.phase!=='review'||!exerciseComplete(value))return '';
- return `<button class="${buttonClass}" id="repeat-exercise">Übung erneut starten</button>`;
+ return `<button class="${buttonClass}" id="repeat-exercise">${label}</button>`;
 }
 function pauseActionsMarkup(){return '<div class="two runner-pause-actions"><button class="primary" id="resume">Fortsetzen</button><button id="restart">Neustart</button></div>'}
 function ballVideoAction(value){
@@ -81,12 +82,15 @@ function ballRunnerMarkup(value,last){
  const status=(value.skippedSets||[]).includes(value.index)?(value.masteredWeekly?.includes(d.key)?'Gemeistert':'Gewechselt'):value.phase==='review'?(exerciseComplete(value)?'Geschafft ✓':'Satz geschafft ✓'):value.paused?'Pausiert':value.phase==='ready'?(value.optionalWeekly===d.key&&d.kind==='Wochenübung'?'Heute freiwillig':''):value.phase==='count'?'Bereit machen':'Läuft';
  const metrics=d.colour?scoreForm(d.key,d.work,true):`<div class="training-metrics training-metrics-four">${previewMetric(stats.today,'Heute')}${previewMetric(stats.record,'Rekord')}${previewMetric(days,'Trainingstage')}${previewTrend(d.key,d.work,stats.rows)}</div><p class="technique-input-label">Wiederholungen</p><form class="scoreform preview-scoreform" data-score="${esc(d.key)}" data-duration="${d.work}" data-colour-score="false"><input type="number" min="0" max="99999" required aria-label="${esc(d.name)}: Wiederholungen" placeholder="Wiederholungen"><button>Eintragen</button></form>`;
  const next=nextOpenTrainingSet(run),finishInside=last&&run.phase==='review',mastery=masteredControl(d),weeklyPanel=mastery.startsWith('<section');
- const repeat=exerciseRepeatMarkup(value,"back-button");
- const nextSet=value.phase==='rest'&&next>=0&&next-value.plan[next].set===value.index-d.set?value.plan[next]:null;
+ const repeat=exerciseRepeatMarkup(value,"back-button","Erneut starten");
+ const sameExercise=next>=0&&next-value.plan[next].set===value.index-d.set;
+ const nextSet=value.phase==='rest'&&sameExercise?value.plan[next]:null;
+ const showNextExercise=!last&&next>=0&&!sameExercise&&(value.phase==='review'||betweenExercises);
  const reviewAction=last?`<button class="primary" id="finish-area">${sectionNames[run.section||activeSection]} abschließen</button>`:
-  next>=0?`<button class="primary" id="next-drill">${next-run.plan[next].set===run.index-d.set?'Nächsten Satz ansehen':'Nächste Übung ansehen'}</button>`:'';
+  next>=0?`<button class="primary" id="next-drill">${sameExercise?'Nächsten Satz ansehen':'Nächste Übung'}</button>`:'';
  const action=run.phase==='ready'?'<button class="primary" id="ready">Los geht’s</button>':(run.phase==='review'||betweenExercises)?reviewAction:run.phase==='done'?'<button class="primary" id="close">Erneut trainieren</button>':run.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
- return `${previewTrainingSummary('ball')}<section class="card technique-progress"><div><span>${openExercisePosition(value)}</span><span>Satz ${d.set} von ${d.total}</span></div><progress value="${trainingProgress(value)}" max="${value.plan.length}" aria-label="Abgeschlossene Sätze"></progress></section><section class="card training-exercise ball-technique"><div class="technique-heading">${ballExerciseBadge(d)}${status?`<span class="technique-status">${status}</span>`:''}</div><h3>${esc(d.name)}</h3>${ballPrescription(d,nextSet)}${colourPerception.summary()}${!['ready','review'].includes(value.phase)?timerMarkup():''}${value.phase==='ready'||value.paused&&value.showVideo?video(d):''}${metrics}${finishInside?`<div class="ball-finish-action">${action}</div>`:''}${weeklyPanel?'':mastery}</section><div class="technique-actions">${finishInside?'':action}${repeat}${ballVideoAction(run)}${trainingNavigationMarkup(run)}${!finishInside&&canFinishTraining(value)?'<button type="button" class="back-button" id="finish-area">Ballbeherrschung für heute abschließen</button>':''}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>${weeklyPanel?mastery:''}`;
+ const actions=showNextExercise&&repeat?'<div class="two ball-review-actions">'+repeat+action+'</div>':(finishInside?'':action)+repeat;
+ return `${previewTrainingSummary('ball')}<section class="card technique-progress"><div><span>${openExercisePosition(value)}</span><span>Satz ${d.set} von ${d.total}</span></div><progress value="${trainingProgress(value)}" max="${value.plan.length}" aria-label="Abgeschlossene Sätze"></progress></section><section class="card training-exercise ball-technique"><div class="technique-heading">${ballExerciseBadge(d)}${status?`<span class="technique-status">${status}</span>`:''}</div><h3>${esc(d.name)}</h3>${ballPrescription(d,nextSet)}${colourPerception.summary()}${!['ready','review'].includes(value.phase)?timerMarkup():''}${value.phase==='ready'||value.paused&&value.showVideo?video(d):''}${metrics}${finishInside?`<div class="ball-finish-action">${action}</div>`:''}${weeklyPanel?'':mastery}</section><div class="technique-actions">${actions}${ballVideoAction(run)}${trainingNavigationMarkup(run,showNextExercise?next:-1)}${!finishInside&&canFinishTraining(value)?'<button type="button" class="back-button" id="finish-area">Ballbeherrschung für heute abschließen</button>':''}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>${weeklyPanel?mastery:''}`;
 }
 
 function feintsRunnerMarkup(value,last){
