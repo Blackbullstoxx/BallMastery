@@ -44,7 +44,7 @@ function trainingNavigationMarkup(value){
 }
 function trainingPreview(section,entries){
  const start=`<button class="primary" id="start" ${entries.length?'':'disabled'}>Los geht’s</button>`;
- if(section==='juggling')return `${previewTrainingSummary(section)}${entries.map(d=>previewJugglingTechnique(d)).join('')}<div class="training-shared-start">${start}${trainingNavigationMarkup({plan:entries,index:0})}</div>`;
+ if(section==='juggling')return `${previewTrainingSummary(section)}${entries.length?previewJugglingTechnique(entries[0]):''}<div class="training-shared-start">${start}${trainingNavigationMarkup({plan:entries,index:0})}</div>`;
  return `${previewTrainingSummary(section)}<section class="card training-exercise">${section==='ball'?(entries.length?previewBallExercise(entries[0]):'<p>Keine Übungen ausgewählt.</p>'):`<h3>Finte frei wählen</h3><p class="training-prescription">${state.feintSets} × ${state.feintWork} s · ${state.feintRest} s Pause</p>`}${start}${trainingNavigationMarkup({plan:entries,index:0})}</section>`;
 }
 
