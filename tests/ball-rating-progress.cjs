@@ -102,3 +102,14 @@ assert.equal(ctx.state.scores.length,1);
 assert(!ctx.recoverWeeklyRatingDays(backup),'the same backup adds no duplicate days');
 assert(ctx.validWeeklyRatingProgress(ctx.state.weeklyRatingProgress));
 console.log('PASS: switching back retains weekly credit; older backup recovers rating without overwriting current scores or counting attempted sets.');
+
+ctx.state={current:26,sets:3,groups:{ball:true},weeklyLearning:{key:'26',since:previousDays[0],entries:[],trainingDays:[...previousDays]}};
+const beforeSelection=result();
+ctx.changeWeeklySelection(22);
+assert.deepEqual(result(),beforeSelection,'Settings selection does not reduce or increase BALL');
+const voluntary={section:'ball',day:today,plan:Array.from({length:3},()=>({key:'22',kind:'Wochenübung'})),completedSets:[0]};
+assert(ctx.creditWeeklyRatingDay(voluntary,true));
+assert(!ctx.creditWeeklyRatingDay(voluntary,true),'second voluntary set cannot credit the same day again');
+assert.deepEqual([...ctx.state.weeklyRatingProgress['22']],[today]);
+assert.equal(ctx.weeklyRatingPosition(ctx.state).days,previousDays.length+1);
+console.log('PASS: voluntary weekly practice credits a single day from the first completed set, and selection alone preserves rating.');

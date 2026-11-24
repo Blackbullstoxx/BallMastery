@@ -73,12 +73,26 @@ function backfillWeeklyRatingDays(){
  state.weeklyRatingBackfilled=true;
  return true;
 }
-function creditWeeklyRatingDay(training){
+// Keep awarded mastery separate from selection changes made in Settings.
+function weeklyRatingPosition(data,today=date()){
+ const index=data.weeklyRatingIndex??(Number(data.current)||0);
+ const phaseDays=(data.weeklyLearning?.trainingDays||[]).filter(day=>day<=today).length;
+ const selection=data.weeklyRatingSelection;
+ return {index,days:Math.min(6,selection?selection.days+Math.max(0,phaseDays-selection.baseline):phaseDays)};
+}
+function changeWeeklySelection(index){
+ const before=weeklyRatingPosition(state);
+ state.weeklyRatingIndex=state.finished?drills.length:before.index;
+ state.current=index;state.finished=false;
+ ensureWeeklyLearning();
+ state.weeklyRatingSelection={days:before.days,baseline:state.weeklyLearning?.trainingDays?.length||0};
+}
+function creditWeeklyRatingDay(training,voluntary=false){
  if(training.section!=='ball'||training.day!==date()||state.finished||isReadOnly())return;
  const key=drills[state.current]?.id;
  const completed=new Set(training.completedSets||[]);
  const weeklySets=training.plan.flatMap((item,i)=>item.kind==='Wochenübung'&&item.key===key?[i]:[]);
- if(!weeklySets.length||!weeklySets.every(i=>completed.has(i)))return;
+ if(!weeklySets.length||!(voluntary?weeklySets.some(i=>completed.has(i)):weeklySets.every(i=>completed.has(i))))return;
  ensureWeeklyLearning();
  const phase=state.weeklyLearning;
  const days=phase.trainingDays||(phase.trainingDays=[]);
@@ -86,6 +100,7 @@ function creditWeeklyRatingDay(training){
   days.push(training.day);
   days.sort();
   recordWeeklyRatingDays(key,days);
+  return true;
  }
 }
 function weeklyLearningContext(key){

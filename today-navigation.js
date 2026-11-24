@@ -16,12 +16,13 @@ const todayNavigation=(()=>{
  function sections(){const available=enabledSections();return ['ball','juggling','feints'].filter(k=>available.includes(k)||state.blockDone?.[date()]?.includes(k)&&state.completedPlans?.[date()]?.[k]?.length)}
  function status(section){
   if(section==='juggling'&&typeof individualJugglingDailyStatus==='function'&&(runs.juggling?.individual||individualJugglingHasCredits()))return individualJugglingDailyStatus();
-  const current=runs[section]?.day===date()?runs[section]:null;
+  const stored=runs[section]?.day===date()?runs[section]:null;
+  const current=stored?.exerciseRepeat||stored;
   const closed=!!state.blockDone?.[date()]?.includes(section);
   const entries=closed&&state.completedPlans?.[date()]?.[section]||current?.plan||plan(section);
   const blocks=overviewBlocks(section,entries),completed=new Set(current?.completedSets||[]);
-  const credited=new Set();blocks.forEach(b=>{if(current)storeOverviewCredits(section,b,b.indices.filter(i=>completed.has(i)).map(i=>entries[i].set));const sets=overviewCredits(section,b);b.indices.forEach((i,n)=>{if(sets.includes(n+1)||completed.has(i))credited.add(i)})});
-  const extraSeconds=overviewExtraSeconds(current),done=(closed||entries.length>0&&entries.every((_,i)=>credited.has(i)||current?.skippedSets?.includes(i)))&&!extraSeconds;
+  const credited=new Set();blocks.forEach(b=>{if(current)storeOverviewCredits(section,b,b.indices.filter(i=>completed.has(i)).map(i=>entries[i].set));const sets=overviewCredits(section,b);b.indices.forEach((i,n)=>{if((!current?.unifiedBall||closed)&&sets.includes(n+1)||completed.has(i))credited.add(i)})});
+  const extraSeconds=overviewExtraSeconds(current),done=(closed||entries.length>0&&entries.every((_,i)=>credited.has(i)||current?.skippedSets?.includes(i)||current?.optionalWeekly&&_.kind==='Wochenübung'&&_.key===current.optionalWeekly))&&!extraSeconds;
   const started=!!state.completedPlans?.[date()]?.[section]?.length||credited.size>0||!!current&&current.phase!=='ready';
   return {section,done,started,seconds:done?0:overviewSeconds(section,entries,current,blocks)};
  }

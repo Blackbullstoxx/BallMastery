@@ -11,7 +11,7 @@ for(const phase of ['ready','count','work','review']){
  if(phase==='review'){assert(h.includes('Geschafft ✓'));assert(h.indexOf('data-score=')<h.indexOf('id="next-drill"'));assert(!h.includes('id="timer"'))}
 }
 r.phase='work';r.paused=true;let h=ctx.jugglingRunnerMarkup(r,false);assert(h.includes('Pausiert'));assert(h.includes('id="restart"'));assert(h.includes('id="resume"'));r.paused=false;
-r.index=2;r.phase='review';r.completedSets=[0,1,2];h=ctx.jugglingRunnerMarkup(r,true);assert(h.includes('3 von 3 erledigt'));assert(h.includes('id="finish-area"'));assert(!h.includes('data-score='));assert(!h.includes('id="previous-drill"'));r.repeatMode=true;h=ctx.jugglingRunnerMarkup(r,true);assert(!h.includes('id="exercise-prev"'));assert(!h.includes('id="exercise-next"'));assert(!h.includes('id="previous-drill"'));
+r.index=2;r.phase='review';r.completedSets=[0,1,2];h=ctx.jugglingRunnerMarkup(r,true);assert(h.includes('3 von 3 erledigt'));assert(h.includes('id="finish-area"'));assert(!h.includes('data-score='));assert(!h.includes('id="previous-drill"'));r.repeatMode=true;h=ctx.jugglingRunnerMarkup(r,true);assert(h.includes('id="exercise-prev"'));assert(!h.includes('id="exercise-next"'));assert(!h.includes('id="previous-drill"'));
 r.index=1;r.phase='ready';r.completedSets=[];
 h=ctx.jugglingRunnerMarkup(r,false);
 assert(h.includes('Übung 2 von 3'));
@@ -19,8 +19,8 @@ assert(h.indexOf('id="ready"')<h.indexOf('id="exercise-prev"'));
 assert(h.indexOf('id="exercise-prev"')<h.indexOf('id="exercise-next"'));
 assert(h.indexOf('data-score=')<h.indexOf('id="ready"'));
 r.completedSets=[0];h=ctx.jugglingRunnerMarkup(r,false);
-assert(h.includes('Übung 1 von 2'));
-assert(!h.includes('id="exercise-prev"')&&h.includes('id="exercise-next"'));
+assert(h.includes('Übung 2 von 3'));
+assert(h.includes('id="exercise-prev"')&&h.includes('id="exercise-next"'));
 r.index=2;r.phase='review';r.completedSets=[0,1,2];
 console.log('PASS: shared juggling cards across ready/count/work/paused/review/history, explicit finish gate, input order, completed progress, zero value, unscored and repeat controls; no state mutations.');
 

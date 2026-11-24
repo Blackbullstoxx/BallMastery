@@ -168,12 +168,14 @@ const playerCards=(()=>{
  function snapshot(data=state,list=drills,today=date()){
   const c=config(data),time=data.cardTraining?.days||{};
   const minutes=key=>((data.manualTraining||[]).filter(r=>r.area===key&&r.date<=today).reduce((n,r)=>n+r.milliseconds,0)+Object.entries(time).reduce((sum,[day,row])=>sum+(day<=today&&validTrainingDate(day)?row[key]||0:0),0))/60000;
-  const learned=data.finished?list.length:clamp(Number(data.current)||0,0,list.length);
+  const rating=typeof weeklyRatingPosition==='function'?weeklyRatingPosition(data,today):null;
+  const learned=data.finished?list.length:clamp(rating?.index??(Number(data.current)||0),0,list.length);
   const techniques=['toe','free'].filter(k=>c.techniques[k]);
   const performance=techniques.length?techniques.reduce((sum,k)=>sum+bonus(data,k,today),0)/techniques.length:0;
   const phase=data.weeklyLearning;
-  const trainedDays=!data.finished&&phase?.key===list[learned]?.id
-   ?Math.min(6,(phase?.trainingDays||[]).filter(day=>day<=today).length):0;
+  const days=(phase?.trainingDays||[]).filter(day=>day<=today);
+  const trainedDays=!data.finished&&phase?.key===list[data.current]?.id
+   ?(rating?.days??Math.min(6,days.length)):0;
   const rawBall=list.length?30+69*(learned+trainedDays/8)/list.length:30;
   const ball=learned===list.length&&list.length?99:Math.min(98,Math.round(rawBall));
   const progress=ball===30?(rawBall-30)/.5:rawBall-ball+.5;

@@ -263,8 +263,8 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .exercise-context{display:block;font-size:12px;line-height:1.5;margin:0 0 7px}
 .training-prescription{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;line-height:1.5;color:#57705f;margin:0 0 14px}
 .ball-prescription{flex-wrap:nowrap;white-space:nowrap}
-.training-prescription>.speed-cue{width:20px;height:14px;margin:0}
-.training-prescription>.colour-cue{margin:0}
+.training-prescription>.speed-cue{flex:none;width:20px;height:14px;margin:0;transform:translateY(-2px)}
+.training-prescription>.colour-cue{flex:none;margin:0}
 .training-exercise .private-video{margin:0 0 16px}
 .training-metrics{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:16px 0 20px;align-items:start}
 .training-metrics-four{grid-template-columns:repeat(4,minmax(0,1fr))}
