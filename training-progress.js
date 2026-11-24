@@ -47,8 +47,14 @@ function selection(level){
 function countCompletedSet(d){
  if(isReadOnly())return;
  const completed=new Set(run.completedSets||[]);if(completed.has(run.index))return;
- playerCards.completedSet();completed.add(run.index);run.completedSets=[...completed];recordOverviewSet(run,run.index);
+ playerCards.completedSet();completed.add(run.index);run.completedSets=[...completed];if(!run.exerciseRepeat)recordOverviewSet(run,run.index);
  if(drills.some(row=>row.id===d.key))markPracticeDay(d.key,run.day);
+ if(run.exerciseRepeat&&run.section==='juggling')markPracticeDay(d.key,run.day);
+ if(isOptionalWeeklySet(run,d)&&typeof creditWeeklyRatingDay==='function'){
+  if(creditWeeklyRatingDay(run,true))playerCards.repairWeeklyRating?.();
+  if(!state.sessions.includes(run.day))state.sessions.push(run.day);
+  if(state.blockDone?.[run.day]?.includes('ball'))preserveDiscardedWork(run);
+ }
  const first=run.index-(d.set-1),last=first+d.total-1;
  if(d.set!==d.total||!Array.from({length:d.total},(_,i)=>first+i).every(i=>completed.has(i)))return;
  run.completedBlocks=run.completedBlocks||[];
@@ -71,29 +77,30 @@ function trainingSetDone(value,index){
 function exerciseStarts(value){
  return value.plan.flatMap((row,index)=>row.set===1?[index]:[]);
 }
-function openTrainingExercises(value){
- const starts=exerciseStarts(value),open=[];
- starts.forEach((start,position)=>{
-  const end=starts[position+1]??value.plan.length;
-  for(let index=start;index<end;index++){
-   if(trainingSetDone(value,index))continue;
-   open.push({start,index});
-   break;
-  }
- });
- return open;
+function exerciseComplete(value,index=value.index){
+ const row=value.plan[index];
+ const start=index-row.set+1;
+ return value.plan.slice(start,start+row.total).every((_,offset)=>trainingSetDone(value,start+offset));
 }
 function exerciseTarget(value,direction){
  const row=value.plan[value.index];
- if(!row)return -1;
- const current=value.index-row.set+1,open=openTrainingExercises(value);
- const target=direction<0?open.findLast(exercise=>exercise.start<current):open.find(exercise=>exercise.start>current);
- return target?.index??-1;
+ if(!row||value.exerciseRepeat)return -1;
+ const start=value.index-row.set+1,starts=exerciseStarts(value);
+ const target=starts[starts.indexOf(start)+direction];
+ if(target===undefined)return -1;
+ const end=starts[starts.indexOf(target)+1]??value.plan.length;
+ for(let index=target;index<end;index++)if(!trainingSetDone(value,index))return index;
+ return end-1;
 }
 function openExercisePosition(value){
- const current=value.index-value.plan[value.index].set+1,open=openTrainingExercises(value);
- const position=open.findIndex(exercise=>exercise.start===current);
- return position<0?'Übung abgeschlossen':`Übung ${position+1} von ${open.length}`;
+ const current=value.index-value.plan[value.index].set+1,starts=exerciseStarts(value);
+ return `Übung ${starts.indexOf(current)+1} von ${starts.length}`;
+}
+function isOptionalWeeklySet(value,row){
+ return row.kind==='Wochenübung'&&row.key===value.optionalWeekly;
+}
+function dailyPlanSettled(value){
+ return value.plan.every((row,index)=>trainingSetDone(value,index)||isOptionalWeeklySet(value,row));
 }
 function nextOpenTrainingSet(value){
  for(let index=value.index+1;index<value.plan.length;index++){
@@ -103,7 +110,7 @@ function nextOpenTrainingSet(value){
 }
 // Only interrupted exercise time can be resumed. Between sets, prepare the next open set.
 function prepareTrainingContinuation(value){
- if(value.phase==='done')return value;
+ if(value.phase==='done'||value.phase==='review'&&value.selectedCompleted)return value;
  if(value.phase==='rest'||value.phase==='review'){
   if(value.individual)return value;
   const next=nextOpenTrainingSet(value);
@@ -126,11 +133,12 @@ function prepareTrainingContinuation(value){
  return value;
 }
 function canFinishTraining(value){
- if(!value||value.individual||value.extraSeconds||value.extraStarting)return false;
+ if(!value||value.individual||value.exerciseRepeat||value.extraSeconds||value.extraStarting)return false;
+ if(!value.repeatMode&&typeof state!=='undefined'&&state.blockDone?.[value.day]?.includes(value.section))return false;
  const settled=value.phase==='ready'||value.phase==='review'||value.paused;
  if(!settled)return false;
  const worked=(value.completedSets||[]).length||value.optionalWeekly||(value.skippedSets||[]).length;
- if(worked&&value.plan.every((row,index)=>trainingSetDone(value,index)||row.kind==='Wochenübung'&&row.key===value.optionalWeekly))return true;
+ if(worked&&dailyPlanSettled(value))return true;
  if(value.section!=='juggling'||value.repeatMode)return false;
  const active=value.plan[value.index];
  return !!worked||value.phase==='work'&&value.remaining<active.work||
@@ -153,7 +161,9 @@ function trainingRunSnapshot(value,section){
  return {day:value.day,section,plan:value.plan.map(({key,kind,set,total,work,rest,colour})=>({key,kind,set,total,work,rest,...(colour?{colour:true}:{})})),index:value.index,phase:value.phase,remaining:timed&&!value.paused?Math.max(0,(value.deadline-Date.now())/1000):value.remaining,colourResults:restoreColourResults(value.colourResults,value.plan.length),completedSets:value.completedSets||[],repeatMode:!!value.repeatMode,mastered:!!value.mastered,
   ...(Object.keys(value.checkpoints||{}).length?{checkpoints:value.checkpoints}:{}),
   ...(value.skippedSets?.length?{skippedSets:value.skippedSets}:{}),
-  ...(value.optionalWeekly?{optionalWeekly:value.optionalWeekly}:{}),...(value.extraSeconds?{extraSeconds:value.extraSeconds}:{}),...(value.individual?{individual:true,creditStart:value.creditStart,scheduled:value.scheduled?trainingRunSnapshot(value.scheduled,section):null}:{})};
+  ...(value.optionalWeekly?{optionalWeekly:value.optionalWeekly}:{}),
+  ...(value.unifiedBall?{unifiedBall:true}:{}),...(value.weeklyOrigin?{weeklyOrigin:value.weeklyOrigin}:{}),...(value.masteredWeekly?.length?{masteredWeekly:value.masteredWeekly}:{}),...(value.selectedCompleted?{selectedCompleted:true}:{}),
+  ...(value.exerciseRepeat?{exerciseRepeat:trainingRunSnapshot(value.exerciseRepeat,section)}:{}),...(value.extraSeconds?{extraSeconds:value.extraSeconds}:{}),...(value.individual?{individual:true,creditStart:value.creditStart,scheduled:value.scheduled?trainingRunSnapshot(value.scheduled,section):null}:{})};
 }
 function trainingSnapshot(){
  const stored={};
@@ -165,6 +175,8 @@ function trainingSnapshot(){
 }
 function restoreSavedRun(saved,section,nested=false){
  if(saved?.individual&&(nested||section!=='juggling'||saved.plan?.length!==1||!Number.isSafeInteger(saved.creditStart)||saved.creditStart<0||saved.creditStart>90000000||!['ready','count','work','review'].includes(saved.phase)))return null;
+ const exerciseRepeat=saved?.exerciseRepeat&&!nested?restoreSavedRun(saved.exerciseRepeat,section,true):null;
+ if(saved?.exerciseRepeat&&(!exerciseRepeat||saved.phase==='done'||saved.individual||saved.extraSeconds))return null;
  const scheduled=saved?.individual&&saved.scheduled?restoreSavedRun(saved.scheduled,section,true):null;
  if(saved?.individual&&saved.scheduled&&!scheduled)return null;
  if(!saved||saved.day!==date()||saved.section!==section||!Array.isArray(saved.plan)||!saved.plan.length||saved.plan.length>5000)return null;
@@ -205,9 +217,13 @@ function restoreSavedRun(saved,section,nested=false){
  if(saved.phase==='done'&&!state.blockDone?.[date()]?.includes(section))return null;
  if(!saved.individual&&(saved.phase==='review'||saved.extraSeconds)&&!completedSets.includes(saved.index)&&!skippedSets.includes(saved.index))return null;
  if(saved.individual&&(saved.extraSeconds||completedSets.length))return null;
- return prepareTrainingContinuation({...(saved.individual?{individual:true,scheduled,creditStart:saved.creditStart}:{}),...(saved.extraSeconds?{extraSeconds:saved.extraSeconds}:{}),day:date(),section,plan:restoredPlan,index:saved.index,phase:saved.phase,remaining:saved.remaining,completedSets,completedBlocks,
+ const knownWeekly=key=>section==='ball'&&drills.some(row=>row.id===key);
+ const masteredWeekly=Array.isArray(saved.masteredWeekly)?[...new Set(saved.masteredWeekly.filter(knownWeekly))]:[];
+ return prepareTrainingContinuation({...(exerciseRepeat?{exerciseRepeat}:{}),
+  ...(saved.unifiedBall===true&&section==='ball'?{unifiedBall:true}:{}),...(knownWeekly(saved.weeklyOrigin)?{weeklyOrigin:saved.weeklyOrigin}:{}),...(masteredWeekly.length?{masteredWeekly}:{}),
+  ...(saved.phase==='review'&&saved.selectedCompleted===true?{selectedCompleted:true}:{}),...(saved.individual?{individual:true,scheduled,creditStart:saved.creditStart}:{}),...(saved.extraSeconds?{extraSeconds:saved.extraSeconds}:{}),day:date(),section,plan:restoredPlan,index:saved.index,phase:saved.phase,remaining:saved.remaining,completedSets,completedBlocks,
   ...(saved.checkpoints?{checkpoints:saved.checkpoints}:{}),...(skippedSets.length?{skippedSets}:{}),...(saved.optionalWeekly?{optionalWeekly:saved.optionalWeekly}:{}),
-  colourResults:restoreColourResults(saved.colourResults,restoredPlan.length),repeatMode:!!saved.repeatMode&&(!!state.blockDone?.[date()]?.includes(section)||section==='juggling'&&typeof individualJugglingHasCredits==='function'&&individualJugglingHasCredits()),mastered:!!saved.mastered,paused:['count','work','rest'].includes(saved.phase),rotations:levels.map(()=>0)});
+  colourResults:restoreColourResults(saved.colourResults,restoredPlan.length),repeatMode:!!exerciseRepeat||!!saved.repeatMode&&(!!state.blockDone?.[date()]?.includes(section)||section==='juggling'&&typeof individualJugglingHasCredits==='function'&&individualJugglingHasCredits()),mastered:!!saved.mastered,paused:['count','work','rest'].includes(saved.phase),rotations:levels.map(()=>0)});
 }
 function restoreTraining(){
  const saved=state.activeTraining;runs={};run=null;

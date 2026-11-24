@@ -34,28 +34,29 @@ ctx.run={section:'juggling',index:2,phase:'work',paused:true,remaining:36.25,day
 ctx.date=()=>ctx.run.day;ctx.validTrainingDate=()=>true;ctx.state={};ctx.techNames={toe:'Zehen',free:'Frei',touches:'Gezielt'};ctx.levels=[];
 ctx.restoreColourResults=()=>({});
 ctx.run.completedSets=[1];
-assert.equal(ctx.exerciseTarget(ctx.run,-1),0,'completed middle exercise is skipped backwards');
+assert.equal(ctx.exerciseTarget(ctx.run,-1),1,'completed middle exercise is available backwards');
 assert.equal(ctx.exerciseTarget(ctx.run,1),-1,'the last exercise never wraps forwards');
 ctx.jumpExercise(-1);
-assert.equal(ctx.run.index,0);
+assert.equal(ctx.run.index,1);
+assert.equal(ctx.run.phase,'review');
 const checkpoint=JSON.parse(JSON.stringify(ctx.trainingRunSnapshot(ctx.run,'juggling')));
 ctx.run=ctx.restoreSavedRun(checkpoint,'juggling');
 assert(ctx.run);
-assert.equal(ctx.exerciseTarget(ctx.run,-1),-1,'the first exercise never wraps backwards');
+assert.equal(ctx.exerciseTarget(ctx.run,-1),0,'the first exercise is reachable from the middle');
 ctx.jumpExercise(1);
 assert.equal(ctx.run.remaining,36.25);
 assert(ctx.run.paused);
 assert.deepEqual([...ctx.run.completedSets],[1]);
-assert.equal(ctx.exerciseTarget({...ctx.run,completedSets:[0,1]},-1),-1,'no free navigation if all other exercises are complete');
+assert.equal(ctx.exerciseTarget({...ctx.run,completedSets:[0,1]},-1),1,'navigation remains available when other exercises are complete');
 assert(ctx.canFinishTraining(ctx.run),'partially trained juggling can be closed');
 console.log('PASS: directional exercise selection and exact remaining time across a backup and return.');
 
-// Number the remaining exercises, even when the first planned exercise is done.
+// Number every planned exercise, including completed exercises.
 const remaining={plan:ctx.run.plan,index:1,completedSets:[0]};
-assert.equal(ctx.openExercisePosition(remaining),'Übung 1 von 2');
-assert.equal(ctx.exerciseTarget(remaining,-1),-1);
+assert.equal(ctx.openExercisePosition(remaining),'Übung 2 von 3');
+assert.equal(ctx.exerciseTarget(remaining,-1),0);
 assert.equal(ctx.exerciseTarget(remaining,1),2);
 remaining.index=2;
-assert.equal(ctx.openExercisePosition(remaining),'Übung 2 von 2');
+assert.equal(ctx.openExercisePosition(remaining),'Übung 3 von 3');
 assert.equal(ctx.exerciseTarget(remaining,-1),1);
 assert.equal(ctx.exerciseTarget(remaining,1),-1);

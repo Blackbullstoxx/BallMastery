@@ -2,8 +2,8 @@
 let dayOverviewOpen=false,dayOverviewDate='';
 function overviewBlocks(section,entries){
  const occurrences=new Map(),blocks=[];
- const saved=state.completedPlans?.[date()]?.[section],current=runs[section];
- if(saved&&entries===current?.plan&&!current.repeatMode&&current.phase!=='done')saved.filter(d=>d.set===1).forEach(d=>{const signature=JSON.stringify([d.kind,d.key,d.work,d.total]);occurrences.set(signature,(occurrences.get(signature)||0)+1)});
+ const saved=state.completedPlans?.[date()]?.[section],current=runs[section]?.exerciseRepeat||runs[section];
+ if(saved&&entries===current?.plan&&!current.unifiedBall&&!current.repeatMode&&current.phase!=='done')saved.filter(d=>d.set===1).forEach(d=>{const signature=JSON.stringify([d.kind,d.key,d.work,d.total]);occurrences.set(signature,(occurrences.get(signature)||0)+1)});
  entries.forEach((d,index)=>{
   if(d.set!==1)return;
   const signature=JSON.stringify([d.kind,d.key,d.work,d.total]),occurrence=occurrences.get(signature)||0;occurrences.set(signature,occurrence+1);
@@ -39,6 +39,7 @@ function overviewExtraSeconds(value){
 }
 function overviewSeconds(section,entries,value,blocks){
  if(section==='juggling'&&typeof individualJugglingDailyStatus==='function'&&(value?.individual||individualJugglingHasCredits()))return individualJugglingDailyStatus().seconds;
+ const complete=new Set(value?.completedSets||[]);
  const credited=new Map();blocks.forEach(b=>{const sets=overviewCredits(section,b);b.indices.forEach((index,n)=>credited.set(index,sets.includes(n+1)))});
  const extraSeconds=overviewExtraSeconds(value);
  if(state.blockDone?.[date()]?.includes(section))return extraSeconds;
@@ -46,11 +47,11 @@ function overviewSeconds(section,entries,value,blocks){
  const remaining=current&&['count','work','rest'].includes(current.phase)?(current.paused?current.remaining:Math.max(0,(current.deadline-Date.now())/1000)):0;
  let seconds=extraSeconds;
  entries.forEach((d,index)=>{
-  if(current?.skippedSets?.includes(index))return;
-  const done=credited.get(index),at=current?.index===index,checkpoint=current?.checkpoints?.[index];
+  if(current?.skippedSets?.includes(index)||current?.optionalWeekly&&d.kind==='Wochenübung'&&d.key===current.optionalWeekly)return;
+  const done=complete.has(index)||!value?.unifiedBall&&credited.get(index),at=current?.index===index,checkpoint=current?.checkpoints?.[index];
   if(!done){
    seconds+=at&&current.phase==='work'?remaining:checkpoint?.phase==='work'?checkpoint.remaining:d.work;
-   const needsCountdown=index===0||entries[index-1].key!==d.key||entries[index-1].rest===0;
+   const needsCountdown=at&&current?.phase==='ready'||index===0||entries[index-1].key!==d.key||entries[index-1].kind!==d.kind||entries[index-1].rest===0;
    if(at&&current.phase==='count')seconds+=remaining;
    else if(checkpoint?.phase==='count')seconds+=checkpoint.remaining;
    else if(needsCountdown){
@@ -67,7 +68,7 @@ function dayOverviewData(){
  if(dayOverviewDate!==date()){dayOverviewDate=date();dayOverviewOpen=false}
  const sections=[],ledger=overviewLedger();let seconds=0,started=false;
  for(const section of Object.keys(sectionNames)){
-  const current=runs[section]?.day===date()?runs[section]:null,done=!!state.blockDone?.[date()]?.includes(section);
+  const stored=runs[section]?.day===date()?runs[section]:null,current=stored?.exerciseRepeat||stored,done=!!state.blockDone?.[date()]?.includes(section);
   const entries=done&&state.completedPlans?.[date()]?.[section]||current?.plan||plan(section);
   const blocks=overviewBlocks(section,entries);
   if(current){const completed=new Set(current.completedSets||[]);blocks.forEach(block=>storeOverviewCredits(section,block,block.indices.filter(index=>completed.has(index)).map(index=>entries[index].set)))}
@@ -145,8 +146,116 @@ function refreshDayOverview(){
  const body=host.querySelector('.overview-body'),markup=overviewBody(data);if(body._overviewMarkup!==markup){body.innerHTML=markup;body._overviewMarkup=markup}
 }
 
+// Merge today's plan by exercise so added sets extend the original sequence.
+function reconcileBallDayPlan(priorWeekly, mastered=false){
+ const day=date(), visible=runs.ball;
+ const current=visible?.exerciseRepeat||visible;
+ const saved=state.completedPlans?.[day]?.ball||[];
+ const fresh=plan('ball');
+ const selected=fresh.find(row=>row.kind==='Wochenübung')?.key;
+ if(priorWeekly&&!selected&&!state.finished)priorWeekly=undefined;
+ if(!current&&!saved.length&&(!priorWeekly||priorWeekly===selected))return;
+ const value=current||{day,section:'ball',plan:[],index:0,phase:'ready',remaining:5,paused:false,completedSets:[],completedBlocks:[],rotations:levels.map(()=>0)};
+ if(value.repeatMode)return;
+ const previous=value.plan[value.index];
+ const groups=new Map();
+ const groupFor=row=>{
+  const key=JSON.stringify([row.kind,row.key]);
+  if(!groups.has(key))groups.set(key,{kind:row.kind,key:row.key,old:[],desired:[]});
+  return groups.get(key);
+ };
+ const archived=!value.unifiedBall&&saved.length>0;
+ if(archived)saved.forEach(row=>groupFor(row).old.push({row,completed:true}));
+ const activeCompleted=new Set(value.completedSets||[]);
+ const activeRows=value.plan.map((row,index)=>({row,index}));
+ if(archived&&value.phase==='done')activeRows.reverse();
+ activeRows.forEach(({row,index})=>{
+  const group=groupFor(row),completed=activeCompleted.has(index);
+  if(archived&&value.phase==='done'&&completed){
+   // The closed-day archive already includes this run's completed sets.
+   const prior=group.old.findLast(item=>item.index===undefined);
+   if(prior){prior.index=index;return}
+  }
+  group.old.push({row,index,completed});
+ });
+ const legacyMastered=!value.unifiedBall?(value.skippedSets||[]).map(index=>value.plan[index]?.key).filter(Boolean):[];
+ const masteredWeekly=[...new Set([...(value.masteredWeekly||legacyMastered),...(mastered?[priorWeekly]:[])])];
+ const wasTrained=groups.get(JSON.stringify(['Wochenübung',priorWeekly]))?.old.some(row=>row.completed);
+ let optionalWeekly=value.optionalWeekly;
+ if(selected!==priorWeekly&&priorWeekly){
+  const origin=value.weeklyOrigin||priorWeekly;
+  value.weeklyOrigin=origin;
+  optionalWeekly=selected&&selected!==origin&&(mastered||wasTrained||optionalWeekly)?selected:undefined;
+ }
+ fresh.forEach(row=>groupFor(row).desired.push(row));
+ // Finished review drills may already have rotated out of the queue.
+ if(state.groups.ball&&isScheduled('review'))levels.forEach((level,i)=>{
+  const kind='Wiederholung · '+level;
+  const candidates=[...groups.values()].filter(group=>group.kind===kind);
+  candidates.forEach((group,n)=>{
+   const template=group.old[0]?.row||group.desired[0];
+   group.desired=n<state.reviews[i].count?Array.from({length:state.reviews[i].sets},()=>({...template,work:state.work,rest:state.rest})):[];
+  });
+ });
+ const priority=group=>group.kind==='Wochenübung'?(group.key===selected?0:1):group.kind.startsWith('Wiederholung')?2:3;
+ const sorted=[...groups.values()].sort((a,b)=>priority(a)-priority(b));
+ const rows=[],completedSets=[],skippedSets=[],completedBlocks=[],checkpoints={},colourResults={};
+ let currentIndex=-1;
+ for(const group of sorted){
+  const weekly=group.kind==='Wochenübung';
+  const historical=weekly&&group.key!==selected;
+  const keepHistorical=group.old.some(item=>item.completed)||masteredWeekly.includes(group.key);
+  const essential=group.old.findLastIndex(({index,completed})=>completed||value.checkpoints?.[index]||index===value.index&&['work','count'].includes(value.phase))+1;
+  const total=historical?(keepHistorical?group.old.length:0):Math.max(group.desired.length,essential);
+  const first=rows.length;
+  for(let offset=0;offset<total;offset++){
+   const item=group.old[offset],oldIndex=item?.index;
+   const checkpoint=value.checkpoints?.[oldIndex];
+   const row=item?.row||group.desired[offset],index=rows.length;
+   rows.push({...row,set:offset+1,total});
+   if(item?.completed)completedSets.push(index);
+   else if(historical)skippedSets.push(index);
+   if(oldIndex!==undefined&&oldIndex===value.index)currentIndex=index;
+   if(checkpoint&&(!historical||!mastered))checkpoints[index]=checkpoint;
+   if(value.colourResults?.[oldIndex])colourResults[index]=value.colourResults[oldIndex];
+  }
+  if(total&&rows.slice(first).every((_,offset)=>completedSets.includes(first+offset)))completedBlocks.push(rows.length-1);
+ }
+ if(!rows.length)return;
+ const isDone=index=>completedSets.includes(index)||skippedSets.includes(index);
+ const isOpen=(row,index)=>!isDone(index)&&!(row.kind==='Wochenübung'&&row.key===optionalWeekly);
+ const open=rows.findIndex(isOpen);
+ if(open>=0&&state.blockDone?.[day]?.includes('ball'))state.blockDone[day]=state.blockDone[day].filter(section=>section!=='ball');
+ if(priorWeekly&&selected!==priorWeekly){
+  if(previous&&currentIndex>=0&&value.phase==='work'&&value.paused&&!mastered)checkpoints[currentIndex]={phase:'work',remaining:value.remaining};
+  const newWeekly=rows.findIndex((row,index)=>row.kind==='Wochenübung'&&row.key===selected&&!isDone(index));
+  if(newWeekly>=0)currentIndex=newWeekly;
+  value.phase='ready';value.paused=false;value.remaining=5;
+ }
+ if(currentIndex<0||value.phase==='done'&&open>=0){
+  currentIndex=open>=0?open:0;
+  value.phase='ready';value.paused=false;value.remaining=5;
+ }
+ if(!['count','work','done'].includes(value.phase)){
+  const currentRow=rows[currentIndex],start=currentIndex-currentRow.set+1;
+  const next=rows.findIndex((row,index)=>index>=start&&index<start+currentRow.total&&!isDone(index));
+  if(next>=0&&next!==currentIndex){currentIndex=next;value.phase='ready';value.remaining=5;value.paused=false}
+  if(isDone(currentIndex)){value.phase='review';value.remaining=0;value.paused=false}
+  else if(value.phase==='review'){value.phase='ready';value.remaining=5;value.paused=false}
+ }
+ Object.assign(value,{plan:rows,index:currentIndex,completedSets,skippedSets,completedBlocks,checkpoints,colourResults,optionalWeekly,masteredWeekly,unifiedBall:true,selectedCompleted:value.phase==='review',masterConfirm:false});
+ if(value.phase==='ready'&&checkpoints[currentIndex]&&!isDone(currentIndex)){
+  const checkpoint=checkpoints[currentIndex];delete checkpoints[currentIndex];
+  Object.assign(value,checkpoint,{paused:true});
+  prepareTrainingContinuation(value);
+ }
+ if(visible?.exerciseRepeat)return;
+ runs.ball=value;
+ if(activeSection==='ball')run=value;
+}
+
 // Reopen finished areas with only the additional work requested today.
-function reopenExtendedPlans(){reconcileJugglingPlan();['ball','feints','juggling'].forEach(section=>reopenExtendedPlan(section,section==='ball'))}
+function reopenExtendedPlans(priorWeekly){reconcileBallDayPlan(priorWeekly);reconcileJugglingPlan();['feints','juggling'].forEach(section=>reopenExtendedPlan(section))}
 // Settings apply to the unfinished part of today's juggling session. Completed
 // rows remain immutable evidence; timer ledgers already contain elapsed time.
 function reconcileJugglingPlan(){
@@ -242,5 +351,5 @@ function preserveDiscardedWork(value){
  });
  if(!rows.length)return;
  state.completedPlans??={};state.completedPlans[date()]??={};
- state.completedPlans[date()][value.section]=[...(state.completedPlans[date()][value.section]||[]),...rows];
+ state.completedPlans[date()][value.section]=value.unifiedBall?rows:[...(state.completedPlans[date()][value.section]||[]),...rows];
 }

@@ -7,7 +7,7 @@ const ctx={Date,Map,Set,Math,Object,JSON,Number,String,tab:'today',activeSection
 vm.createContext(ctx);const cardsSource=fs.readFileSync(__dirname+'/../player-cards.js','utf8');vm.runInContext(cardsSource.slice(cardsSource.indexOf('const playerCardMaterials='),cardsSource.indexOf('// Pure rating rules')),ctx);vm.runInContext(fs.readFileSync(__dirname+'/../day-overview.js','utf8'),ctx);vm.runInContext(fs.readFileSync(__dirname+'/../today-navigation.js','utf8')+';this.nav=todayNavigation;',ctx);
 ctx.playerCards.collectionSnapshot=ctx.playerCards.snapshot;const nav=ctx.nav;assert.equal(nav.screen(),'areas');assert.equal(nav.label(nav.status('feints')),'ca. 2:05 Min.');
 ctx.runs.feints={day,section:'feints',plan:entries,index:1,phase:'ready',completedSets:[0]};ctx.run=ctx.runs.feints;
-assert.equal(nav.label(nav.status('feints')),'noch ca. 1:00 Min.');
+assert.equal(nav.label(nav.status('feints')),'noch ca. 1:05 Min.');
 ctx.run.phase='review';ctx.run.completedSets=[0,1];assert.equal(nav.label(nav.status('feints')),'Geschafft ✓');assert(!ctx.state.blockDone[day],'UI completion must not award or reveal');
 ctx.run=null;ctx.runs={};assert(nav.status('feints').done,'completed ledger survives discarding run');
 ctx.state.overviewDay={day:'2026-11-10',sections:{}};assert(!nav.status('feints').done,'previous-day credits cannot complete today');
@@ -21,7 +21,7 @@ assert(nav.areaMarkup().includes('data-today-view="areas" aria-current="page"'))
 const app=fs.readFileSync(__dirname+'/../app.js','utf8');const area=app.slice(app.indexOf('function renderToday('),app.indexOf('function masteredControl('));assert(!area.includes('${dayOverviewMarkup()}'));assert(!area.includes('class="section-choice"'));assert(!area.includes('class="area-title-row"'));
 assert(!app.includes('records-player-card'));
 const control=app.slice(app.indexOf('function masteredControl('),app.indexOf('function masterRunDrill('));assert(control.includes('<h3>Nächste Wochenübung?</h3>'));assert(control.indexOf('<h3>')<control.indexOf('id="run-master"'));
-const index=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8');assert(index.includes('today-navigation.js?v=147')&&sw.includes('today-navigation.js?v=147'));assert(index.indexOf('today-navigation.js')<index.indexOf('app.js?v=169'));
+const index=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8');assert(index.includes('today-navigation.js?v=148')&&sw.includes('today-navigation.js?v=148'));assert(index.indexOf('today-navigation.js')<index.indexOf('app.js?v=170'));
 console.log('PASS: daily status independent of reveal, exact remaining times, discarded/imported/day-isolated credits, tier goals, highest tier, view/scroll memory, unfinished-run priority, pause on leaving and offline module.');
 
 ctx.runs={};ctx.run=null;ctx.state.blockDone={};ctx.state.completedPlans={[day]:{feints:entries}};ctx.state.overviewDay={day,sections:{}};
