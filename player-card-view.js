@@ -6,7 +6,6 @@ function mountPlayerCard(host,options){
  const backs=playerCardMaterials.map(m=>m.back),fronts=playerCardMaterials.map(m=>m.front);
  const root=host.querySelector('#fvo-card-preview'),q=s=>root.querySelector(s);
  const warmAssets=[...backs,...fronts].map(src=>{const image=new Image();image.src=src;return image;});
- const ratingUnderlay=document.createElement('div');ratingUnderlay.className='fp-rating-underlay';host.querySelector('.fp-front').insertBefore(ratingUnderlay,host.querySelector('.fp-name'));
  const names=playerCardMaterials.map(m=>m.name),metals=playerCardMaterials.map(m=>m.metal);
  const turn=q('.fp-turn'),back=q('.fp-back'),front=q('.fp-front'),title=q('.fp-title'),result=q('.fp-result'),total=q('.fp-total'),ratings=[...root.querySelectorAll('.fp-ratings span')];
  const scene={value:options.correction?'fall':options.to.tier>options.from.tier?'upgrade':'reveal'},tier={value:options.from.tier},reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -17,7 +16,7 @@ function mountPlayerCard(host,options){
  function at(ms,fn){const token=serial;timers.push(setTimeout(()=>{if(token===serial)fn()},ms));}
  function anim(el,keyframes,duration,delay=0){const a=el.animate(keyframes,{duration,delay,easing:'cubic-bezier(.33,0,.2,1)',fill:'forwards'});animations.push(a);return a;}
  function side(which){back.hidden=which!=='back';front.hidden=which!=='front';turn.style.transform='none';}
- function material(t){front.dataset.cardMaterial=t===8?'football-god':'';front.dataset.cardTier=String(t);q('.fp-back img').src=backs[t];q('.fp-front img').src=fronts[t];q('.fp-frame-overlay').src=fronts[t];back.style.maskImage='url('+backs[t]+')';front.style.maskImage='url('+fronts[t]+')';q('.fp-back-light').style.maskImage='url('+backs[t]+')';q('.fp-mist-clip').style.maskImage='url('+backs[t]+'),url('+backs[t]+')';q('.fp-stage').style.setProperty('--metal',metals[t]);title.querySelector('strong').textContent=names[t];q('.fp-back img').alt=names[t]+' – Kartenrückseite';}
+ function material(t){front.dataset.cardTier=String(t);q('.fp-back img').src=backs[t];q('.fp-front img').src=fronts[t];q('.fp-frame-overlay').src=fronts[t];back.style.maskImage='url('+backs[t]+')';front.style.maskImage='url('+fronts[t]+')';q('.fp-back-light').style.maskImage='url('+backs[t]+')';q('.fp-mist-clip').style.maskImage='url('+backs[t]+'),url('+backs[t]+')';q('.fp-stage').style.setProperty('--metal',metals[t]);title.querySelector('strong').textContent=names[t];q('.fp-back img').alt=names[t]+' – Kartenrückseite';}
  function labelBallStars(rating,snapshot){
    rating.setAttribute('aria-label',`BALL ${snapshot.values[0]} · ${snapshot.ballDots??0} von 3 Fortschrittspunkten`);
  }
