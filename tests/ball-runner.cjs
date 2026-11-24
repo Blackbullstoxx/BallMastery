@@ -31,3 +31,7 @@ assert(html.includes(repeatAction));
 const sameExercise = {...completed,plan:completed.plan.map((row,index)=>({...row,key:'048',kind:'Wochenübung',set:index+1,total:2}))};
 assert(ctx.ballRunnerMarkup(sameExercise,false).includes('id="pause"'));
 console.log('PASS: the next exercise stays primary through the break, replay is secondary, and pauses within an exercise remain available');
+
+const videoAndNavigation=ctx.ballRunnerMarkup({...completed,index:1,phase:'work',paused:true},false);
+assert(videoAndNavigation.includes('id="toggle-video"') && videoAndNavigation.includes('id="exercise-prev"'));
+assert(videoAndNavigation.indexOf('id="toggle-video"')<videoAndNavigation.indexOf('id="exercise-prev"'));
