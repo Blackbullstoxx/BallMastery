@@ -17,7 +17,7 @@ h=ctx.jugglingRunnerMarkup(r,false);
 assert(h.includes('Übung 2 von 3'));
 assert(h.indexOf('id="ready"')<h.indexOf('id="exercise-prev"'));
 assert(h.indexOf('id="exercise-prev"')<h.indexOf('id="exercise-next"'));
-assert(h.indexOf('id="exercise-next"')<h.indexOf('data-score='));
+assert(h.indexOf('data-score=')<h.indexOf('id="ready"'));
 r.completedSets=[0];h=ctx.jugglingRunnerMarkup(r,false);
 assert(h.includes('Übung 1 von 2'));
 assert(!h.includes('id="exercise-prev"')&&h.includes('id="exercise-next"'));

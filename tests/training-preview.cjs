@@ -16,7 +16,7 @@ const html=ctx.trainingPreview('juggling',[{key:'toe',name:'Zehenjonglieren',wor
 assert(html.includes('Übung 1 von 3'));
 assert(html.indexOf('Übung 1 von 3')<html.indexOf('<h3>Zehenjonglieren</h3>'));
 assert(html.indexOf('id="start"')<html.indexOf('id="exercise-next"'));
-assert(html.indexOf('id="exercise-next"')<html.indexOf('data-score='));
+assert(html.indexOf('data-score=')<html.indexOf('id="start"'));
 const empty=ctx.trainingPreview('juggling',[]);
 assert(empty.includes('id="start" disabled')&&!empty.includes('Trainingsfortschritt'));
 console.log('PASS: last five recorded daily maxima median, sparse days, duplicates, future/mode/technique isolation, explicit zero vs missing, one shared start and unscored technique.');
