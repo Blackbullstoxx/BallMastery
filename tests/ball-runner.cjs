@@ -12,3 +12,22 @@ console.log('PASS: full-width single video action and separate feints summary');
 for(let level=0;level<4;level++){const badge=ctx.ballExerciseBadge({kind:'Wiederholung · Meister ★★★★',key:'test',level});assert.equal((badge.match(/★/g)||[]).length,level+1);assert(!badge.includes('Meister'));assert(badge.includes('Wiederholung'));}
 assert(ctx.ballExerciseBadge({kind:'Feste Zusatzübung',key:'test',level:1}).includes('Zusatzübung'));
 console.log('PASS: compact green labels with one to four stars and no level names');
+
+const completed = {...r,plan:[...r.plan,{...r.plan[0],key:'099',kind:'Feste Zusatzübung'}],phase:'rest',paused:false,completedSets:[0]};
+const nextAction = '<button class="primary" id="next-drill">Nächste Übung ansehen</button>';
+const repeatAction = '<button class="back-button" id="repeat-exercise">Übung erneut starten</button>';
+html=ctx.ballRunnerMarkup(completed,false);
+assert(html.includes(nextAction));
+assert(html.includes('id="timer"'));
+assert(!html.includes('id="pause"'));
+assert(!html.includes('id="repeat-exercise"'));
+html=ctx.ballRunnerMarkup({...completed,phase:'review'},false);
+assert(!html.includes('id="timer"'));
+assert(html.includes(nextAction) && html.includes(repeatAction));
+assert(html.indexOf(nextAction)<html.indexOf(repeatAction));
+html=ctx.ballRunnerMarkup({...completed,phase:'review',index:1,completedSets:[0,1]},true);
+assert(html.includes('class="primary" id="finish-area"'));
+assert(html.includes(repeatAction));
+const sameExercise = {...completed,plan:completed.plan.map((row,index)=>({...row,key:'048',kind:'Wochenübung',set:index+1,total:2}))};
+assert(ctx.ballRunnerMarkup(sameExercise,false).includes('id="pause"'));
+console.log('PASS: the next exercise stays primary through the break, replay is secondary, and pauses within an exercise remain available');
