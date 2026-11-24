@@ -35,7 +35,7 @@ function previewBallExercise(d){
 }
 function previewJugglingTechnique(d,options={}){
  const stats=previewScoreStats(d.key,0),level=stats.level===null?null:stats.level.toLocaleString('de-DE',{maximumFractionDigits:0,useGrouping:false});
- return `<section class="card training-exercise juggling-technique" aria-label="${esc(d.name)}"><div class="technique-heading"><h3>${esc(d.name)}</h3>${options.status?`<span class="technique-status">${esc(options.status)}</span>`:''}</div><p class="training-prescription">${options.subtitle||`${(d.work/60).toLocaleString('de-DE',{maximumFractionDigits:2})} Min.`}</p>${options.timer||''}${d.noScore?'':`<div class="training-metrics training-metrics-four">${previewMetric(stats.today,'Heute')}${previewMetric(level,'Form',`Median der Tagesbestwerte der letzten fünf erfassten Trainingstage dieser Technik; bisher ${stats.count} ${stats.count===1?'Eintrag':'Einträge'}. Trainingsfreie Tage zählen nicht als null.`)}${previewMetric(stats.record,'Rekord')}${previewTrend(d.key,0,stats.rows)}</div><p class="technique-input-label">Kontakte am Stück</p>${previewScoreInput(d.key,0)}`}${options.afterInput||''}</section>`;
+ return `<section class="card training-exercise juggling-technique" aria-label="${esc(d.name)}"><div class="technique-heading"><h3>${esc(d.name)}</h3>${options.status?`<span class="technique-status">${esc(options.status)}</span>`:''}</div><p class="training-prescription">${options.subtitle||`${(d.work/60).toLocaleString('de-DE',{maximumFractionDigits:2})} Min.`}</p>${options.timer||''}${options.readyActions||''}${d.noScore?'':`<div class="training-metrics training-metrics-four">${previewMetric(stats.today,'Heute')}${previewMetric(level,'Form',`Median der Tagesbestwerte der letzten fünf erfassten Trainingstage dieser Technik; bisher ${stats.count} ${stats.count===1?'Eintrag':'Einträge'}. Trainingsfreie Tage zählen nicht als null.`)}${previewMetric(stats.record,'Rekord')}${previewTrend(d.key,0,stats.rows)}</div><p class="technique-input-label">Kontakte am Stück</p>${previewScoreInput(d.key,0)}`}${options.afterInput||''}</section>`;
 }
 function trainingNavigationMarkup(value){
  const back=exerciseTarget(value,-1)>=0,forward=exerciseTarget(value,1)>=0;
@@ -44,8 +44,18 @@ function trainingNavigationMarkup(value){
 }
 function trainingPreview(section,entries){
  const start=`<button class="primary" id="start" ${entries.length?'':'disabled'}>Los geht’s</button>`;
- if(section==='juggling')return `${previewTrainingSummary(section)}${entries.length?previewJugglingTechnique(entries[0]):''}<div class="training-shared-start">${start}${trainingNavigationMarkup({plan:entries,index:0})}</div>`;
+ if(section==='juggling'){
+  const summary=previewTrainingSummary(section);
+  if(!entries.length)return `${summary}<div class="training-shared-start">${start}</div>`;
+  const preview={plan:entries,index:0};
+  const readyActions=jugglingReadyActions(start,preview);
+  return summary+jugglingProgressMarkup(preview)+previewJugglingTechnique(entries[0],{readyActions});
+ }
  return `${previewTrainingSummary(section)}<section class="card training-exercise">${section==='ball'?(entries.length?previewBallExercise(entries[0]):'<p>Keine Übungen ausgewählt.</p>'):`<h3>Finte frei wählen</h3><p class="training-prescription">${state.feintSets} × ${state.feintWork} s · ${state.feintRest} s Pause</p>`}${start}${trainingNavigationMarkup({plan:entries,index:0})}</section>`;
+}
+
+function jugglingReadyActions(action,value){
+ return `<div class="training-shared-start">${action}${trainingNavigationMarkup(value)}</div>`;
 }
 
 // Reuse the same technique card while preparing, timing, reviewing and revisiting.
@@ -57,11 +67,11 @@ function jugglingProgressMarkup(value){
 function jugglingRunnerMarkup(value,last){
  const d=value.plan[value.index],review=value.phase==='review',ready=value.phase==='ready',timing=!review&&!ready;
  const status=review?'Geschafft ✓':value.paused?'Pausiert':ready?'':value.phase==='count'?'Bereit machen':'Läuft';
- const card=previewJugglingTechnique(d,{status,subtitle:value.extraSeconds?`Zusatzzeit · ${(value.extraSeconds/60).toLocaleString('de-DE')} Min.`:'',timer:timing?timerMarkup():review?jugglingDoneTimerMarkup():'',afterInput:review?jugglingExtraMarkup(value,last):''});
  const action=ready?'<button class="primary" id="ready">Los geht’s</button>':review?'':value.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
- const navigation=trainingNavigationMarkup(value);
+ const card=previewJugglingTechnique(d,{status,subtitle:value.extraSeconds?`Zusatzzeit · ${(value.extraSeconds/60).toLocaleString('de-DE')} Min.`:'',timer:timing?timerMarkup():review?jugglingDoneTimerMarkup():'',readyActions:ready?jugglingReadyActions(action,value):'',afterInput:review?jugglingExtraMarkup(value,last):''});
+ const navigation=ready?'':trainingNavigationMarkup(value);
  const finish=!last&&canFinishTraining(value)?'<button type="button" class="back-button" id="finish-area">Jonglieren abschließen</button>':'';
- return `${previewTrainingSummary('juggling')}${jugglingProgressMarkup(value)}${card}<div class="technique-actions">${action}${value.extraSeconds?'<button class="back-button" id="juggling-extra-end">Zusatzzeit beenden</button>':''}${navigation}${finish}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>`;
+ return `${previewTrainingSummary('juggling')}${jugglingProgressMarkup(value)}${card}<div class="technique-actions">${ready?'':action}${navigation}${value.extraSeconds?'<button class="back-button" id="juggling-extra-end">Zusatzzeit beenden</button>':''}${finish}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>`;
 }
 function pauseActionsMarkup(){return '<div class="two runner-pause-actions"><button class="primary" id="resume">Fortsetzen</button><button id="restart">Neustart</button></div>'}
 function ballVideoAction(value){
