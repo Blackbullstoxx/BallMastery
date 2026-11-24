@@ -101,6 +101,30 @@ function nextOpenTrainingSet(value){
  }
  return -1;
 }
+// Only interrupted exercise time can be resumed. Between sets, prepare the next open set.
+function prepareTrainingContinuation(value){
+ if(value.phase==='done')return value;
+ if(value.phase==='rest'||value.phase==='review'){
+  if(value.individual)return value;
+  const next=nextOpenTrainingSet(value);
+  value.phase='review';
+  value.remaining=0;
+  value.paused=false;
+  if(next<0)return value;
+  const checkpoint=value.checkpoints?.[next];
+  if(checkpoint)delete value.checkpoints[next];
+  value.index=next;
+  value.phase=checkpoint?.phase??'ready';
+  value.remaining=checkpoint?.remaining??5;
+  value.paused=!!checkpoint;
+  if(checkpoint?.extraSeconds)value.extraSeconds=checkpoint.extraSeconds;
+ }
+ if(value.phase==='work'&&value.remaining<(value.extraSeconds||value.plan[value.index].work))return value;
+ value.phase='ready';
+ value.remaining=5;
+ value.paused=false;
+ return value;
+}
 function canFinishTraining(value){
  if(!value||value.individual||value.extraSeconds||value.extraStarting)return false;
  const settled=value.phase==='ready'||value.phase==='review'||value.paused;
@@ -168,7 +192,7 @@ function restoreSavedRun(saved,section,nested=false){
   restoredPlan.push(row);
  }
  if(restoredPlan.at(-1).set!==restoredPlan.at(-1).total||!Number.isInteger(saved.index)||saved.index<0||saved.index>=restoredPlan.length||!['ready','count','work','rest','review','done'].includes(saved.phase))return null;
- if(saved.extraSeconds!==undefined&&(section!=='juggling'||!Number.isInteger(saved.extraSeconds)||saved.extraSeconds<30||saved.extraSeconds>7200||!['count','work'].includes(saved.phase)))return null;
+ if(saved.extraSeconds!==undefined&&(section!=='juggling'||!Number.isInteger(saved.extraSeconds)||saved.extraSeconds<30||saved.extraSeconds>7200||!['ready','count','work'].includes(saved.phase)))return null;
  const limit=saved.phase==='count'?5:saved.phase==='rest'?restoredPlan[saved.index].rest:(saved.extraSeconds||restoredPlan[saved.index].work);
  if(!Number.isFinite(saved.remaining)||saved.remaining<0||(['count','work','rest'].includes(saved.phase)&&saved.remaining>limit))return null;
  if(!Array.isArray(saved.completedSets)||!saved.completedSets.every(i=>Number.isInteger(i)&&i>=0&&i<restoredPlan.length))return null;
@@ -181,9 +205,9 @@ function restoreSavedRun(saved,section,nested=false){
  if(saved.phase==='done'&&!state.blockDone?.[date()]?.includes(section))return null;
  if(!saved.individual&&(saved.phase==='review'||saved.extraSeconds)&&!completedSets.includes(saved.index)&&!skippedSets.includes(saved.index))return null;
  if(saved.individual&&(saved.extraSeconds||completedSets.length))return null;
- return {...(saved.individual?{individual:true,scheduled,creditStart:saved.creditStart}:{}),...(saved.extraSeconds?{extraSeconds:saved.extraSeconds}:{}),day:date(),section,plan:restoredPlan,index:saved.index,phase:saved.phase,remaining:saved.remaining,completedSets,completedBlocks,
+ return prepareTrainingContinuation({...(saved.individual?{individual:true,scheduled,creditStart:saved.creditStart}:{}),...(saved.extraSeconds?{extraSeconds:saved.extraSeconds}:{}),day:date(),section,plan:restoredPlan,index:saved.index,phase:saved.phase,remaining:saved.remaining,completedSets,completedBlocks,
   ...(saved.checkpoints?{checkpoints:saved.checkpoints}:{}),...(skippedSets.length?{skippedSets}:{}),...(saved.optionalWeekly?{optionalWeekly:saved.optionalWeekly}:{}),
-  colourResults:restoreColourResults(saved.colourResults,restoredPlan.length),repeatMode:!!saved.repeatMode&&(!!state.blockDone?.[date()]?.includes(section)||section==='juggling'&&typeof individualJugglingHasCredits==='function'&&individualJugglingHasCredits()),mastered:!!saved.mastered,paused:['count','work','rest'].includes(saved.phase),restored:saved.phase!=='done',rotations:levels.map(()=>0)};
+  colourResults:restoreColourResults(saved.colourResults,restoredPlan.length),repeatMode:!!saved.repeatMode&&(!!state.blockDone?.[date()]?.includes(section)||section==='juggling'&&typeof individualJugglingHasCredits==='function'&&individualJugglingHasCredits()),mastered:!!saved.mastered,paused:['count','work','rest'].includes(saved.phase),rotations:levels.map(()=>0)});
 }
 function restoreTraining(){
  const saved=state.activeTraining;runs={};run=null;
@@ -196,14 +220,6 @@ function restoreTraining(){
  }
  progressReady=true;
  if(typeof todayNavigation!=='undefined')todayNavigation.restore();
-}
-function renderRecovery(){
- const d=run.plan[run.index],timed=['count','work','rest'].includes(run.phase),remaining=Math.ceil(run.remaining);
- const time=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');
- const detail=timed?`${run.phase==='count'?'Countdown':run.phase==='rest'?'Pause':run.extraSeconds?'Zusatzzeit':'Übungszeit'} · noch ${time}`:run.phase==='review'?'Diese Übung ist bereits geschafft.':'Bereit für diese Übung.';
- $('#runner').classList?.add('summary-runner');$('#runner').innerHTML=`${previewTrainingSummary(run.section)}<section class="card"><span class="badge">Training gespeichert</span><h2>${esc(d.name)}</h2>${run.section==='ball'?ballExerciseBadge(d):''}<p class="hint">${run.section==='ball'?'':esc(d.kind)+' · '}${trainingPositionText(run)}</p><p>${detail}</p><button class="primary" id="recover-run">Fortsetzen</button><button class="back-button" id="discard-run">Training verwerfen</button><div id="discard-confirm"></div>${trainingNavigationMarkup(run)}</section>`;
- $('#recover-run').onclick=()=>{run.restored=false;if(timed)void resumeRun();else{renderRunner();scrollTimerIntoView(true)}};
- $('#discard-run').onclick=()=>confirmInline($('#discard-confirm'),'Diesen begonnenen Bereich verwerfen? Bereits absolvierte Übungen und gespeicherte Rekorde bleiben erhalten.',stop);
 }
 function checkpointTraining(){
  if(isReadOnly())return;

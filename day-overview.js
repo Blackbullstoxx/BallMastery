@@ -174,7 +174,7 @@ function reconcileJugglingPlan(){
   }
   value.checkpoints=checkpoints;
  }
- value.plan=next;value.completedSets=finished.map((_,index)=>index);value.completedBlocks=[...value.completedSets];delete value.historyIndex;delete value.beforeStop;value.stopping=false;
+ value.plan=next;value.completedSets=finished.map((_,index)=>index);value.completedBlocks=[...value.completedSets];delete value.historyIndex;
  if(keepCurrent){
   value.index=finished.length;
   if(value.phase==='work'){
@@ -183,8 +183,8 @@ function reconcileJugglingPlan(){
     next[value.index].work=Math.max(1,elapsed);const previous=run;run=value;try{countCompletedSet(next[value.index])}finally{run=previous}
     value.phase='review';value.paused=false;
    }
-  }else if(value.phase==='count'){value.remaining=Math.min(5,Math.max(0,oldRemaining));value.paused=true}
-  else{value.phase='ready';value.remaining=5;value.paused=false}
+  }else{value.phase='ready';value.remaining=5;value.paused=false}
+  if(value.phase==='work')prepareTrainingContinuation(value);
  }else if(completed.has(oldIndex)){
   value.index=value.plan.indexOf(old);value.phase='review';value.remaining=0;value.paused=false;
  }else if(pending.length){value.index=finished.length;value.phase='ready';value.remaining=5;value.paused=false}

@@ -28,7 +28,7 @@ function finishJugglingExtra(){
 }
 
 function endJugglingExtra(){
- if(isReadOnly()||run?.section!=='juggling'||!run.extraSeconds||!['count','work'].includes(run.phase))return;
+ if(isReadOnly()||run?.section!=='juggling'||!run.extraSeconds||!['ready','count','work'].includes(run.phase))return;
  syncBallTime();resetBallClock();silence();
  if(finishJugglingExtra()&&typeof dropboxBackup!=='undefined')dropboxBackup.changed(true);
 }
