@@ -13,4 +13,10 @@ ctx.state.scores=[{key:'toe',duration:0,date:'2026-11-01',value:0},{key:'toe',du
 assert.equal(s.level,ctx.recordCurrentLevel(s.rows));
 ctx.state.scores=[];ctx.sectionNames={juggling:'Jonglieren'};ctx.ballTrainingMarkup=()=>'';ctx.trainingSummaryMetrics=()=>'';ctx.techNames={toe:'Zehenjonglieren',free:'Freies Jonglieren',touches:'Gezielte Kontakte'};
 const html=ctx.trainingPreview('juggling',[{key:'toe',name:'Zehenjonglieren',work:420,set:1},{key:'free',name:'Freies Jonglieren',work:420,set:1},{key:'touches',name:'Gezielte Kontakte',work:60,set:1,noScore:true}]);assert.equal((html.match(/id="start"/g)||[]).length,1);assert.equal((html.match(/data-score=/g)||[]).length,1);assert.equal((html.match(/>Heute</g)||[]).length,1);assert(html.includes('Form'));assert(html.includes('Zehenjonglieren'));assert(!html.includes('Freies Jonglieren'));assert(!html.includes('Gezielte Kontakte'));assert(html.includes('id="exercise-next"'));assert(!html.includes('id="exercise-prev"'));assert(!html.includes('Ø letzte 7'));assert(!html.includes('Heute:'));assert(!html.includes('Ohne Pause'));assert(!html.includes('DEIN TRAINING'));
+assert(html.includes('Übung 1 von 3'));
+assert(html.indexOf('Übung 1 von 3')<html.indexOf('<h3>Zehenjonglieren</h3>'));
+assert(html.indexOf('id="start"')<html.indexOf('id="exercise-next"'));
+assert(html.indexOf('id="exercise-next"')<html.indexOf('data-score='));
+const empty=ctx.trainingPreview('juggling',[]);
+assert(empty.includes('id="start" disabled')&&!empty.includes('Trainingsfortschritt'));
 console.log('PASS: last five recorded daily maxima median, sparse days, duplicates, future/mode/technique isolation, explicit zero vs missing, one shared start and unscored technique.');

@@ -284,6 +284,8 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .preview-scoreform input{width:0;min-width:0;flex:1;background:#fff}
 .preview-scoreform button{flex:0 0 auto;background:#d9eabd;font-size:14px;font-weight:650;padding:10px 16px}
 .training-shared-start{margin:18px 0 15px}
+.juggling-technique .training-shared-start{margin:0 0 16px}
+.juggling-runner>.technique-actions:empty{display:none}
 .training-exercise>.primary{margin-top:4px}
 @media(max-width:400px){.training-summary{padding:16px 18px}.training-metric{padding:0 4px}.training-metric strong{font-size:21px}.training-metric>span,.training-metric summary>span{font-size:11px}.preview-scoreform button{padding:10px 12px}}
 @media(max-width:350px){.training-metric{padding:0 2px}.training-metric strong{font-size:20px}.training-metric>span,.training-metric summary>span{font-size:10px}.preview-scoreform{gap:8px}}
