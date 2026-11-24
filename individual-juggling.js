@@ -79,7 +79,7 @@ function returnFromIndividualJuggling(redraw=true){
  if(isReadOnly()||!run?.individual)return;
  if(['count','work'].includes(run.phase))endIndividualJuggling();
  const scheduled=run.scheduled;clearInterval(tick);silence();resetBallClock();
- if(scheduled){runs.juggling=scheduled;run=scheduled;run.restored=false}else{delete runs.juggling;run=null}
+ if(scheduled){runs.juggling=scheduled;run=scheduled}else{delete runs.juggling;run=null}
  reopenExtendedPlan('juggling');reopenExtendedPlan('juggling');reconcileJugglingPlan();if(redraw){render();if(run)scrollTimerIntoView(true);else window.requestAnimationFrame(()=>document.querySelector('#view .training-summary')?.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}))}
 }
 function individualJugglingRunnerMarkup(value){

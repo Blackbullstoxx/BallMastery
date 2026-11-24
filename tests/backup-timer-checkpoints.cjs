@@ -26,7 +26,7 @@ ctx.state.manualTraining=[{id:'test',date:'2026-11-10',milliseconds:90000}];asse
  let now=100000,overviewUpdates=0;
  const local={
   Date:{now:()=>now},state:{},progressReady:true,
-  run:{section:'juggling',phase:'work',paused:false,remaining:180,last:180,deadline:now+180000},
+  run:{section:'juggling',phase:'work',index:0,plan:[{work:180}],paused:false,remaining:180,last:180,deadline:now+180000},
   isReadOnly:()=>false,ensureWeeklyLearning(){},syncBallTime(){},rememberAreaTrainingTimes(){},
   refreshBallTimeDisplay(){},trainingSnapshot:()=>({remaining:local.run.remaining,paused:local.run.paused}),
   localStorage:{setItem(_key,value){writes.push(JSON.parse(value).activeTraining)}},
@@ -36,6 +36,7 @@ ctx.state.manualTraining=[{id:'test',date:'2026-11-10',milliseconds:90000}];asse
  vm.createContext(local);
  vm.runInContext(app.slice(app.indexOf('function save('),app.indexOf('function best(')),local);
  vm.runInContext(app.slice(app.indexOf('function update('),app.indexOf('async function resumeRun(')),local);
+ vm.runInContext(progress.slice(progress.indexOf('function nextOpenTrainingSet('),progress.indexOf('function canFinishTraining(')),local);
  vm.runInContext(progress.slice(progress.indexOf('function checkpointTraining(')),local);
  local.renderRunner=()=>local.save();
  local.save();
