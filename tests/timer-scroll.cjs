@@ -48,7 +48,7 @@ assert.equal(ctx.run.remaining,36.25);
 assert(ctx.run.paused);
 assert.deepEqual([...ctx.run.completedSets],[1]);
 assert.equal(ctx.exerciseTarget({...ctx.run,completedSets:[0,1]},-1),1,'navigation remains available when other exercises are complete');
-assert(ctx.canFinishTraining(ctx.run),'partially trained juggling can be closed');
+assert(!ctx.canFinishTraining(ctx.run),'paused and partially trained juggling cannot be completed');
 console.log('PASS: directional exercise selection and exact remaining time across a backup and return.');
 
 // Number every planned exercise, including completed exercises.

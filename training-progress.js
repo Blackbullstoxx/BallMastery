@@ -138,11 +138,7 @@ function canFinishTraining(value){
  const settled=value.phase==='ready'||value.phase==='review'||value.paused;
  if(!settled)return false;
  const worked=(value.completedSets||[]).length||value.optionalWeekly||(value.skippedSets||[]).length;
- if(worked&&dailyPlanSettled(value))return true;
- if(value.section!=='juggling'||value.repeatMode)return false;
- const active=value.plan[value.index];
- return !!worked||value.phase==='work'&&value.remaining<active.work||
-  Object.entries(value.checkpoints||{}).some(([i,checkpoint])=>checkpoint.phase==='work'&&checkpoint.remaining<value.plan[i].work);
+ return !!worked&&dailyPlanSettled(value);
 }
 function validRunCheckpoints(checkpoints,plan,completed){
  if(checkpoints===undefined)return true;

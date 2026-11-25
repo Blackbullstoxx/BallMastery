@@ -4,7 +4,7 @@ const app=fs.readFileSync(__dirname+'/../app.js','utf8');
 const fn=(name,next)=>app.slice(app.indexOf('function '+name+'('),app.indexOf('\nfunction '+next+'('));
 let completes=0,renders=0,sets=0,listener=null;
 const runner={innerHTML:''};
-const ctx={document:{querySelector:()=>null},Date,esc:String,tab:'today',silence:()=>{},run:null,tick:1,activeSection:'juggling',isReadOnly:()=>false,syncScreenAwake:()=>{},syncBallTime:()=>{},checkTrainingDay:()=>false,refreshTimerRing:()=>{},save:()=>{},refreshDayOverview:()=>{},beep:()=>{},clearInterval:()=>{},colourPerception:{sync:()=>{},finishSet:()=>{},summary:()=>''},countCompletedSet:()=>{sets++;ctx.run.completedSets=[ctx.run.index]},complete:()=>completes++,render:()=>renders++,preserveScroll:fn=>fn(),dropboxBackup:{changed:()=>{}},drills:[],completedExercises:()=>[],canPreviewNext:()=>false,sectionNames:{ball:'Ballbeherrschung',juggling:'Jonglieren',feints:'Finten'},ballTrainingMarkup:()=>'',trainingSummaryMetrics:()=>'',practiceDayList:()=>[],recordBallTrend:()=>null,recordBallTrendExplanation:()=>'',trainingModeCue:()=>'',video:()=>'',trainingPositionText:()=>'',trainingProgress:()=>0,scoreForm:()=>'<form data-score="toe"></form>',masteredControl:()=>'',canEndRepeat:()=>false,bindScores:()=>{}};
+const ctx={document:{querySelector:()=>null},Date,esc:String,tab:'today',silence:()=>{},run:null,tick:1,activeSection:'juggling',isReadOnly:()=>false,syncScreenAwake:()=>{},syncBallTime:()=>{},checkTrainingDay:()=>false,refreshTimerRing:()=>{},save:()=>{},refreshDayOverview:()=>{},beep:()=>{},clearInterval:()=>{},colourPerception:{sync:()=>{},finishSet:()=>{},summary:()=>''},countCompletedSet:()=>{sets++;ctx.run.completedSets=[ctx.run.index]},complete:()=>completes++,render:()=>renders++,preserveScroll:fn=>fn(),dropboxBackup:{changed:()=>{}},drills:[],completedExercises:()=>[],canPreviewNext:()=>false,sectionNames:{ball:'Ballbeherrschung',juggling:'Jonglieren',feints:'Finten'},ballTrainingMarkup:()=>'',trainingSummaryMetrics:()=>'',timerMarkup:()=>'',practiceDayList:()=>[],recordBallTrend:()=>null,recordBallTrendExplanation:()=>'',trainingModeCue:()=>'',video:()=>'',trainingPositionText:()=>'',trainingProgress:()=>0,scoreForm:()=>'<form data-score="toe"></form>',masteredControl:()=>'',canEndRepeat:()=>false,bindScores:()=>{}};
 ctx.$=selector=>selector==='#runner'?runner:selector==='#finish-area'&&runner.innerHTML.includes('id="finish-area"')?{addEventListener:(_,fn)=>listener=fn}:null;
 ctx.state={scores:[],colourScores:[]};ctx.date=()=> '2026-11-12';ctx.techNames={toe:'Zehenjonglieren'};
 vm.createContext(ctx);for(const file of ['record-charts.js','juggling-extra.js','training-preview.js'])vm.runInContext(fs.readFileSync(__dirname+'/../'+file,'utf8'),ctx);const progress=fs.readFileSync(__dirname+'/../training-progress.js','utf8');
@@ -14,6 +14,27 @@ for(const [section,noScore,juggling] of [['juggling',false,true],['juggling',tru
  completes=renders=sets=0;listener=null;runner.innerHTML='';ctx.activeSection=section;ctx.run={section,phase:'work',paused:false,plan:[{key:juggling?'toe':'feints',kind:section==='ball'?'Wochenübung':section,set:1,total:1,noScore,juggling,work:30}],index:0,last:1,deadline:Date.now()-1};
  ctx.update();assert.equal(ctx.run.phase,'review');assert.equal(sets,1);assert.equal(completes,0,'timer cannot launch reveal');assert.equal(renders,0);assert(runner.innerHTML.includes(ctx.sectionNames[section]+' abschließen'));assert(listener,'explicit finish action present');listener();assert.equal(completes,1);assert.equal(renders,1);
 }
+// Completing the first technique never allows the remaining scheduled time to be skipped.
+const jugglingPlan=['toe','free'].map(key=>({key,name:key,kind:'Jonglieren',set:1,total:1,work:60,rest:0,juggling:true,noScore:true}));
+ctx.run={day:ctx.date(),section:'juggling',phase:'review',paused:false,plan:jugglingPlan,index:0,remaining:0,completedSets:[0]};
+ctx.renderRunner();
+assert(runner.innerHTML.includes('id="next-drill"'));
+assert(!runner.innerHTML.includes('id="finish-area"'));
+completes=0;
+ctx.finishArea();
+assert.equal(completes,0);
+for(const phase of ['ready','work']){
+ Object.assign(ctx.run,{phase,index:1,paused:phase==='work',remaining:23});
+ ctx.renderRunner();
+ assert(!runner.innerHTML.includes('id="finish-area"'));
+ ctx.finishArea();
+ assert.equal(completes,0);
+}
+Object.assign(ctx.run,{phase:'review',paused:false,remaining:0,completedSets:[0,1]});
+ctx.renderRunner();
+assert(runner.innerHTML.includes('id="finish-area"'));
+ctx.finishArea();
+assert.equal(completes,1);
 // Audio preparation can wait; duplicate taps and leaving the area cannot complete twice.
 let ready,prepares=0;ctx.cardAudio={enabled:()=>true,prepare:()=>{prepares++;return {then:ok=>ready=ok}}};completes=0;ctx.finishArea();ctx.finishArea();assert.equal(prepares,1);assert.equal(completes,0);ctx.tab='records';ready();assert.equal(completes,0);ctx.tab='today';ctx.finishArea();ready();assert.equal(completes,1);delete ctx.cardAudio;
 // Saving a score keeps the finished timer in review; it does not trigger completion.

@@ -65,12 +65,12 @@ function jugglingRunnerMarkup(value,last){
  const card=previewJugglingTechnique(d,{status,subtitle:value.extraSeconds?`Zusatzzeit · ${(value.extraSeconds/60).toLocaleString('de-DE')} Min.`:'',timer:timing?timerMarkup():review?jugglingDoneTimerMarkup():''});
  const next=review&&!last&&!value.exerciseRepeat?nextOpenTrainingSet(value):-1;
  const nextAction=next>=0?'<button type="button" class="primary" id="next-drill">Nächste Übung</button>':'';
- const finish=last?'<button type="button" class="primary" id="finish-area">Jonglieren abschließen</button>':canFinishTraining(value)?'<button type="button" class="back-button" id="finish-area">Jonglieren abschließen</button>':'';
+ const finish=last?'<button type="button" class="primary" id="finish-area">Jonglieren abschließen</button>':'';
  const action=ready?'<button class="primary" id="ready">Los geht’s</button>':review?nextAction||(last?finish:''):value.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
  const repeat=exerciseRepeatMarkup(value,nextAction||last?'back-button':'primary','Erneut starten');
  const actions=nextAction&&repeat?exerciseReviewActionsMarkup(repeat,action):action+repeat;
  const extra=review&&!value.exerciseRepeat&&(value.completedSets||[]).includes(value.index)?jugglingExtraMarkup(value):'';
- return `${previewTrainingSummary('juggling')}${jugglingProgressMarkup(value)}${card}<div class="technique-actions">${actions}${value.extraSeconds?'<button class="back-button" id="juggling-extra-end">Zusatzzeit beenden</button>':''}${trainingNavigationMarkup(value,next)}${last?'':finish}${extra}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>`;
+ return `${previewTrainingSummary('juggling')}${jugglingProgressMarkup(value)}${card}<div class="technique-actions">${actions}${value.extraSeconds?'<button class="back-button" id="juggling-extra-end">Zusatzzeit beenden</button>':''}${trainingNavigationMarkup(value,next)}${extra}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>`;
 }
 function exerciseReviewActionsMarkup(repeat,action){
  return '<div class="two exercise-review-actions">'+repeat+action+'</div>';
