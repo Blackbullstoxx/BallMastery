@@ -8,7 +8,7 @@ const row=key=>({key,kind:'Jonglieren',set:1,total:1,work:420,rest:0});
 (async()=>{
 ctx.run={day,section:'juggling',plan:[row('toe'),row('free')],index:0,phase:'review',remaining:0,completedSets:[0],completedBlocks:[0]};ctx.runs.juggling=ctx.run;
 const plan=JSON.stringify(ctx.run.plan),settings=JSON.stringify(ctx.state.juggleMinutes),completed=JSON.stringify(ctx.run.completedSets);
-const html=ctx.jugglingExtraMarkup({...ctx.run,extraOpen:true},false);for(const n of [3,5,7])assert(html.includes('data-extra-minutes="'+n+'"'));assert(html.includes('Eigene Dauer'));assert(ctx.jugglingExtraMarkup(ctx.run,true).includes('Jonglieren abschließen'));
+const html=ctx.jugglingExtraMarkup({...ctx.run,extraOpen:true});for(const n of [3,5,7])assert(html.includes('data-extra-minutes="'+n+'"'));assert(html.includes('Eigene Dauer'));assert(ctx.jugglingExtraMarkup(ctx.run).includes('>Zusatzzeit</button>'));
 await ctx.startJugglingExtra(3);assert.equal(ctx.run.extraSeconds,180);assert.equal(ctx.run.phase,'count');assert.equal(calls,1);await ctx.startJugglingExtra(5);assert.equal(calls,1,'no duplicate start while countdown runs');
 ctx.run.deadline=now;ctx.run.last=1;ctx.update();assert.equal(ctx.run.remaining,180);assert.equal(ctx.run.phase,'work');ctx.run.paused=true;ctx.run.remaining=90;assert.equal(ctx.timerFraction(ctx.run),.5);
 const saved=JSON.parse(JSON.stringify(ctx.trainingSnapshot()));assert.equal(saved.runs.juggling.extraSeconds,180);const restored=ctx.restoreSavedRun(saved.runs.juggling,'juggling');assert(restored.paused);assert.equal(restored.extraSeconds,180);assert.equal(restored.remaining,90);assert.equal(restored.plan[0].work,420);
