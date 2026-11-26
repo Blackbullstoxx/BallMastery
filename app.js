@@ -288,7 +288,7 @@ function bindScores(){
   const input=form.querySelector('input');
   const n=Number(input.value);
   if(!Number.isInteger(n)||n<0||n>99999)return;
-  const alignTimer=run?.section==='ball'&&['count','work','rest'].includes(run.phase)&&form.closest('#runner.ball-runner');
+  const alignTimer=run?.section==='ball'&&['count','work','rest','review'].includes(run.phase)&&form.closest('#runner.ball-runner');
   const changed=recordScore(form.dataset.score,Number(form.dataset.duration),n,form.dataset.colourScore==='true');
   save();
   if(changed&&typeof dropboxBackup!=='undefined')dropboxBackup.changed(true);
