@@ -1,14 +1,14 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const ctx={state:{scores:[]},date:()=> '2026-11-14',esc:String,previewTrainingSummary:()=>'',trainingSummaryMetrics:()=>'',sectionNames:{ball:'Ballbeherrschung'},recordCurrentLevel:()=>null,recordSeries:()=>[],practiceDayList:()=>['2026-11-01','2026-11-02','2026-11-03','2026-11-04'],recordBallTrend:()=>null,recordBallTrendExplanation:()=>'',trainingModeCue:()=>'',canPreviewNext:()=>false,canFinishTraining:()=>true,trainingProgress:r=>r.completedSets.length,colourPerception:{summary:()=>''},timerMarkup:()=>'<div id="timer"></div>',video:()=>'<video></video>',masteredControl:()=>'',canEndRepeat:()=>false,scoreForm:()=>'<form data-colour-score="true"></form>'};vm.createContext(ctx);vm.runInContext(fs.readFileSync(__dirname+'/../training-preview.js','utf8'),ctx);
+const ctx={state:{scores:[]},date:()=> '2026-11-14',esc:String,previewTrainingSummary:()=>'',trainingSummaryMetrics:()=>'',sectionNames:{ball:'Ballbeherrschung'},recordCurrentLevel:()=>null,recordSeries:()=>[],practiceDayList:()=>['2026-11-01','2026-11-02','2026-11-03','2026-11-04'],recordBallTrend:()=>null,recordBallTrendExplanation:()=>'',trainingModeCue:()=>'',canPreviewNext:()=>false,canFinishTraining:()=>true,trainingProgress:r=>r.completedSets.length,colourPerception:{summary:()=>''},timerMarkup:(control='')=>'<div id="timer">'+control+'</div>',video:()=>'<video></video>',masteredControl:()=>'',canEndRepeat:()=>false,scoreForm:()=>'<form data-colour-score="true"></form>'};vm.createContext(ctx);vm.runInContext(fs.readFileSync(__dirname+'/../training-preview.js','utf8'),ctx);
 const progress=fs.readFileSync(__dirname+'/../training-progress.js','utf8');
 vm.runInContext(progress.slice(progress.indexOf('function trainingSetDone('),progress.indexOf('function canFinishTraining(')),ctx);
 const r={section:'ball',plan:[{key:'048',name:'Pull Push Outside',kind:'Wochenübung',set:1,total:1,work:30,rest:30}],index:0,phase:'work',paused:true,completedSets:[]};
-let before=JSON.stringify(r),html=ctx.ballRunnerMarkup(r,true);assert(html.includes('<strong>4</strong><span>Trainingstage</span>'));assert(html.indexOf('id="timer"')<html.indexOf('>Heute<'));assert(html.indexOf('>Trend<')<html.indexOf('placeholder="Wiederholungen"'));assert(html.indexOf('id="resume"')<html.indexOf('id="restart"'));assert(html.includes('data-score="048" data-duration="30" data-colour-score="false"'));assert(html.includes('id="toggle-video"'));assert.equal(JSON.stringify(r),before);
+let before=JSON.stringify(r),html=ctx.ballRunnerMarkup(r,true);assert(html.includes('<strong>4</strong><span>Trainingstage</span>'));assert(html.indexOf('id="timer"')<html.indexOf('>Heute<'));assert(html.indexOf('>Trend<')<html.indexOf('placeholder="Wiederholungen"'));assert(html.indexOf('id="resume"')<html.indexOf('id="restart"'));assert(html.includes('data-score="048" data-duration="30" data-colour-score="false"'));assert(html.includes('pause-media-open')&&!html.includes('id="toggle-video"'));assert.equal(JSON.stringify(r),before);
 r.plan[0].colour=true;html=ctx.ballRunnerMarkup(r,true);assert(html.includes('data-colour-score="true"'),'colour result input preserved');
 console.log('PASS: per-drill training days, timer/metric/input order, preserved score attributes, colour input and resume-first actions without state mutations');
-assert(ctx.ballVideoAction(r).includes('class="back-button" id="toggle-video"'),'single video action fills the row');
+assert(html.includes('pause-media-return'));
 html=ctx.feintsRunnerMarkup({...r,section:'feints'},true);assert(html.indexOf('training-summary')<html.indexOf('training-exercise'),'feints summary is outside and above exercise card');assert(html.includes('Satz 1 von 1'));assert(html.indexOf('id="resume"')<html.indexOf('id="restart"'));
-console.log('PASS: full-width single video action and separate feints summary');
+console.log('PASS: video switch inside the paused timer and separate feints summary');
 for(let level=0;level<4;level++){const badge=ctx.ballExerciseBadge({kind:'Wiederholung · Meister ★★★★',key:'test',level});assert.equal((badge.match(/★/g)||[]).length,level+1);assert(!badge.includes('Meister'));assert(badge.includes('Wiederholung'));}
 assert(ctx.ballExerciseBadge({kind:'Feste Zusatzübung',key:'test',level:1}).includes('Zusatzübung'));
 console.log('PASS: compact green labels with one to four stars and no level names');
@@ -21,9 +21,9 @@ html=ctx.ballRunnerMarkup(completed,false);
 assert(html.includes(previous+' disabled') && html.includes(next+'>'));
 assert(html.includes('id="timer"'));
 assert(!html.includes('id="pause"') && !html.includes('id="repeat-exercise"'));
-assert(!html.includes('id="next-drill"'));
+assert(html.includes('class="primary" id="next-drill">Nächste Übung'));
 html=ctx.ballRunnerMarkup({...completed,phase:'review'},false);
-assert(!html.includes('id="timer"') && !html.includes('id="next-drill"'));
+assert(!html.includes('id="timer"') && html.includes('class="primary" id="next-drill">Nächste Übung'));
 assert(html.includes(repeatAction));
 const threeExercises=[...completed.plan,{...completed.plan[1],key:'100'}];
 html=ctx.ballRunnerMarkup({...completed,plan:threeExercises,index:1,phase:'review',completedSets:[0,1]},false);
@@ -37,5 +37,5 @@ assert(ctx.ballRunnerMarkup(sameExercise,false).includes('id="pause"'));
 console.log('PASS: fixed arrow states through rest and review, replay and pauses within an exercise remain available');
 
 const videoAndNavigation=ctx.ballRunnerMarkup({...completed,index:1,phase:'work',paused:true},false);
-assert(videoAndNavigation.includes('id="toggle-video"') && videoAndNavigation.includes('id="exercise-prev"'));
-assert(videoAndNavigation.indexOf('id="exercise-prev"')<videoAndNavigation.indexOf('id="toggle-video"'));
+assert(videoAndNavigation.includes('pause-media-open') && videoAndNavigation.includes('id="exercise-prev"'));
+assert(videoAndNavigation.indexOf('id="exercise-prev"')<videoAndNavigation.indexOf('pause-media-open'));

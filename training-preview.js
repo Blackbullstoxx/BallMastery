@@ -66,14 +66,23 @@ function jugglingProgressMarkup(value){
  const done=starts.filter((start,n)=>value.plan.slice(start,starts[n+1]??value.plan.length).every((_,i)=>completed.has(start+i))).length;
  return exerciseProgressMarkup(value,`${done} von ${starts.length} erledigt`,done,starts.length,'Abgeschlossene Jonglierübungen');
 }
+function nextTrainingAction(value,next=nextOpenTrainingSet(value)){
+ if(next<0)return '';
+ const current=value.plan[value.index];
+ const sameExercise=next-value.plan[next].set===value.index-current.set;
+ return `<button type="button" class="primary" id="next-drill">${sameExercise?'Nächsten Satz ansehen':'Nächste Übung'}</button>`;
+}
+function trainingReviewActions(action,repeat,hasNextExercise){
+ return hasNextExercise&&repeat?`<div class="two training-review-actions">${repeat}${action}</div>`:action+repeat;
+}
 function jugglingRunnerMarkup(value,last){
  const d=value.plan[value.index],review=value.phase==='review',ready=value.phase==='ready',timing=!review&&!ready;
  const status=review?'Geschafft ✓':value.paused?'Pausiert':ready?'':value.phase==='count'?'Bereit machen':'Läuft';
  const card=previewJugglingTechnique(d,{status,subtitle:value.extraSeconds?`Zusatzzeit · ${(value.extraSeconds/60).toLocaleString('de-DE')} Min.`:'',timer:timing?timerMarkup():review?jugglingDoneTimerMarkup():''});
- const action=ready?'<button class="primary" id="ready">Los geht’s</button>':review?last?'<button type="button" class="primary" id="finish-area">Jonglieren abschließen</button>':'':value.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
+ const action=ready?'<button class="primary" id="ready">Los geht’s</button>':review?last?'<button type="button" class="primary" id="finish-area">Jonglieren abschließen</button>':nextTrainingAction(value):value.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
  const repeat=exerciseRepeatMarkup(value,'back-button','Erneut starten');
  const extra=review&&!value.exerciseRepeat&&(value.completedSets||[]).includes(value.index)?jugglingExtraMarkup(value):'';
- return `${previewTrainingSummary('juggling')}${jugglingProgressMarkup(value)}${card}<div class="technique-actions">${action}${repeat}${value.extraSeconds?'<button class="back-button" id="juggling-extra-end">Zusatzzeit beenden</button>':''}${extra}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>`;
+ return `${previewTrainingSummary('juggling')}${jugglingProgressMarkup(value)}${card}<div class="technique-actions">${trainingReviewActions(action,repeat,review&&!last&&!!action)}${value.extraSeconds?'<button class="back-button" id="juggling-extra-end">Zusatzzeit beenden</button>':''}${extra}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>`;
 }
 function exerciseRepeatMarkup(value,buttonClass="primary",label="Übung erneut starten"){
  if(value.exerciseRepeat)return '<button class="back-button" id="repeat-return">Zum Tagesplan</button>';
@@ -137,16 +146,14 @@ function ballRunnerMarkup(value,last){
  const sameExercise=next>=0&&next-value.plan[next].set===value.index-d.set;
  const nextSet=value.phase==='rest'&&sameExercise?value.plan[next]:null;
  const reviewAction=last?`<button class="primary" id="finish-area">${sectionNames[run.section||activeSection]} abschließen</button>`:
-  sameExercise?'<button class="primary" id="next-drill">Nächsten Satz ansehen</button>':'';
+  nextTrainingAction(value,next);
  const action=run.phase==='ready'?'<button class="primary" id="ready">Los geht’s</button>':(run.phase==='review'||betweenExercises)?reviewAction:run.phase==='done'?'<button class="primary" id="close">Erneut trainieren</button>':run.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
- return `${previewTrainingSummary('ball')}${setProgressMarkup(value)}<section class="card training-exercise ball-technique"><div class="technique-heading">${ballExerciseBadge(d)}${status?`<span class="technique-status">${status}</span>`:''}</div><h3>${esc(d.name)}</h3>${ballPrescription(d,nextSet)}${colourPerception.summary()}${media}${metrics}${weeklyPanel?'':mastery}</section><div class="technique-actions">${action}${repeat}${!finishing&&canFinishTraining(value)?'<button type="button" class="back-button" id="finish-area">Ballbeherrschung für heute abschließen</button>':''}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>${weeklyPanel?mastery:''}`;
+ return `${previewTrainingSummary('ball')}${setProgressMarkup(value)}<section class="card training-exercise ball-technique"><div class="technique-heading">${ballExerciseBadge(d)}${status?`<span class="technique-status">${status}</span>`:''}</div><h3>${esc(d.name)}</h3>${ballPrescription(d,nextSet)}${colourPerception.summary()}${media}${metrics}${weeklyPanel?'':mastery}</section><div class="technique-actions">${trainingReviewActions(action,repeat,run.phase==='review'&&!last&&next>=0&&!sameExercise)}${!finishing&&canFinishTraining(value)?'<button type="button" class="back-button" id="finish-area">Ballbeherrschung für heute abschließen</button>':''}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>${weeklyPanel?mastery:''}`;
 }
 
 function feintsRunnerMarkup(value,last){
  const d=value.plan[value.index],ready=value.phase==='ready',review=value.phase==='review';
  const status=review?'Geschafft ✓':value.paused?'Pausiert':ready?'':value.phase==='count'?'Bereit machen':'Läuft';
- const next=review&&!last&&!value.exerciseRepeat?nextOpenTrainingSet(value):-1;
- const sameExercise=next>=0&&next-value.plan[next].set===value.index-d.set;
- const action=ready?'<button class="primary" id="ready">Los geht’s</button>':review?last||sameExercise?`<button class="primary" id="${last?'finish-area':'next-drill'}">${last?'Finten abschließen':'Nächsten Satz ansehen'}</button>`:'':value.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
+ const action=ready?'<button class="primary" id="ready">Los geht’s</button>':review?last?'<button type="button" class="primary" id="finish-area">Finten abschließen</button>':nextTrainingAction(value):value.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
  return `${previewTrainingSummary('feints')}${setProgressMarkup(value)}<section class="card training-exercise"><div class="technique-heading"><h3>Finten</h3><span class="technique-status">${status}</span></div><p class="training-prescription">${d.total} × ${d.work} s · ${d.rest} s Pause</p>${!ready&&!review?timerMarkup():''}</section><div class="technique-actions">${action}${exerciseRepeatMarkup(value)}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>`;
 }
