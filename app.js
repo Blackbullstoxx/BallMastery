@@ -281,7 +281,25 @@ function complete(){if(isReadOnly())return;syncBallTime();resetBallClock();
  if(typeof creditWeeklyRatingDay==='function')creditWeeklyRatingDay(run);
  preserveDiscardedWork(run);
  delete run.extraSeconds;delete run.checkpoints;run.rewardPending=true;run.phase='done';delete run.selectedCompleted;clearInterval(tick);state.completedPlans=state.completedPlans||{};state.completedPlans[date()]=state.completedPlans[date()]||{};Object.keys(state.completedPlans).sort().slice(0,-2).forEach(day=>delete state.completedPlans[day]);state.blockDone=state.blockDone||{};state.blockDone[date()]=[...new Set([...(state.blockDone[date()]||[]),run.section||'ball'])];if(!state.sessions.includes(date()))state.sessions.push(date());playerCards.completed(run.section||'ball');save();const backup=typeof dropboxBackup!=='undefined'?dropboxBackup.saveNow():null;return backup}
-function bindScores(){if(isReadOnly())return;document.querySelectorAll('[data-score]').forEach(f=>f.onsubmit=e=>{e.preventDefault();const n=Number(f.querySelector('input').value);if(!Number.isInteger(n)||n<0||n>99999)return;const changed=recordScore(f.dataset.score,Number(f.dataset.duration),n,f.dataset.colourScore==='true');save();if(changed&&typeof dropboxBackup!=='undefined')dropboxBackup.changed(true);toast(changed?'Tagesbestwert gespeichert':'Dein höherer Tagesbestwert bleibt gespeichert');preserveScroll(()=>render())})}
+function bindScores(){
+ if(isReadOnly())return;
+ document.querySelectorAll('[data-score]').forEach(form=>form.onsubmit=event=>{
+  event.preventDefault();
+  const input=form.querySelector('input');
+  const n=Number(input.value);
+  if(!Number.isInteger(n)||n<0||n>99999)return;
+  const alignTimer=run?.section==='ball'&&['count','work','rest'].includes(run.phase)&&form.closest('#runner.ball-runner');
+  const changed=recordScore(form.dataset.score,Number(form.dataset.duration),n,form.dataset.colourScore==='true');
+  save();
+  if(changed&&typeof dropboxBackup!=='undefined')dropboxBackup.changed(true);
+  toast(changed?'Tagesbestwert gespeichert':'Dein höherer Tagesbestwert bleibt gespeichert');
+  if(alignTimer){
+   input.blur();
+   render();
+   scrollTimerIntoView(true);
+  }else preserveScroll(()=>render());
+ });
+}
 
 function scoreCategory(key){const drill=drills.find(d=>d.id===key);return drill?drill.level:key.startsWith('feint:')?4:5}
 let recordOpenArea=null,recordOpenLevel=null,recordOpenExercise=null;
