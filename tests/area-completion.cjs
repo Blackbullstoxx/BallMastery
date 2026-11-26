@@ -18,7 +18,7 @@ for(const [section,noScore,juggling] of [['juggling',false,true],['juggling',tru
 const jugglingPlan=['toe','free'].map(key=>({key,name:key,kind:'Jonglieren',set:1,total:1,work:60,rest:0,juggling:true,noScore:true}));
 ctx.run={day:ctx.date(),section:'juggling',phase:'review',paused:false,plan:jugglingPlan,index:0,remaining:0,completedSets:[0]};
 ctx.renderRunner();
-assert(runner.innerHTML.includes('id="next-drill"'));
+assert(runner.innerHTML.includes('id="exercise-next" aria-label="Nächste Übung">'));
 assert(!runner.innerHTML.includes('id="finish-area"'));
 completes=0;
 ctx.finishArea();

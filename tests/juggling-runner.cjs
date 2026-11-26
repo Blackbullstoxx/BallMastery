@@ -8,18 +8,18 @@ for(const phase of ['ready','count','work','review']){
  r.phase=phase;const before=JSON.stringify(r),h=ctx.jugglingRunnerMarkup(r,false);assert.equal(JSON.stringify(r),before);assert.equal((h.match(/data-score=/g)||[]).length,1);assert(h.includes('>0</strong><span>Heute'));assert(h.includes('Form'));assert(h.includes('Rekord'));assert(!h.includes('Heute:'));assert(!h.includes('Als Nächstes:'));assert(!h.includes('Satz 1 von 1'));
  if(phase==='ready'){assert(h.includes('id="ready"'));assert(!h.includes('id="timer"'))}
  if(phase==='count'||phase==='work'){assert(h.includes('id="pause"'));assert(h.includes('id="timer"'))}
- if(phase==='review'){assert(h.includes('Geschafft ✓'));assert(h.indexOf('</section><div class="technique-actions">')<h.indexOf('id="repeat-exercise"'));assert(h.includes('<div class="two exercise-review-actions"><button class="back-button" id="repeat-exercise">Erneut starten</button><button type="button" class="primary" id="next-drill">Nächste Übung</button>'));assert(!h.includes('id="exercise-next"'));assert(!h.includes('id="timer"'))}
+ if(phase==='review'){assert(h.includes('Geschafft ✓'));assert(h.indexOf('</section><div class="technique-actions">')<h.indexOf('id="repeat-exercise"'));assert(h.includes('id="exercise-next" aria-label="Nächste Übung">'));assert(!h.includes('id="next-drill"'));assert(!h.includes('id="timer"'))}
 }
 r.completedSets=[0,1];
 let skipped=ctx.jugglingRunnerMarkup(r,false);
-assert(skipped.includes('id="next-drill"')&&skipped.includes('id="exercise-next"'),'Vor still browses the completed exercise if the primary action skips it');
+assert(skipped.includes('id="exercise-next" aria-label="Nächste Übung">'),'the completed exercise remains reachable');
 r.completedSets=[0];
 r.phase='work';r.paused=true;let h=ctx.jugglingRunnerMarkup(r,false);assert(h.includes('Pausiert'));assert(h.includes('id="restart"'));assert(h.includes('id="resume"'));r.paused=false;
-r.index=2;r.phase='review';r.completedSets=[0,1,2];h=ctx.jugglingRunnerMarkup(r,true);assert(h.includes('3 von 3 erledigt'));assert(h.includes('id="finish-area"'));assert(!h.includes('data-score='));assert(!h.includes('id="previous-drill"'));r.repeatMode=true;h=ctx.jugglingRunnerMarkup(r,true);assert(h.includes('id="exercise-prev"'));assert(!h.includes('id="exercise-next"'));assert(!h.includes('id="previous-drill"'));
+r.index=2;r.phase='review';r.completedSets=[0,1,2];h=ctx.jugglingRunnerMarkup(r,true);assert(h.includes('3 von 3 erledigt'));assert(h.includes('id="finish-area"'));assert(!h.includes('data-score='));assert(!h.includes('id="previous-drill"'));r.repeatMode=true;h=ctx.jugglingRunnerMarkup(r,true);assert(h.includes('id="exercise-prev"'));assert(h.includes('id="exercise-next" aria-label="Nächste Übung" disabled'));assert(!h.includes('id="previous-drill"'));
 r.index=1;r.phase='ready';r.completedSets=[];
 h=ctx.jugglingRunnerMarkup(r,false);
 assert(h.includes('Übung 2 von 3'));
-assert(h.indexOf('id="ready"')<h.indexOf('id="exercise-prev"'));
+assert(h.indexOf('id="exercise-next"')<h.indexOf('id="ready"'));
 assert(h.indexOf('id="exercise-prev"')<h.indexOf('id="exercise-next"'));
 assert(h.indexOf('data-score=')<h.indexOf('id="ready"'));
 r.completedSets=[0];h=ctx.jugglingRunnerMarkup(r,false);
