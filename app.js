@@ -146,7 +146,7 @@ function canPreviewNext(){
  return !!d&&run.phase==='rest'&&d.set===d.total&&nextOpenTrainingSet(run)>=0;
 }
 function advancePreview(){
- if(!run||run.extraStarting||run.finishPending||!(run.phase==='review'||canPreviewNext()))return;
+ if(!run||run.extraStarting||run.finishPending||isReadOnly()||!(run.phase==='review'||canPreviewNext()))return;
  const target=nextOpenTrainingSet(run);
  if(target>=0)moveTrainingSet(target);
 }

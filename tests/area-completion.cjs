@@ -3,7 +3,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const app=fs.readFileSync(__dirname+'/../app.js','utf8');
 const fn=(name,next)=>app.slice(app.indexOf('function '+name+'('),app.indexOf('\nfunction '+next+'('));
 let completes=0,renders=0,sets=0,listener=null;
-const runner={innerHTML:''};
+const runner={innerHTML:'',querySelector:()=>null};
 const ctx={document:{querySelector:()=>null},Date,esc:String,tab:'today',silence:()=>{},run:null,tick:1,activeSection:'juggling',isReadOnly:()=>false,syncScreenAwake:()=>{},syncBallTime:()=>{},checkTrainingDay:()=>false,refreshTimerRing:()=>{},save:()=>{},refreshDayOverview:()=>{},beep:()=>{},clearInterval:()=>{},colourPerception:{sync:()=>{},finishSet:()=>{},summary:()=>''},countCompletedSet:()=>{sets++;ctx.run.completedSets=[ctx.run.index]},complete:()=>completes++,render:()=>renders++,preserveScroll:fn=>fn(),dropboxBackup:{changed:()=>{}},drills:[],completedExercises:()=>[],canPreviewNext:()=>false,sectionNames:{ball:'Ballbeherrschung',juggling:'Jonglieren',feints:'Finten'},ballTrainingMarkup:()=>'',trainingSummaryMetrics:()=>'',timerMarkup:()=>'',practiceDayList:()=>[],recordBallTrend:()=>null,recordBallTrendExplanation:()=>'',trainingModeCue:()=>'',video:()=>'',trainingPositionText:()=>'',trainingProgress:()=>0,scoreForm:()=>'<form data-score="toe"></form>',masteredControl:()=>'',canEndRepeat:()=>false,bindScores:()=>{}};
 ctx.$=selector=>selector==='#runner'?runner:selector==='#finish-area'&&runner.innerHTML.includes('id="finish-area"')?{addEventListener:(_,fn)=>listener=fn}:null;
 ctx.state={scores:[],colourScores:[]};ctx.date=()=> '2026-11-12';ctx.techNames={toe:'Zehenjonglieren'};

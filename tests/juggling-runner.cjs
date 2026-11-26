@@ -8,7 +8,7 @@ for(const phase of ['ready','count','work','review']){
  r.phase=phase;const before=JSON.stringify(r),h=ctx.jugglingRunnerMarkup(r,false);assert.equal(JSON.stringify(r),before);assert.equal((h.match(/data-score=/g)||[]).length,1);assert(h.includes('>0</strong><span>Heute'));assert(h.includes('Form'));assert(h.includes('Rekord'));assert(!h.includes('Heute:'));assert(!h.includes('Als Nächstes:'));assert(!h.includes('Satz 1 von 1'));
  if(phase==='ready'){assert(h.includes('id="ready"'));assert(!h.includes('id="timer"'))}
  if(phase==='count'||phase==='work'){assert(h.includes('id="pause"'));assert(h.includes('id="timer"'))}
- if(phase==='review'){assert(h.includes('Geschafft ✓'));assert(h.indexOf('</section><div class="technique-actions">')<h.indexOf('id="repeat-exercise"'));assert(h.includes('id="exercise-next" aria-label="Nächste Übung">'));assert(!h.includes('id="next-drill"'));assert(!h.includes('id="timer"'))}
+ if(phase==='review'){assert(h.includes('Geschafft ✓'));assert(h.indexOf('</section><div class="technique-actions">')<h.indexOf('id="repeat-exercise"'));assert(h.includes('id="exercise-next" aria-label="Nächste Übung">'));assert(h.includes('class="primary" id="next-drill">Nächste Übung'));assert(!h.includes('id="timer"'))}
 }
 r.completedSets=[0,1];
 let skipped=ctx.jugglingRunnerMarkup(r,false);
