@@ -37,17 +37,14 @@ function previewJugglingTechnique(d,options={}){
  const stats=previewScoreStats(d.key,0),level=stats.level===null?null:stats.level.toLocaleString('de-DE',{maximumFractionDigits:0,useGrouping:false});
  return `<section class="card training-exercise juggling-technique" aria-label="${esc(d.name)}"><div class="technique-heading"><h3>${esc(d.name)}</h3>${options.status?`<span class="technique-status">${esc(options.status)}</span>`:''}</div><p class="training-prescription">${options.subtitle||`${(d.work/60).toLocaleString('de-DE',{maximumFractionDigits:2})} Min.`}</p>${options.timer||''}${d.noScore?'':`<div class="training-metrics training-metrics-four">${previewMetric(stats.today,'Heute')}${previewMetric(level,'Form',`Median der Tagesbestwerte der letzten fünf erfassten Trainingstage dieser Technik; bisher ${stats.count} ${stats.count===1?'Eintrag':'Einträge'}. Trainingsfreie Tage zählen nicht als null.`)}${previewMetric(stats.record,'Rekord')}${previewTrend(d.key,0,stats.rows)}</div><p class="technique-input-label">Kontakte am Stück</p>${previewScoreInput(d.key,0)}`}</section>`;
 }
-function progressCounterMarkup(label){
- const compact=label.replace(' von ','/').replace(' erledigt',' ✓');
- if(compact===label)return esc(label);
- return `<span class="progress-counter-full">${esc(label)}</span><span class="progress-counter-short" aria-hidden="true">${esc(compact)}</span>`;
-}
 function exerciseProgressMarkup(value,detail,completed,maximum,progressLabel,position=openExercisePosition(value)){
  const arrow=(direction,id,label,path)=>{
   const enabled=!value.individual&&exerciseTarget(value,direction)>=0;
   return `<button type="button" class="exercise-arrow" id="${id}" aria-label="${label}"${enabled?'':' disabled'}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${path}"/></svg></button>`;
  };
- return `<section class="card technique-progress exercise-progress" aria-label="Trainingsfortschritt"><div class="exercise-progress-row" role="group" aria-label="Übung wechseln">${arrow(-1,'exercise-prev','Vorherige Übung','M15 5l-7 7 7 7')}<strong>${progressCounterMarkup(position)}</strong><span>${progressCounterMarkup(detail)}</span>${arrow(1,'exercise-next','Nächste Übung','M9 5l7 7-7 7')}</div><progress value="${completed}" max="${maximum}" aria-label="${progressLabel}"></progress></section>`;
+ const wideLabels=[position,detail].some(label=>/\d{2}/.test(label));
+ const completionCount=detail.endsWith(' erledigt');
+ return `<section class="card technique-progress exercise-progress" aria-label="Trainingsfortschritt"><div class="exercise-progress-row${wideLabels?' exercise-progress-row-wide':''}${completionCount?' exercise-progress-row-completion':''}" role="group" aria-label="Übung wechseln">${arrow(-1,'exercise-prev','Vorherige Übung','M15 5l-7 7 7 7')}<strong>${esc(position)}</strong><span>${esc(detail)}</span>${arrow(1,'exercise-next','Nächste Übung','M9 5l7 7-7 7')}</div><progress value="${completed}" max="${maximum}" aria-label="${progressLabel}"></progress></section>`;
 }
 function setProgressMarkup(value){
  const row=value.plan[value.index];
