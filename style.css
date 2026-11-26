@@ -411,3 +411,29 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .training-areas .ball-progress-stars svg:first-child{top:-.125px}
 .training-areas .ball-progress-stars svg:nth-child(2){top:calc(50% - var(--training-star-size) / 2)}
 .training-areas .ball-progress-stars svg:last-child{bottom:-.125px}
+
+.pause-media{position:relative;perspective:950px;margin:8px 0 18px}
+/* The last grid row is the space below the status text. The circle's stroke
+   puts its inner bottom edge 16.5px above the bottom of the 240px viewBox. */
+.pause-media-timer .timer-face{inset:0;display:grid;grid-template-rows:1fr auto auto 1fr;justify-content:stretch;justify-items:center;gap:0}
+.pause-media-timer .timer-face .clock{grid-row:2;margin-bottom:4px}
+.pause-media-timer .timer-label{grid-row:3;position:relative}
+.pause-media-baseline{display:inline-block;width:0;height:0}
+.pause-media-switch{position:absolute;z-index:2;display:grid;place-items:center;min-width:44px;height:44px;min-height:44px;padding:0;background:transparent;color:#234834;border-radius:999px}
+.pause-media-switch .pause-media-icon{display:flex;align-items:center;justify-content:center;gap:3px;min-width:32px;height:26px;padding:0 8px;border-radius:999px;background:#e8efe5;font-size:13px;font-weight:650}
+.pause-media-switch svg{width:16px;height:16px}
+.pause-media-open{grid-row:4;inset:var(--label-ink-bottom,0px) 0 6.875cqw;width:max-content;margin:auto;transform:translateY(-2px)}
+.pause-media-return{position:relative;margin-block:auto}
+.pause-media-side[aria-hidden="true"] .pause-media-switch{visibility:hidden}
+.pause-media-switch{backface-visibility:hidden;-webkit-backface-visibility:hidden;-webkit-tap-highlight-color:transparent}
+.pause-media-switch:focus-visible{outline:2px solid #28613e;outline-offset:0}
+.pause-media-stage{position:relative;transform-style:preserve-3d;transition:transform .34s ease}
+.pause-media.is-video .pause-media-stage{transform:rotateY(180deg)}
+.pause-media-side{display:grid;align-items:center;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.ball-runner .pause-media-timer .timer-ring{margin:0 auto;container-type:inline-size}
+.pause-media-video{position:absolute;inset:0;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;container-type:size}
+.training-exercise .pause-media-video .private-video{position:relative;margin:0;width:min(100%,calc((100cqh - 44px) * 16 / 9));height:auto;aspect-ratio:16/9;flex:none}
+.pause-media-video .private-video-load,.pause-media-video .private-video>video{height:100%;margin:0;object-fit:contain}
+.pause-media-video .private-video-load[hidden]{display:none}
+.pause-media-video .private-video-status{position:absolute;inset:auto 0 0;margin:0;padding:6px 8px;background:#e8efe5;border-radius:0 0 12px 12px;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){.pause-media-stage{transition:none}}

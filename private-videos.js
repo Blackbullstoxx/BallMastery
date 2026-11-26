@@ -27,7 +27,7 @@ const privateVideos=(()=>{
      v.addEventListener('error',()=>{clearInterval(watch);if(!host.isConnected)return;v.removeAttribute('src');v.load();v.remove();button.hidden=false;button.disabled=false;note('Video konnte nicht abgespielt werden. Bitte erneut laden.');},{once:true});
      v.src=link;button.hidden=true;if(status){status.remove();status=null}host.append(v);
      // Safari may require another tap after the asynchronous authorization request.
-     try{await v.play()}catch{}
+     if(!host.closest('[inert]'))try{await v.play()}catch{}
     }catch(error){if(host.isConnected){button.disabled=false;note(error.message||'Video konnte nicht geladen werden. Bitte erneut versuchen.')}}
    };
   });

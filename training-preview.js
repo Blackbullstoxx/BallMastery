@@ -81,8 +81,49 @@ function exerciseRepeatMarkup(value,buttonClass="primary",label="Übung erneut s
  return `<button class="${buttonClass}" id="repeat-exercise">${label}</button>`;
 }
 function pauseActionsMarkup(){return '<div class="two runner-pause-actions"><button class="primary" id="resume">Fortsetzen</button><button id="restart">Neustart</button></div>'}
-function ballVideoAction(value){
- return value.paused&&!value.showVideo?'<button class="back-button" id="toggle-video">Video ansehen</button>':'';
+function pausedBallMedia(player){
+ const videoButton=`<button type="button" class="pause-media-switch pause-media-open" aria-label="Video ansehen">
+  <span class="pause-media-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14l12-7z" fill="currentColor"/></svg>Video</span>
+ </button>`;
+ return `<div class="pause-media">
+  <div class="pause-media-stage">
+   <div class="pause-media-side pause-media-timer">${timerMarkup(videoButton)}</div>
+   <div class="pause-media-side pause-media-video" inert aria-hidden="true">
+    ${player}
+    <button type="button" class="pause-media-switch pause-media-return" aria-label="Zurück zum Timer">
+     <span class="pause-media-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Timer</span>
+    </button>
+   </div>
+  </div>
+ </div>`;
+}
+function bindPausedBallMedia(root){
+ const media=root.querySelector('.pause-media');
+ if(!media)return;
+ const label=media.querySelector('.timer-label');
+ // Align to the bottom of the visible text, including the descender of g.
+ const font=getComputedStyle(label),measure=document.createElement('canvas').getContext('2d');
+ if(measure){
+  measure.font=`${font.fontWeight} ${font.fontSize} ${font.fontFamily}`;
+  const descent=measure.measureText(label.textContent).actualBoundingBoxDescent;
+  const baseline=label.querySelector('.pause-media-baseline').offsetTop;
+  if(Number.isFinite(descent))label.parentElement.style.setProperty('--label-ink-bottom',`${baseline+descent-label.offsetHeight}px`);
+ }
+ media.addEventListener('click',event=>{
+  const button=event.target.closest('.pause-media-switch');
+  if(!button)return;
+  const videoSide=media.querySelector('.pause-media-video');
+  const timerSide=media.querySelector('.pause-media-timer');
+  const showingVideo=media.classList.toggle('is-video');
+  videoSide.inert=!showingVideo;
+  videoSide.setAttribute('aria-hidden',!showingVideo);
+  timerSide.inert=showingVideo;
+  timerSide.setAttribute('aria-hidden',showingVideo);
+  if(!showingVideo)videoSide.querySelector('video')?.pause();
+  if(event.detail===0){
+   (showingVideo?videoSide:timerSide).querySelector('.pause-media-switch').focus({preventScroll:true});
+  }
+ });
 }
 function ballRunnerMarkup(value,last){
  const d=value.plan[value.index],run=value,betweenExercises=value.phase==='rest'&&d.set===d.total,stats=previewScoreStats(d.key,d.work),days=practiceDayList(d.key).length;
@@ -90,13 +131,15 @@ function ballRunnerMarkup(value,last){
  const metrics=d.colour?scoreForm(d.key,d.work,true):`<div class="training-metrics training-metrics-four">${previewMetric(stats.today,'Heute')}${previewMetric(stats.record,'Rekord')}${previewMetric(days,'Trainingstage')}${previewTrend(d.key,d.work,stats.rows)}</div><p class="technique-input-label">Wiederholungen</p><form class="scoreform preview-scoreform" data-score="${esc(d.key)}" data-duration="${d.work}" data-colour-score="false"><input type="number" min="0" max="99999" required aria-label="${esc(d.name)}: Wiederholungen" placeholder="Wiederholungen"><button>Eintragen</button></form>`;
  const next=nextOpenTrainingSet(run),finishing=last&&run.phase==='review',mastery=masteredControl(d),weeklyPanel=mastery.startsWith('<section');
  const repeat=exerciseRepeatMarkup(value,"back-button","Erneut starten");
- const showVideo=['ready','review'].includes(value.phase)||(value.paused&&value.showVideo);
+ const showVideo=['ready','review'].includes(value.phase);
+ const player=showVideo||value.paused?video(d):'';
+ const media=showVideo?player:value.paused&&player?pausedBallMedia(player):timerMarkup();
  const sameExercise=next>=0&&next-value.plan[next].set===value.index-d.set;
  const nextSet=value.phase==='rest'&&sameExercise?value.plan[next]:null;
  const reviewAction=last?`<button class="primary" id="finish-area">${sectionNames[run.section||activeSection]} abschließen</button>`:
   sameExercise?'<button class="primary" id="next-drill">Nächsten Satz ansehen</button>':'';
  const action=run.phase==='ready'?'<button class="primary" id="ready">Los geht’s</button>':(run.phase==='review'||betweenExercises)?reviewAction:run.phase==='done'?'<button class="primary" id="close">Erneut trainieren</button>':run.paused?pauseActionsMarkup():'<button class="primary timer-pause" id="pause"><span aria-hidden="true">Ⅱ</span> Pause</button>';
- return `${previewTrainingSummary('ball')}${setProgressMarkup(value)}<section class="card training-exercise ball-technique"><div class="technique-heading">${ballExerciseBadge(d)}${status?`<span class="technique-status">${status}</span>`:''}</div><h3>${esc(d.name)}</h3>${ballPrescription(d,nextSet)}${colourPerception.summary()}${!['ready','review'].includes(value.phase)?timerMarkup():''}${showVideo?video(d):''}${metrics}${weeklyPanel?'':mastery}</section><div class="technique-actions">${action}${repeat}${ballVideoAction(run)}${!finishing&&canFinishTraining(value)?'<button type="button" class="back-button" id="finish-area">Ballbeherrschung für heute abschließen</button>':''}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>${weeklyPanel?mastery:''}`;
+ return `${previewTrainingSummary('ball')}${setProgressMarkup(value)}<section class="card training-exercise ball-technique"><div class="technique-heading">${ballExerciseBadge(d)}${status?`<span class="technique-status">${status}</span>`:''}</div><h3>${esc(d.name)}</h3>${ballPrescription(d,nextSet)}${colourPerception.summary()}${media}${metrics}${weeklyPanel?'':mastery}</section><div class="technique-actions">${action}${repeat}${!finishing&&canFinishTraining(value)?'<button type="button" class="back-button" id="finish-area">Ballbeherrschung für heute abschließen</button>':''}${canEndRepeat()?'<button class="back-button" id="end-repeat">Training beenden</button>':''}</div>${weeklyPanel?mastery:''}`;
 }
 
 function feintsRunnerMarkup(value,last){
