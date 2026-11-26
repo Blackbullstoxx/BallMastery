@@ -27,7 +27,8 @@ state.colourSets=normalizeColourSettings(state.colourSets);state.weekdays=normal
 
 let currentPlanDate=date(),midnightTimer=null;
 function checkTrainingDay(){let expired=currentPlanDate!==date();currentPlanDate=date();for(const [key,value] of Object.entries(runs)){if(value.day&&value.day!==date()){delete runs[key];expired=true}}if(run?.day&&run.day!==date()){colourPerception.stop(true);clearInterval(tick);silence();run=null;homeMasterConfirm=false;if(wake)wake.release().catch(()=>{});wake=null;expired=true}if(expired&&typeof todayNavigation!=='undefined')todayNavigation.restore();return expired}
-function render(){playerCards.destroy();ensureWeeklyLearning();colourPerception.sync();stopRecordCharts();checkTrainingDay();if(!drills.length)return;$('#greeting').textContent=state.name?'Für '+state.name:'Dein tägliches Training';document.querySelectorAll('nav [data-tab]').forEach(b=>b.classList.toggle('selected',b.dataset.tab===tab));document.body.classList.toggle('today-layout',tab==='today');if(tab==='today')renderToday();else if(tab==='settings'){if(isReadOnly())$('#view').innerHTML='<h2>Einstellungen</h2><p>In der Leseansicht nicht verfügbar.</p>';else renderSettings();}else if(tab==='videos')renderVideos();else renderRecords();if(tab==='today'){const heading=$('#view h2')||$('#view .today-subnav');heading?.insertAdjacentHTML('afterend',playerCards.pauseBanner());playerCards.bindPauseBanner()}bindScores();renderReadOnlyUI();save()}
+let keepingExercisePosition=false,exerciseScrollSpace=null;
+function render(){if(!keepingExercisePosition)removeExerciseScrollSpace();playerCards.destroy();ensureWeeklyLearning();colourPerception.sync();stopRecordCharts();checkTrainingDay();if(!drills.length)return;$('#greeting').textContent=state.name?'Für '+state.name:'Dein tägliches Training';document.querySelectorAll('nav [data-tab]').forEach(b=>b.classList.toggle('selected',b.dataset.tab===tab));document.body.classList.toggle('today-layout',tab==='today');if(tab==='today')renderToday();else if(tab==='settings'){if(isReadOnly())$('#view').innerHTML='<h2>Einstellungen</h2><p>In der Leseansicht nicht verfügbar.</p>';else renderSettings();}else if(tab==='videos')renderVideos();else renderRecords();if(tab==='today'){const heading=$('#view h2')||$('#view .today-subnav');heading?.insertAdjacentHTML('afterend',playerCards.pauseBanner());playerCards.bindPauseBanner()}bindScores();renderReadOnlyUI();save()}
 function planRow(d,label,sets){return `<div class="plan-item"><small>${label} · ${levels[d.level]}</small><p class="drill-name">${esc(title(d))}</p><div class="plan-meta"><span>${sets} ${sets===1?'Satz':'Sätze'}</span><span>${practiceHint(d.id)}</span><span>Bestwert: <strong>${best(d.id,state.work).all||'–'}</strong></span></div></div>`}
 let restBadgeSeenDay='';
 function restDayView(){return `<div class="card"><div class="reward-finish rest-day"><div class="reward-medal rest-medal" aria-hidden="true"><div class="reward-inner"><svg class="rest-art" viewBox="0 0 112 124" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#f7d47d" stroke-width="2.5" stroke-linecap="round"><path d="M78 14v-3m0 39v-3M61 31h-3m40 0h-3M66 19l-2-2m26 26 2 2m-2-26 2-2"/></g><circle cx="78" cy="31" r="10" fill="#f7d47d"/><g fill="none" stroke="#e8bc5d" stroke-width="4" stroke-linecap="round"><path d="M18 49l5 48M94 49l-5 48"/></g><path d="M19 53l8 12m66-12-8 12" fill="none" stroke="#fff6dc" stroke-width="2.5"/><path d="M27 65Q56 83 85 65Q58 109 27 65Z" fill="#fff6dc"/><path d="M33 73Q57 91 79 73" fill="none" stroke="#e8bc5d" stroke-width="2" stroke-linecap="round"/></svg></div></div><h2 class="center">Heute ist trainingsfrei.</h2><p class="rest-caption">Genieß deine Pause!</p></div></div>`}
@@ -100,10 +101,12 @@ if(direction){const target=exerciseTarget(run,direction);if(target>=0)run.index=
 render();if(!repeatMode&&!direction)countdown();else scrollTimerIntoView(true)}
 // Explicit exercise navigation also aligns ready/review screens; timer ticks keep their existing guards.
 function scrollTimerIntoView(navigation=false){
+ if(keepingExercisePosition)return;
  const current=run;
  window.requestAnimationFrame?.(()=>{
   const card=$('#runner');
   if(!card||!run||run!==current||tab!=='today'||document.hidden||!navigation&&(run.paused||!['count','work','rest'].includes(run.phase)))return;
+  removeExerciseScrollSpace();
   (card.querySelector('.technique-progress')||card).scrollIntoView({block:'start',inline:'nearest',behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
  });
 }
@@ -147,9 +150,38 @@ function advancePreview(){
  const target=nextOpenTrainingSet(run);
  if(target>=0)moveTrainingSet(target);
 }
+function removeExerciseScrollSpace(){
+ exerciseScrollSpace?.remove();
+ exerciseScrollSpace=null;
+}
+function keepExercisePosition(move,direction){
+ const panel=$('.exercise-progress');
+ if(!panel||!document.scrollingElement){move(direction);return}
+ const scroller=document.scrollingElement;
+ const offset=panel.getBoundingClientRect().top;
+ if(!exerciseScrollSpace){
+  exerciseScrollSpace=document.createElement('div');
+  exerciseScrollSpace.setAttribute('aria-hidden','true');
+  document.body.append(exerciseScrollSpace);
+ }
+ const space=exerciseScrollSpace;
+ // Keep the old scroll position reachable while the exercise markup is replaced.
+ space.style.height=`${scroller.scrollTop+scroller.clientHeight}px`;
+ keepingExercisePosition=true;
+ try{move(direction)}finally{
+  keepingExercisePosition=false;
+  const nextPanel=$('.exercise-progress');
+  if(nextPanel){
+   const target=Math.max(0,Math.round(scroller.scrollTop+nextPanel.getBoundingClientRect().top-offset));
+   const naturalHeight=scroller.scrollHeight-space.offsetHeight;
+   space.style.height=`${Math.max(0,target+scroller.clientHeight-naturalHeight)}px`;
+   window.scrollTo({top:target,behavior:'instant'});
+  }else removeExerciseScrollSpace();
+ }
+}
 function bindExerciseNavigation(move){
- $('#exercise-prev')?.addEventListener('click',()=>move(-1));
- $('#exercise-next')?.addEventListener('click',()=>move(1));
+ $('#exercise-prev')?.addEventListener('click',()=>keepExercisePosition(move,-1));
+ $('#exercise-next')?.addEventListener('click',()=>keepExercisePosition(move,1));
 }
 function jumpExercise(direction){
  if(!run||run.individual||run.extraStarting||run.finishPending||isReadOnly())return;
