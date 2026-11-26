@@ -298,14 +298,15 @@ header #greeting{grid-column:2;grid-row:2;align-self:center;min-width:0;font-siz
 .technique-progress>div{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:#57705f;line-height:1.5;margin-bottom:10px}
 .technique-progress progress{display:block;height:7px}
 .card.exercise-progress{padding:8px 10px;container-type:inline-size}
-.exercise-progress>.exercise-progress-row{display:flex;align-items:center;gap:0;margin-bottom:11px;font-size:clamp(9px,calc((100cqi - 107px) / var(--progress-label-width,12.8)),15px);font-variant-numeric:tabular-nums}
-.exercise-progress-row>strong{color:#173325;white-space:nowrap;margin-inline:15px 4px}
-.exercise-progress-row>span{white-space:nowrap;margin-inline:auto 15px}
+.exercise-progress>.exercise-progress-row{display:flex;align-items:center;gap:0;margin-bottom:0;font-size:clamp(9px,calc((100cqi - 107px) / var(--progress-label-width,12.8)),15px);font-variant-numeric:tabular-nums}
+.exercise-progress-center{min-width:0;flex:1;display:grid;gap:7px;margin-inline:15px}
+.exercise-progress-labels{display:flex;justify-content:space-between;white-space:nowrap;gap:4px}
+.exercise-progress-labels>strong{color:#173325}
 .exercise-progress-row>.exercise-arrow{position:relative;display:grid;flex:none;place-items:center;width:34px;height:40px;min-height:40px;padding:0;margin:0;border-radius:10px;background:#e2efcc;color:#205c3b}
 .exercise-arrow::before{position:absolute;inset:-2px -5px;content:""}
 .exercise-arrow>svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .exercise-progress-row>.exercise-arrow:disabled{background:#e5e8e5;color:#68736c;opacity:1;cursor:default}
-.exercise-progress progress{height:5px}
+.exercise-progress progress{width:100%;height:5px;margin:0}
 .exercise-progress-row-wide{--progress-label-width:15}
 .exercise-progress-row-completion{--progress-label-width:14.3}
 .exercise-progress-row-wide.exercise-progress-row-completion{--progress-label-width:17.5}
