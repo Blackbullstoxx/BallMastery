@@ -44,7 +44,18 @@ function exerciseProgressMarkup(value,detail,completed,maximum,progressLabel,pos
  };
  const wideLabels=[position,detail].some(label=>/\d{2}/.test(label));
  const completionCount=detail.endsWith(' erledigt');
- return `<section class="card technique-progress exercise-progress" aria-label="Trainingsfortschritt"><div class="exercise-progress-row${wideLabels?' exercise-progress-row-wide':''}${completionCount?' exercise-progress-row-completion':''}" role="group" aria-label="Übung wechseln">${arrow(-1,'exercise-prev','Vorherige Übung','M15 5l-7 7 7 7')}<div class="exercise-progress-center"><div class="exercise-progress-labels"><strong>${esc(position)}</strong><span>${esc(detail)}</span></div><progress value="${completed}" max="${maximum}" aria-label="${progressLabel}"></progress></div>${arrow(1,'exercise-next','Nächste Übung','M9 5l7 7-7 7')}</div></section>`;
+ const starts=value.individual?[]:exerciseStarts(value);
+ let progress=`<progress value="${completed}" max="${maximum}" aria-label="${progressLabel}"></progress>`;
+ if(starts.length>1){
+  const completedSets=new Set(value.completedSets||[]);
+  const segments=starts.map((start,n)=>{
+   const end=starts[n+1]??value.plan.length;
+   const count=value.plan.slice(start,end).filter((_,i)=>completedSets.has(start+i)).length;
+   return `<progress value="${count}" max="${end-start}" aria-hidden="true"></progress>`;
+  }).join('');
+  progress=`<div class="exercise-progress-segments" role="progressbar" aria-label="${progressLabel}" aria-valuenow="${completed}" aria-valuemax="${maximum}">${segments}</div>`;
+ }
+ return `<section class="card technique-progress exercise-progress" aria-label="Trainingsfortschritt"><div class="exercise-progress-row${wideLabels?' exercise-progress-row-wide':''}${completionCount?' exercise-progress-row-completion':''}" role="group" aria-label="Übung wechseln">${arrow(-1,'exercise-prev','Vorherige Übung','M15 5l-7 7 7 7')}<div class="exercise-progress-center"><div class="exercise-progress-labels"><strong>${esc(position)}</strong><span>${esc(detail)}</span></div>${progress}</div>${arrow(1,'exercise-next','Nächste Übung','M9 5l7 7-7 7')}</div></section>`;
 }
 function setProgressMarkup(value){
  const row=value.plan[value.index];
