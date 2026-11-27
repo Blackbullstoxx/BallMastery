@@ -258,3 +258,10 @@
  overflow:visible;pointer-events:none;filter:drop-shadow(0 2px 5px #5533168c);
 }
 #fvo-card-preview .fp-award-star path{fill:#fff0b0;stroke:#8e511e;stroke-width:.55}
+
+#fvo-card-preview .fp-award-effects{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+#fvo-card-preview :is(.fp-award-spark,.fp-award-glint,.fp-award-emboss){position:absolute}
+#fvo-card-preview .fp-award-spark{background:#f1b938;box-shadow:0 0 5px #e39a24;border-radius:1px}
+#fvo-card-preview .fp-award-spark-light{background:#fff5c4}
+#fvo-card-preview .fp-award-glint{background:radial-gradient(circle,#fff9c2 4%,#ffc74b88 35%,transparent 68%)}
+#fvo-card-preview .fp-award-emboss svg{display:block;width:100%;height:100%;fill:#e4a322}
