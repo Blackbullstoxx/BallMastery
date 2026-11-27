@@ -12,9 +12,9 @@ function mountPlayerCard(host,options){
  let serial=0,timers=[],animations=[],targetTier=2,target=[70,80,60,85],targetOverall=74;
  const normal=options.from.values,higher=options.to.values;
  function overall(v){return v===normal?options.from.total:options.to.total;}
- function cancel(){options.sounds?.stop();serial++;timers.forEach(clearTimeout);timers=[];animations.forEach(a=>a.cancel());animations=[];q('.fp-award-star')?.remove();q('.fp-glints').replaceChildren();q('.fp-mist').style.opacity='0';q('.fp-new-back').style.clipPath='inset(0 0 100% 0)';q('.fp-back img').style.clipPath='inset(0 0 0 0)';}
+ function cancel(){options.sounds?.stop();serial++;timers.forEach(clearTimeout);timers=[];animations.forEach(a=>a.cancel());animations=[];q('.fp-award-star')?.remove();q('.fp-award-effects')?.remove();q('.fp-glints').replaceChildren();q('.fp-mist').style.opacity='0';q('.fp-new-back').style.clipPath='inset(0 0 100% 0)';q('.fp-back img').style.clipPath='inset(0 0 0 0)';}
  function at(ms,fn){const token=serial;timers.push(setTimeout(()=>{if(token===serial)fn()},ms));}
- function anim(el,keyframes,duration,delay=0){const a=el.animate(keyframes,{duration,delay,easing:'cubic-bezier(.33,0,.2,1)',fill:'forwards'});animations.push(a);return a;}
+ function anim(el,keyframes,duration,delay=0,easing='cubic-bezier(.33,0,.2,1)'){const a=el.animate(keyframes,{duration,delay,easing,fill:'forwards'});animations.push(a);return a;}
  function side(which){back.hidden=which!=='back';front.hidden=which!=='front';turn.style.transform='none';}
  function material(t){front.dataset.cardTier=String(t);q('.fp-back img').src=backs[t];q('.fp-front img').src=fronts[t];q('.fp-frame-overlay').src=fronts[t];back.style.maskImage='url('+backs[t]+')';front.style.maskImage='url('+fronts[t]+')';q('.fp-back-light').style.maskImage='url('+backs[t]+')';q('.fp-mist-clip').style.maskImage='url('+backs[t]+'),url('+backs[t]+')';q('.fp-stage').style.setProperty('--metal',metals[t]);title.querySelector('strong').textContent=names[t];q('.fp-back img').alt=names[t]+' – Kartenrückseite';}
  function labelBallStars(rating,snapshot){
@@ -34,6 +34,43 @@ function mountPlayerCard(host,options){
    alignBallStars(stack);
    return stack;
  }
+ function awardPiece(layer,kind,x,y,width,height=width){
+   const piece=document.createElement('div');
+   piece.className='fp-award-'+kind;
+   Object.assign(piece.style,{left:(x-width/2)+'px',top:(y-height/2)+'px',width:width+'px',height:height+'px'});
+   layer.append(piece);
+   return piece;
+ }
+ function sparkTrail(layer,startX,startY,endX,endY,travelStart,approachTime){
+   const dx=endX-startX,dy=endY-startY,length=Math.hypot(dx,dy)||1;
+   for(let i=1;i<=9;i++){
+     const fraction=i/10,distance=fraction*fraction*(3-2*fraction);
+     const delay=travelStart+(approachTime-travelStart)*fraction;
+     for(const side of [-1,1]){
+       const scatter=side*(7+Math.random()*10);
+       const driftX=(-dx*16-dy*scatter)/length,driftY=(-dy*16+dx*scatter)/length;
+       const spark=awardPiece(layer,'spark',startX+dx*distance,startY+dy*distance,3+Math.random()*3);
+       if(side<0)spark.classList.add('fp-award-spark-light');
+       const fade=anim(spark,[
+         {opacity:0,transform:'rotate(45deg) scale(.65)'},
+         {opacity:.95,transform:`translate(${driftX*.35}px,${driftY*.35}px) rotate(55deg)`,offset:.19},
+         {opacity:0,transform:`translate(${driftX}px,${driftY}px) rotate(100deg) scale(.15)`}
+       ],190,delay,'ease-out');
+       fade.onfinish=()=>spark.remove();
+     }
+   }
+ }
+ function embossBallStar(layer,star,x,y,width,height){
+   const glint=awardPiece(layer,'glint',x,y,23);
+   anim(glint,[{opacity:0,transform:'scale(.35)'},{opacity:1,offset:.37},{opacity:0,transform:'scale(1.2)'}],900,0,'ease-out');
+   const surface=star.cloneNode(true);
+   awardPiece(layer,'emboss',x,y,width,height).append(surface);
+   anim(surface,[
+     {clipPath:'inset(100% 0 0)',filter:'brightness(1.8)'},
+     {clipPath:'inset(0 0 0)',filter:'brightness(1.45)',offset:.65},
+     {clipPath:'inset(0 0 0)',filter:'none',opacity:0}
+   ],850,0,'ease-out');
+ }
  function flyBallStar(stack,earned,last){
    const star=stack.children[3-earned],bounds=star.getBoundingClientRect();
    const frame=root.getBoundingClientRect(),card=q('.fp-perspective').getBoundingClientRect();
@@ -47,14 +84,20 @@ function mountPlayerCard(host,options){
    floating.setAttribute('class','fp-award-star');
    floating.setAttribute('aria-hidden','true');
    root.append(floating);
+   const layer=document.createElement('div');
+   layer.className='fp-award-effects';
+   layer.setAttribute('aria-hidden','true');
+   root.append(layer);
+   const duration=1650,travelStart=885,approachTime=1350;
+   sparkTrail(layer,startX+size/2,startY+size/2,endX+size/2+11,endY+size/2-22,travelStart,approachTime);
    const flight=floating.animate([
      {transform:pose(startX,startY+10,.3,-18),opacity:0},
-     {transform:pose(startX,startY,1.15,3),opacity:1,offset:.19},
-     {transform:pose(startX,startY,1),opacity:1,offset:.29},
-     {transform:pose(startX,startY,1),opacity:1,offset:.61,easing:'cubic-bezier(.42,0,.33,1)'},
-     {transform:pose(endX+11,endY-22,.48,-8),opacity:1,offset:.84},
+     {transform:pose(startX,startY,1.15,3),opacity:1,offset:275/duration},
+     {transform:pose(startX,startY,1),opacity:1,offset:420/duration},
+     {transform:pose(startX,startY,1),opacity:1,offset:travelStart/duration,easing:'cubic-bezier(.42,0,.33,1)'},
+     {transform:pose(endX+11,endY-22,.48,-8),opacity:1,offset:approachTime/duration},
      {transform:`translate(${endX}px,${endY}px) scale(${bounds.width/(scale*size)},${bounds.height/(scale*size)})`,opacity:1,filter:'none'}
-   ],{duration:1450,fill:'both'});
+   ],{duration,fill:'both'});
    animations.push(flight);
    const token=serial;
    flight.onfinish=()=>{
@@ -62,8 +105,12 @@ function mountPlayerCard(host,options){
      star.classList.add('filled');
      labelBallStars(ratings[0],{...options.to,ballDots:earned});
      flight.cancel();floating.remove();
-     if(earned<last)at(230,()=>flyBallStar(stack,earned+1,last));
-     else at(230,()=>options.onComplete?.());
+     embossBallStar(layer,star,endX+size/2,endY+size/2,bounds.width/scale,bounds.height/scale);
+     at(900,()=>{
+       layer.remove();
+       if(earned<last)flyBallStar(stack,earned+1,last);
+       else options.onComplete?.();
+     });
    };
  }
  function revealBallStars(){
